@@ -189,7 +189,6 @@ async function markSlotsPresent(
       p_class_schedule_id: slot.scheduleId,
       p_session_date: sessionDate,
       p_status: "present",
-      p_notes: undefined,
       p_created_by: userId,
     });
 

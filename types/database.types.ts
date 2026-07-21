@@ -1656,7 +1656,7 @@ export type Database = {
           p_class_id: number
           p_class_schedule_id?: number | null
           p_created_by?: string
-          p_notes?: string
+          p_notes?: string | null
           p_session_date: string
           p_status: Database["public"]["Enums"]["attendance_status"]
           p_student_id: number
@@ -1668,7 +1668,7 @@ export type Database = {
           p_amount_cents: number
           p_class_id: number
           p_created_by?: string
-          p_notes?: string
+          p_notes?: string | null
           p_payment_plan: Database["public"]["Enums"]["payment_plan"]
           p_session_count: number
           p_student_id: number
@@ -1703,7 +1703,7 @@ export type Database = {
           p_class_schedule_id?: number | null
           p_created_by?: string
           p_credit_cost: number
-          p_notes?: string
+          p_notes?: string | null
           p_related_attendance_id?: number | null
           p_session_date: string
           p_student_id: number
@@ -1779,7 +1779,7 @@ export type Database = {
             Args: {
               p_changed_by?: string
               p_exchanged_for_payment_id?: number
-              p_notes?: string
+              p_notes?: string | null
               p_payment_id: number
               p_status: Database["public"]["Enums"]["payment_status"]
             }
@@ -1790,7 +1790,7 @@ export type Database = {
               p_changed_by?: string
               p_credits?: number
               p_exchanged_for_payment_id?: number
-              p_notes?: string
+              p_notes?: string | null
               p_payment_id: number
               p_status: Database["public"]["Enums"]["payment_status"]
               p_to_student_id?: number
@@ -1807,7 +1807,7 @@ export type Database = {
           p_credits_used?: number
           p_history_type?: Database["public"]["Enums"]["student_class_history_type"]
           p_makeup_session_id?: number
-          p_notes?: string
+          p_notes?: string | null
           p_session_date: string
           p_session_record_id?: number
           p_source?: Database["public"]["Enums"]["session_record_source"]

@@ -122,7 +122,6 @@ export async function recordClassPayment(
       p_amount_cents: dollarsToCents(amount),
       p_session_count: sessionCountForPlan(plan),
       p_created_by: user.id,
-      p_notes: undefined,
     },
   );
 
