@@ -4,15 +4,17 @@ import { cookies } from "next/headers";
 import { AdminCampusSwitcher } from "@/components/admin-campus-switcher";
 import { BrandLogo } from "@/components/brand-logo";
 import { DashboardLiveClasses } from "@/components/dashboard-live-classes";
+import { DashboardLowCredits } from "@/components/dashboard-low-credits";
 import { DashboardUpcomingClasses } from "@/components/dashboard-upcoming-classes";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocation, getActiveCampusLocationId } from "@/lib/campus-location";
+import { studentsWithLowTotalCredits } from "@/lib/class-session-credits";
 import { createTranslator } from "@/lib/i18n";
 import {
   buildLiveClassItems,
   buildUpcomingTodayClassItems,
 } from "@/lib/live-classes";
-import { formatTeacherName } from "@/lib/person-name";
+import { compareStudentNames, formatTeacherName } from "@/lib/person-name";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -83,11 +85,27 @@ export default async function Home() {
     );
   }
 
+  type EnrollmentRow = {
+    "student id": number | null;
+    "class id": number;
+    is_active: boolean | null;
+    classes: { is_active: boolean } | { is_active: boolean }[] | null;
+  };
+
+  type StudentNameRow = {
+    id: number;
+    "first name": string;
+    "last name": string | null;
+  };
+
   const [
     { data: scheduleRows },
     { count: studentCount },
     { count: tutorCount },
     { count: classCount },
+    { data: activeStudents },
+    { data: enrollments },
+    { data: balances },
   ] = await Promise.all([
     supabase
       .from("class_schedules")
@@ -127,6 +145,24 @@ export default async function Home() {
       .select("id", { count: "exact", head: true })
       .eq("location_id", locationId)
       .eq("is_active", true),
+    supabase
+      .from("students")
+      .select('id, "first name", "last name"')
+      .eq("location_id", locationId)
+      .eq("is_active", true),
+    supabase
+      .from("enrollments")
+      .select(
+        '"student id", "class id", is_active, classes!inner ( is_active, location_id )',
+      )
+      .eq("classes.location_id", locationId)
+      .not("student id", "is", null),
+    supabase
+      .from("student_class_balances")
+      .select(
+        "student_id, class_id, sessions_total, sessions_remaining, sessions_used, absence_count, classes!inner ( location_id )",
+      )
+      .eq("classes.location_id", locationId),
   ]);
 
   const normalizedSchedules = ((scheduleRows as ScheduleRow[] | null) ?? []).map(
@@ -159,6 +195,46 @@ export default async function Home() {
     normalizedSchedules,
     formatTeacherName,
   );
+
+  const activeStudentById = new Map(
+    ((activeStudents as StudentNameRow[] | null) ?? []).map((student) => [
+      student.id,
+      student,
+    ]),
+  );
+
+  const lowCreditsStudents = studentsWithLowTotalCredits(
+    ((enrollments as EnrollmentRow[] | null) ?? [])
+      .filter(
+        (enrollment): enrollment is EnrollmentRow & { "student id": number } =>
+          enrollment["student id"] !== null,
+      )
+      .map((enrollment) => ({
+        studentId: enrollment["student id"],
+        classId: enrollment["class id"],
+        enrollmentActive: enrollment.is_active !== false,
+        classActive: firstOrNull(enrollment.classes)?.is_active ?? false,
+      })),
+    balances ?? [],
+  )
+    .flatMap((row) => {
+      const student = activeStudentById.get(row.studentId);
+      if (!student) return [];
+      return [
+        {
+          id: student.id,
+          "first name": student["first name"],
+          "last name": student["last name"],
+          totalRemaining: row.totalRemaining,
+        },
+      ];
+    })
+    .sort((a, b) => {
+      if (a.totalRemaining !== b.totalRemaining) {
+        return a.totalRemaining - b.totalRemaining;
+      }
+      return compareStudentNames(a, b);
+    });
 
   const counts: Record<(typeof quickLinks)[number]["href"], number> = {
     "/students": studentCount ?? 0,
@@ -203,6 +279,10 @@ export default async function Home() {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <DashboardLiveClasses classes={liveClasses} />
         <DashboardUpcomingClasses classes={upcomingClasses} />
+      </div>
+
+      <div className="mt-6">
+        <DashboardLowCredits students={lowCreditsStudents} />
       </div>
     </div>
   );

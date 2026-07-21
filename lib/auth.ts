@@ -64,7 +64,7 @@ export async function requireAdmin(): Promise<StaffAccount> {
   const staff = await requireStaff();
 
   if (staff.role !== "admin") {
-    redirect("/settings");
+    redirect("/");
   }
 
   return staff;

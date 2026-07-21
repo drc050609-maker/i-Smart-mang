@@ -12,14 +12,14 @@ import {
 
 import {
   recordTeacherPaycheck,
-  saveTeacherClassPayRate,
+  saveTeacherGroupPayRate,
   type PaycheckActionState,
 } from "@/app/(dashboard)/tutors/paycheck-actions";
 import { correctTeacherPaycheckAmount } from "@/app/(dashboard)/finance-actions";
 import { EditAmountDialog } from "@/components/edit-amount-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { Listbox, ListboxLabel, ListboxOption } from "@/components/listbox";
-import { formatClassSubject } from "@/lib/class-subject";
+import { formatSubjectWithGradeTier } from "@/lib/class-subject";
 import {
   formatStatementAmountCents,
   formatStatementMonth,
@@ -29,6 +29,7 @@ import { appLanguageLocale } from "@/lib/language";
 import {
   paycheckPeriodKey,
   payRatesToInputValues,
+  type TeacherGroupPayRates,
   type TeacherPaycheckPeriodData,
 } from "@/lib/teacher-paycheck";
 
@@ -38,8 +39,9 @@ const inputClassName =
 const initialState: PaycheckActionState = {};
 
 type PaycheckLineSummary = {
-  classId: number;
+  groupKey: string;
   subject: string;
+  gradeTier: TeacherPaycheckPeriodData["classLines"][number]["gradeTier"];
   sessionCount: number;
   rateCents: number;
   lineTotalCents: number;
@@ -57,16 +59,17 @@ function formatRecordedAt(iso: string, language: "en" | "zh") {
 
 function buildLineSummaries(
   classLines: TeacherPaycheckPeriodData["classLines"],
-  rates: Record<number, string>,
+  rates: Record<string, string>,
 ): PaycheckLineSummary[] {
   return classLines.map((line) => {
-    const rate = Number(rates[line.classId] ?? "");
+    const rate = Number(rates[line.groupKey] ?? "");
     const rateCents =
       Number.isFinite(rate) && rate >= 0 ? Math.round(rate * 100) : 0;
 
     return {
-      classId: line.classId,
+      groupKey: line.groupKey,
       subject: line.subject,
+      gradeTier: line.gradeTier,
       sessionCount: line.sessionCount,
       rateCents,
       lineTotalCents: line.sessionCount * rateCents,
@@ -83,9 +86,14 @@ function PaycheckPeriodCard({
 }: {
   teacherId: number;
   period: TeacherPaycheckPeriodData;
-  rates: Record<number, string>;
-  onRateChange: (classId: number, value: string) => void;
-  onRateBlur: (classId: number, value: string) => void;
+  rates: Record<string, string>;
+  onRateChange: (groupKey: string, value: string) => void;
+  onRateBlur: (
+    groupKey: string,
+    classIds: number[],
+    gradeTier: TeacherPaycheckPeriodData["classLines"][number]["gradeTier"],
+    value: string,
+  ) => void;
 }) {
   const { language, t } = useLanguage();
   const router = useRouter();
@@ -138,20 +146,27 @@ function PaycheckPeriodCard({
       JSON.stringify(
         period.classLines.map((line) => ({
           classId: line.classId,
+          classIds: line.classIds,
+          gradeTier: line.gradeTier,
           sessionCount: line.sessionCount,
-          rate: Number(rates[line.classId] ?? 0),
+          rate: Number(rates[line.groupKey] ?? 0),
         })),
       ),
     [period.classLines, rates],
   );
 
-  function handleRateChange(classId: number, value: string) {
+  function handleRateChange(groupKey: string, value: string) {
     setFormError(null);
-    onRateChange(classId, value);
+    onRateChange(groupKey, value);
   }
 
-  function handleRateBlur(classId: number, value: string) {
-    onRateBlur(classId, value);
+  function handleRateBlur(
+    groupKey: string,
+    classIds: number[],
+    gradeTier: TeacherPaycheckPeriodData["classLines"][number]["gradeTier"],
+    value: string,
+  ) {
+    onRateBlur(groupKey, classIds, gradeTier, value);
   }
 
   function openConfirmDialog() {
@@ -242,13 +257,13 @@ function PaycheckPeriodCard({
           <tbody className="divide-y divide-gray-100 dark:divide-white/10">
             {period.classLines.map((line) => {
               const savedLine = savedPaycheck?.lines.find(
-                (saved) => saved.classId === line.classId,
+                (saved) => saved.groupKey === line.groupKey,
               );
               const rateValue = isRecorded
                 ? savedLine
                   ? (savedLine.rateCents / 100).toString()
                   : "0"
-                : (rates[line.classId] ?? "");
+                : (rates[line.groupKey] ?? "");
               const subtotalCents = isRecorded
                 ? (savedLine?.lineTotalCents ?? 0)
                 : (() => {
@@ -259,11 +274,16 @@ function PaycheckPeriodCard({
 
                     return line.sessionCount * Math.round(rate * 100);
                   })();
+              const label = formatSubjectWithGradeTier(
+                line.subject,
+                line.gradeTier,
+                language,
+              );
 
               return (
-                <tr key={line.classId}>
+                <tr key={line.groupKey}>
                   <td className="py-3 pr-3 text-sm font-medium text-gray-900 dark:text-white">
-                    {formatClassSubject(line.subject, language)}
+                    {label}
                   </td>
                   <td className="px-3 py-3 text-right text-sm text-gray-700 dark:text-gray-300">
                     {isRecorded ? (savedLine?.sessionCount ?? line.sessionCount) : line.sessionCount}
@@ -287,14 +307,19 @@ function PaycheckPeriodCard({
                           inputMode="decimal"
                           value={rateValue}
                           onChange={(event) =>
-                            handleRateChange(line.classId, event.target.value)
+                            handleRateChange(line.groupKey, event.target.value)
                           }
                           onBlur={(event) =>
-                            handleRateBlur(line.classId, event.target.value)
+                            handleRateBlur(
+                              line.groupKey,
+                              line.classIds,
+                              line.gradeTier,
+                              event.target.value,
+                            )
                           }
                           placeholder="0"
                           className={inputClassName}
-                          aria-label={`${t("common.ratePerClass")} — ${formatClassSubject(line.subject, language)}`}
+                          aria-label={`${t("common.ratePerClass")} — ${label}`}
                         />
                       </div>
                     )}
@@ -418,9 +443,13 @@ function PaycheckPeriodCard({
                       </thead>
                       <tbody className="divide-y divide-gray-100 dark:divide-white/10">
                         {lineSummaries.map((line) => (
-                          <tr key={line.classId}>
+                          <tr key={line.groupKey}>
                             <td className="py-2.5 pr-3 text-sm text-gray-900 dark:text-white">
-                              {formatClassSubject(line.subject, language)}
+                              {formatSubjectWithGradeTier(
+                                line.subject,
+                                line.gradeTier,
+                                language,
+                              )}
                             </td>
                             <td className="px-3 py-2.5 text-right text-sm text-gray-700 dark:text-gray-300">
                               {line.sessionCount}
@@ -504,14 +533,14 @@ export function TeacherPaycheckSection({
 }: {
   teacherId: number;
   periods: TeacherPaycheckPeriodData[];
-  defaultPayRates: Record<number, number>;
+  defaultPayRates: TeacherGroupPayRates;
 }) {
   const { language, t } = useLanguage();
   const defaultPeriodKey = periods[0]
     ? paycheckPeriodKey(periods[0].year, periods[0].month)
     : "";
   const [selectedPeriodKey, setSelectedPeriodKey] = useState(defaultPeriodKey);
-  const [rates, setRates] = useState<Record<number, string>>(() =>
+  const [rates, setRates] = useState<Record<string, string>>(() =>
     payRatesToInputValues(defaultPayRates),
   );
   const [rateSaveError, setRateSaveError] = useState<string | null>(null);
@@ -522,12 +551,17 @@ export function TeacherPaycheckSection({
         paycheckPeriodKey(period.year, period.month) === selectedPeriodKey,
     ) ?? periods[0] ?? null;
 
-  function handleRateChange(classId: number, value: string) {
+  function handleRateChange(groupKey: string, value: string) {
     setRateSaveError(null);
-    setRates((current) => ({ ...current, [classId]: value }));
+    setRates((current) => ({ ...current, [groupKey]: value }));
   }
 
-  async function handleRateBlur(classId: number, value: string) {
+  async function handleRateBlur(
+    groupKey: string,
+    classIds: number[],
+    gradeTier: TeacherPaycheckPeriodData["classLines"][number]["gradeTier"],
+    value: string,
+  ) {
     const trimmed = value.trim();
     if (!trimmed) {
       return;
@@ -538,10 +572,18 @@ export function TeacherPaycheckSection({
       return;
     }
 
-    const result = await saveTeacherClassPayRate(teacherId, classId, rate);
+    const result = await saveTeacherGroupPayRate(
+      teacherId,
+      classIds,
+      rate,
+      gradeTier,
+    );
     if (result.error) {
       setRateSaveError(result.error);
+      return;
     }
+
+    setRates((current) => ({ ...current, [groupKey]: trimmed }));
   }
 
   return (

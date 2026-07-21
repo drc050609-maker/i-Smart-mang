@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, type ComponentType, type SVGProps } from "react";
+import {
+  useCallback,
+  useEffect,
+  useState,
+  type ComponentType,
+  type CSSProperties,
+  type SVGProps,
+} from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -39,23 +46,29 @@ import {
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
-type NavItem = { name: string; href: string; icon: Icon };
+type NavItem = { name: string; href: string; icon: Icon; adminOnly?: boolean };
 
 const navigation: NavItem[] = [
   { name: "Dashboard", href: "/", icon: HomeIcon },
-  { name: "Students", href: "/students", icon: UsersIcon },
   { name: "Leads", href: "/leads", icon: UserPlusIcon },
+  { name: "Students", href: "/students", icon: UsersIcon },
   { name: "Classes", href: "/classes", icon: FolderIcon },
-  { name: "Tutors", href: "/tutors", icon: AcademicCapIcon },
+  { name: "Attendance", href: "/attendance", icon: ClipboardDocumentCheckIcon },
+  { name: "Teachers", href: "/tutors", icon: AcademicCapIcon },
   { name: "Tuitions", href: "/tuitions", icon: BanknotesIcon },
   { name: "Payments", href: "/payments", icon: CreditCardIcon },
   { name: "Books & Purchases", href: "/purchases", icon: ShoppingBagIcon },
   { name: "Statements", href: "/statements", icon: ChartBarSquareIcon },
-  { name: "Attendance", href: "/attendance", icon: ClipboardDocumentCheckIcon },
   { name: "Schedule", href: "/schedule", icon: CalendarIcon },
-  { name: "Events", href: "/events", icon: PhotoIcon },
+  { name: "Events", href: "/events", icon: PhotoIcon, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
+
+/** Default expanded width (~w-72). */
+const SIDEBAR_DEFAULT_WIDTH = 288;
+/** Compact icon rail — same size as the old collapsed sidebar (w-20). */
+const SIDEBAR_MIN_WIDTH = 80;
+const SIDEBAR_MAX_WIDTH = 420;
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -69,38 +82,53 @@ function navItemIsCurrent(href: string, pathname: string) {
 function NavLinks({
   pathname,
   onNavigate,
+  role,
+  compact,
 }: {
   pathname: string;
   onNavigate?: () => void;
+  role: StaffRole;
+  compact?: boolean;
 }) {
   const { t } = useLanguage();
+  const visibleNav = navigation.filter(
+    (item) => !item.adminOnly || role === "admin",
+  );
 
   return (
     <ul role="list" className="-mx-2 space-y-1">
-      {navigation.map((item) => {
+      {visibleNav.map((item) => {
         const current = navItemIsCurrent(item.href, pathname);
         return (
           <li key={item.href}>
             <Link
               href={item.href}
               onClick={() => onNavigate?.()}
+              title={compact ? t(getNavTranslationKey(item.href)) : undefined}
               className={classNames(
                 current
-                  ? "bg-gray-50 text-indigo-600 dark:bg-white/5 dark:text-white"
-                  : "text-gray-700 hover:bg-gray-50 hover:text-indigo-600 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white",
-                "group flex gap-x-3 rounded-md p-2 text-sm/6 font-semibold",
+                  ? "bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-200"
+                  : "text-gray-700 hover:bg-violet-50/70 hover:text-violet-800 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white",
+                compact ? "justify-center px-2" : "gap-x-3 px-2",
+                "group flex rounded-lg p-2 text-sm/6 font-semibold transition-colors",
               )}
             >
               <item.icon
                 aria-hidden="true"
                 className={classNames(
                   current
-                    ? "text-indigo-600 dark:text-white"
-                    : "text-gray-400 group-hover:text-indigo-600 dark:group-hover:text-white",
+                    ? "text-violet-600 dark:text-violet-300"
+                    : "text-gray-400 group-hover:text-violet-600 dark:group-hover:text-violet-300",
                   "size-6 shrink-0",
                 )}
               />
-              {t(getNavTranslationKey(item.href))}
+              {compact ? (
+                <span className="sr-only">
+                  {t(getNavTranslationKey(item.href))}
+                </span>
+              ) : (
+                t(getNavTranslationKey(item.href))
+              )}
             </Link>
           </li>
         );
@@ -112,9 +140,11 @@ function NavLinks({
 function BrandMark({
   location,
   onNavigate,
+  compact,
 }: {
   location: StaffLocation;
   onNavigate?: () => void;
+  compact?: boolean;
 }) {
   const { language } = useLanguage();
 
@@ -122,12 +152,23 @@ function BrandMark({
     <Link
       href="/"
       onClick={() => onNavigate?.()}
-      className="relative flex h-24 shrink-0 flex-col justify-center gap-1"
+      className={classNames(
+        "relative flex shrink-0 flex-col justify-center",
+        compact ? "h-16 items-center" : "h-24 gap-1",
+      )}
     >
-      <BrandLogo className="h-auto w-full max-w-52 rounded-sm bg-white" priority />
-      <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
-        {formatStaffLocationLabel(location, language)}
-      </span>
+      <BrandLogo
+        className={classNames(
+          "h-auto rounded-sm bg-white",
+          compact ? "w-10" : "w-full max-w-52",
+        )}
+        priority
+      />
+      {compact ? null : (
+        <span className="text-xs font-medium text-gray-500 dark:text-gray-400">
+          {formatStaffLocationLabel(location, language)}
+        </span>
+      )}
     </Link>
   );
 }
@@ -147,12 +188,18 @@ export function DashboardShell({
   activeCampus: StaffLocation;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarWidth, setSidebarWidth] = useState(SIDEBAR_DEFAULT_WIDTH);
+  const [isResizing, setIsResizing] = useState(false);
   const pathname = usePathname();
   const { t } = useLanguage();
 
   const closeMobile = () => setSidebarOpen(false);
+  const compact = sidebarWidth <= SIDEBAR_MIN_WIDTH + 24;
 
-  const currentNavItem = navigation.find((item) =>
+  const visibleNav = navigation.filter(
+    (item) => !item.adminOnly || staff.role === "admin",
+  );
+  const currentNavItem = visibleNav.find((item) =>
     navItemIsCurrent(item.href, pathname),
   );
   const pageTitle = currentNavItem
@@ -165,8 +212,38 @@ export function DashboardShell({
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
+  const handleResizeMove = useCallback((event: PointerEvent) => {
+    const next = Math.min(
+      SIDEBAR_MAX_WIDTH,
+      Math.max(SIDEBAR_MIN_WIDTH, event.clientX),
+    );
+    setSidebarWidth(next);
+  }, []);
+
+  const stopResize = useCallback(() => {
+    setIsResizing(false);
+  }, []);
+
+  useEffect(() => {
+    if (!isResizing) return;
+
+    window.addEventListener("pointermove", handleResizeMove);
+    window.addEventListener("pointerup", stopResize);
+    window.addEventListener("pointercancel", stopResize);
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+
+    return () => {
+      window.removeEventListener("pointermove", handleResizeMove);
+      window.removeEventListener("pointerup", stopResize);
+      window.removeEventListener("pointercancel", stopResize);
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+    };
+  }, [isResizing, handleResizeMove, stopResize]);
+
   return (
-    <div className="min-h-full">
+    <div className="min-h-full bg-[#faf9fc] dark:bg-slate-950">
       <Dialog
         open={sidebarOpen}
         onClose={setSidebarOpen}
@@ -174,7 +251,7 @@ export function DashboardShell({
       >
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+          className="fixed inset-0 bg-gray-900/60 transition-opacity duration-300 ease-linear data-closed:opacity-0"
         />
 
         <div className="fixed inset-0 flex">
@@ -195,12 +272,16 @@ export function DashboardShell({
               </div>
             </TransitionChild>
 
-            <div className="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2 dark:bg-gray-900 dark:ring dark:ring-white/10 dark:before:pointer-events-none dark:before:absolute dark:before:inset-0 dark:before:bg-black/10">
+            <div className="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2 dark:bg-slate-900 dark:ring dark:ring-white/10">
               <BrandMark location={activeCampus} onNavigate={closeMobile} />
               <nav className="relative flex flex-1 flex-col">
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                   <li>
-                    <NavLinks pathname={pathname} onNavigate={closeMobile} />
+                    <NavLinks
+                      pathname={pathname}
+                      onNavigate={closeMobile}
+                      role={staff.role}
+                    />
                   </li>
                 </ul>
                 <StaffProfileFooter
@@ -215,13 +296,23 @@ export function DashboardShell({
         </div>
       </Dialog>
 
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col dark:bg-gray-900">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:border-white/10 dark:bg-black/10">
-          <BrandMark location={activeCampus} />
-          <nav className="flex flex-1 flex-col">
+      <div
+        className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:flex-col"
+        style={{ width: sidebarWidth }}
+      >
+        <div className="relative flex grow flex-col gap-y-5 overflow-y-auto border-r border-violet-100/80 bg-white px-3 pt-4 dark:border-white/10 dark:bg-slate-900">
+          <div className={compact ? "px-1" : "px-3"}>
+            <BrandMark location={activeCampus} compact={compact} />
+          </div>
+
+          <nav className="flex flex-1 flex-col px-1 pb-4">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
-                <NavLinks pathname={pathname} />
+                <NavLinks
+                  pathname={pathname}
+                  role={staff.role}
+                  compact={compact}
+                />
               </li>
             </ul>
             <StaffProfileFooter
@@ -229,16 +320,31 @@ export function DashboardShell({
               email={staff.email}
               role={staff.role}
               location={staff.location}
+              compact={compact}
             />
           </nav>
+
+          <div
+            role="separator"
+            aria-orientation="vertical"
+            aria-label={t("common.resizeSidebar")}
+            onPointerDown={(event) => {
+              event.preventDefault();
+              setIsResizing(true);
+            }}
+            className={classNames(
+              "absolute inset-y-0 right-0 z-20 w-1.5 cursor-col-resize bg-transparent hover:bg-violet-200/80",
+              isResizing && "bg-violet-300",
+            )}
+          />
         </div>
       </div>
 
-      <div className="sticky top-0 z-40 flex items-center gap-x-6 bg-white px-4 py-4 shadow-xs sm:px-6 lg:hidden dark:bg-gray-900 dark:shadow-none dark:after:pointer-events-none dark:after:absolute dark:after:inset-0 dark:after:border-b dark:after:border-white/10 dark:after:bg-black/10">
+      <div className="sticky top-0 z-40 flex items-center gap-x-6 border-b border-violet-100/80 bg-white/95 px-4 py-4 shadow-xs backdrop-blur sm:px-6 lg:hidden dark:border-white/10 dark:bg-slate-900/90">
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden dark:text-gray-400 dark:hover:text-white"
+          className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 lg:hidden dark:text-gray-300 dark:hover:text-white"
         >
           <span className="sr-only">{t("common.openSidebar")}</span>
           <Bars3Icon aria-hidden="true" className="size-6" />
@@ -246,12 +352,19 @@ export function DashboardShell({
         <div className="flex-1 text-sm/6 font-semibold text-gray-900 dark:text-white">
           {pageTitle}
         </div>
-        <span className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-white/10 dark:text-indigo-300">
+        <span className="flex size-8 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-200">
           {staffInitials || "IS"}
         </span>
       </div>
 
-      <main className="py-10 lg:pl-72">
+      <main
+        className="py-10 transition-[padding] duration-150 lg:pl-[var(--sidebar-pad)]"
+        style={
+          {
+            ["--sidebar-pad"]: `${sidebarWidth}px`,
+          } as CSSProperties
+        }
+      >
         <div className="px-4 sm:px-6 lg:px-8">{children}</div>
       </main>
     </div>

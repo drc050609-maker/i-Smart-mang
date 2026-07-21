@@ -23,6 +23,7 @@ import type { TeacherOption } from "@/components/teacher-combobox";
 import type { RoomOption } from "@/components/add-class-dialog";
 import type { StudentOption } from "@/components/student-multi-combobox";
 import type { ClassScheduleRow } from "@/lib/class-schedule";
+import { formatClassSchedule, sortClassSchedules } from "@/lib/class-schedule";
 import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { formatClassSubject } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
@@ -66,6 +67,7 @@ type ClassScheduleEmbed = {
   schedule_date: string | null;
   schedule_start_time: string;
   schedule_end_time: string;
+  student_id: number | null;
 };
 
 type ClassDetail = Pick<
@@ -204,7 +206,8 @@ export default async function ClassDetailPage({
         schedule_day_of_week,
         schedule_date,
         schedule_start_time,
-        schedule_end_time
+        schedule_end_time,
+        student_id
       )
     `,
       )
@@ -273,6 +276,21 @@ export default async function ClassDetailPage({
   );
   const activeCount = enrollmentRows.filter(isEnrollmentActive).length;
   const schedules: ClassScheduleRow[] = listOrEmpty(detail.class_schedules);
+  const enrolledStudentsForSchedule: StudentOption[] = enrollmentRows
+    .map((enrollment) => studentFromEnrollment(enrollment))
+    .filter((student): student is StudentEmbed => student != null)
+    .map((student) => ({
+      id: student.id,
+      "first name": student["first name"],
+      "last name": student["last name"],
+    }));
+  const schedulesByStudentId = new Map<number, ClassScheduleRow[]>();
+  for (const schedule of schedules) {
+    if (schedule.student_id == null) continue;
+    const list = schedulesByStudentId.get(schedule.student_id) ?? [];
+    list.push(schedule);
+    schedulesByStudentId.set(schedule.student_id, list);
+  }
   const todayScheduleId = findTodayScheduleId(
     schedules.map((schedule) => ({ ...schedule, class_id: classId })),
     classId,
@@ -402,6 +420,7 @@ export default async function ClassDetailPage({
         classId={classId}
         durationMinutes={detail.duration_minutes}
         schedules={schedules}
+        enrolledStudents={enrolledStudentsForSchedule}
       />
 
       <section className="mt-8">
@@ -458,6 +477,12 @@ export default async function ClassDetailPage({
                       </th>
                       <th
                         scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {t("common.schedule")}
+                      </th>
+                      <th
+                        scope="col"
                         className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-white"
                       >
                         {t("common.remaining")}
@@ -496,6 +521,18 @@ export default async function ClassDetailPage({
                       const status = formatEnrollmentStatus(enrollment, t);
                       const isInactive = !isEnrollmentActive(enrollment);
                       const balance = balanceForStudent(student.id);
+                      const studentSchedules = sortClassSchedules(
+                        schedulesByStudentId.get(student.id) ?? [],
+                      );
+                      const scheduleLabel =
+                        studentSchedules
+                          .map((schedule) =>
+                            formatClassSchedule(schedule, {
+                              language: staff.preferred_language,
+                            }),
+                          )
+                          .filter((value): value is string => Boolean(value))
+                          .join("; ") || t("common.unassigned");
 
                       return (
                         <tr
@@ -512,6 +549,9 @@ export default async function ClassDetailPage({
                           </td>
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                             {formatDob(student.dob, staff.preferred_language)}
+                          </td>
+                          <td className="px-3 py-4 text-sm text-gray-700 dark:text-gray-300">
+                            {scheduleLabel}
                           </td>
                           <td className="px-3 py-4 text-right text-sm font-medium whitespace-nowrap text-indigo-700 dark:text-indigo-300">
                             {balance.sessions_remaining}

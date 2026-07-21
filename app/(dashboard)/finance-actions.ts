@@ -229,6 +229,82 @@ export async function updateClassPricing(
   return { success: true };
 }
 
+export async function clearClassPricing(
+  _prev: MoneyActionState,
+  formData: FormData,
+): Promise<MoneyActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff) {
+    return { error: "You must be signed in." };
+  }
+
+  const classId = Number(formData.get("classId"));
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  const reason =
+    formData.get("reason")?.toString().trim() || "Cleared class pricing";
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { error } = await supabase.rpc("clear_class_pricing", {
+    p_class_id: classId,
+    p_reason: reason,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/tuitions");
+  revalidatePath("/payments");
+  revalidatePath("/classes", "layout");
+  return { success: true };
+}
+
+export async function clearClassPricingField(
+  _prev: MoneyActionState,
+  formData: FormData,
+): Promise<MoneyActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff) {
+    return { error: "You must be signed in." };
+  }
+
+  const classId = Number(formData.get("classId"));
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  const field = formData.get("field")?.toString();
+  if (field !== "single" && field !== "package20" && field !== "package50") {
+    return { error: "Invalid pricing field." };
+  }
+
+  const reason =
+    formData.get("reason")?.toString().trim() || "Cleared class pricing field";
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { error } = await supabase.rpc("clear_class_pricing_field", {
+    p_class_id: classId,
+    p_field: field,
+    p_reason: reason,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/tuitions");
+  revalidatePath("/payments");
+  revalidatePath("/classes", "layout");
+  return { success: true };
+}
+
 export async function updateCampusTrialPricing(
   _prev: MoneyActionState,
   formData: FormData,
@@ -278,5 +354,123 @@ export async function updateCampusTrialPricing(
   revalidatePath("/settings");
   revalidatePath("/tuitions");
   revalidatePath("/trial");
+  return { success: true };
+}
+
+function optionalDollarsToCents(
+  value: FormDataEntryValue | null,
+  fieldLabel: string,
+): { ok: true; cents: number | null } | { ok: false; error: string } {
+  const raw = value?.toString().trim() ?? "";
+  if (!raw) {
+    return { ok: true, cents: null };
+  }
+  return parseDollarsToCents(value, { fieldLabel });
+}
+
+export async function createClassPricePromotion(
+  _prev: MoneyActionState,
+  formData: FormData,
+): Promise<MoneyActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff) {
+    return { error: "You must be signed in." };
+  }
+
+  const classId = Number(formData.get("classId"));
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Select a class." };
+  }
+
+  const name = formData.get("name")?.toString().trim() ?? "";
+  if (!name) {
+    return { error: "Enter a name for this special pack." };
+  }
+
+  const startDate = formData.get("startDate")?.toString().trim() ?? "";
+  const endDate = formData.get("endDate")?.toString().trim() ?? "";
+  if (!startDate || !endDate) {
+    return { error: "Start and end dates are required." };
+  }
+  if (endDate < startDate) {
+    return { error: "End date must be on or after the start date." };
+  }
+
+  const single = optionalDollarsToCents(
+    formData.get("singlePrice"),
+    "Single class price",
+  );
+  if (!single.ok) return { error: single.error };
+
+  const package20 = optionalDollarsToCents(
+    formData.get("package20Price"),
+    "20-class package price",
+  );
+  if (!package20.ok) return { error: package20.error };
+
+  const package50 = optionalDollarsToCents(
+    formData.get("package50Price"),
+    "50-class package price",
+  );
+  if (!package50.ok) return { error: package50.error };
+
+  if (
+    single.cents == null &&
+    package20.cents == null &&
+    package50.cents == null
+  ) {
+    return { error: "Enter at least one promotional price." };
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { error } = await supabase.from("class_price_promotions").insert({
+    class_id: classId,
+    name,
+    single_price_cents: single.cents,
+    package_20_price_cents: package20.cents,
+    package_50_price_cents: package50.cents,
+    start_date: startDate,
+    end_date: endDate,
+    is_active: true,
+    created_by: staff.id,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/tuitions");
+  return { success: true };
+}
+
+export async function deactivateClassPricePromotion(
+  _prev: MoneyActionState,
+  formData: FormData,
+): Promise<MoneyActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff) {
+    return { error: "You must be signed in." };
+  }
+
+  const promotionId = Number(formData.get("promotionId"));
+  if (!Number.isInteger(promotionId) || promotionId <= 0) {
+    return { error: "Invalid promotion." };
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { error } = await supabase
+    .from("class_price_promotions")
+    .update({ is_active: false })
+    .eq("id", promotionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/tuitions");
   return { success: true };
 }

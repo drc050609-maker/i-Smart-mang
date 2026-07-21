@@ -138,23 +138,23 @@ export function balanceMapKey(studentId: number, classId: number) {
   return `${studentId}:${classId}`;
 }
 
-/** Active enrollments where every enrolled class has zero sessions remaining. */
-export function studentsOutOfClassCredits(
-  enrollments: Array<{
-    studentId: number;
-    classId: number;
-    enrollmentActive: boolean;
-    classActive: boolean;
-  }>,
-  balances: StudentClassBalance[],
-): Set<number> {
-  const balanceByKey = new Map(
+type EnrollmentForCredits = {
+  studentId: number;
+  classId: number;
+  enrollmentActive: boolean;
+  classActive: boolean;
+};
+
+function balanceRemainingByEnrollmentKey(balances: StudentClassBalance[]) {
+  return new Map(
     balances.map((balance) => [
       balanceMapKey(balance.student_id, balance.class_id),
       balance.sessions_remaining,
     ]),
   );
+}
 
+function enrollmentsGroupedByStudent(enrollments: EnrollmentForCredits[]) {
   const enrollmentsByStudent = new Map<
     number,
     Array<{ classId: number; enrollmentActive: boolean; classActive: boolean }>
@@ -170,6 +170,16 @@ export function studentsOutOfClassCredits(
     enrollmentsByStudent.set(enrollment.studentId, existing);
   }
 
+  return enrollmentsByStudent;
+}
+
+/** Active enrollments where every enrolled class has zero sessions remaining. */
+export function studentsOutOfClassCredits(
+  enrollments: EnrollmentForCredits[],
+  balances: StudentClassBalance[],
+): Set<number> {
+  const balanceByKey = balanceRemainingByEnrollmentKey(balances);
+  const enrollmentsByStudent = enrollmentsGroupedByStudent(enrollments);
   const outOfCredits = new Set<number>();
 
   for (const [studentId, studentEnrollments] of enrollmentsByStudent) {
@@ -193,6 +203,52 @@ export function studentsOutOfClassCredits(
   }
 
   return outOfCredits;
+}
+
+export type LowCreditsStudent = {
+  studentId: number;
+  totalRemaining: number;
+};
+
+/**
+ * Students whose total `sessions_remaining` across active enrollments is 0 or 1.
+ * Missing balance rows count as 0 remaining (same as studentsOutOfClassCredits).
+ */
+export function studentsWithLowTotalCredits(
+  enrollments: EnrollmentForCredits[],
+  balances: StudentClassBalance[],
+  maxRemaining = 1,
+): LowCreditsStudent[] {
+  const balanceByKey = balanceRemainingByEnrollmentKey(balances);
+  const enrollmentsByStudent = enrollmentsGroupedByStudent(enrollments);
+  const lowCredits: LowCreditsStudent[] = [];
+
+  for (const [studentId, studentEnrollments] of enrollmentsByStudent) {
+    const activeEnrollments = studentEnrollments.filter(
+      (enrollment) => enrollment.enrollmentActive && enrollment.classActive,
+    );
+
+    if (activeEnrollments.length === 0) {
+      continue;
+    }
+
+    const totalRemaining = activeEnrollments.reduce((sum, enrollment) => {
+      const remaining =
+        balanceByKey.get(balanceMapKey(studentId, enrollment.classId)) ?? 0;
+      return sum + remaining;
+    }, 0);
+
+    if (totalRemaining <= maxRemaining) {
+      lowCredits.push({ studentId, totalRemaining });
+    }
+  }
+
+  return lowCredits.sort((a, b) => {
+    if (a.totalRemaining !== b.totalRemaining) {
+      return a.totalRemaining - b.totalRemaining;
+    }
+    return a.studentId - b.studentId;
+  });
 }
 
 export function findTodayScheduleId(

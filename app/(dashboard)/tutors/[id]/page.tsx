@@ -11,11 +11,17 @@ import { TeacherPaycheckSection } from "@/components/teacher-paycheck-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import {
+  classPayRatesToGroupRates,
   listTeacherPaycheckPeriodOptions,
   loadTeacherClassPayRates,
   loadTeacherPaycheckPeriods,
+  type TeacherGroupPayRates,
+  type TeacherPaycheckPeriodData,
 } from "@/lib/teacher-paycheck";
-import { formatClassSubject } from "@/lib/class-subject";
+import {
+  formatClassSubject,
+  uniqueClassesBySubject,
+} from "@/lib/class-subject";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -34,6 +40,7 @@ type ClassListRow = {
   id: number;
   subject: string;
   teacher_id: number | null;
+  location_id: number | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
 };
@@ -111,7 +118,7 @@ export default async function TutorDetailPage({
   ] = await Promise.all([
     supabase
       .from("teachers")
-      .select("id, first_name, last_name, dob, phone_number, is_active")
+      .select("id, first_name, last_name, dob, phone_number, is_active, location_id")
       .eq("id", teacherId)
       .maybeSingle(),
     supabase
@@ -133,6 +140,7 @@ export default async function TutorDetailPage({
         id,
         subject,
         teacher_id,
+        location_id,
         rooms ( room_number ),
         teachers!classes_teacher_id_fkey ( id, first_name, last_name )
       `,
@@ -141,7 +149,7 @@ export default async function TutorDetailPage({
   ]);
 
   if (teacherError) {
-    throw new Error(`Could not load tutor: ${teacherError.message}`);
+    throw new Error(`Could not load teacher: ${teacherError.message}`);
   }
 
   if (!teacher) {
@@ -149,8 +157,15 @@ export default async function TutorDetailPage({
   }
 
   const classRows = (classes as ClassEmbed[] | null) ?? [];
-  const classOptions: TeacherClassOption[] = ((allClasses as ClassListRow[] | null) ?? []).map(
-    (classRow) => {
+  const displayClassRows = uniqueClassesBySubject(classRows);
+  const classOptions: TeacherClassOption[] = (
+    (allClasses as ClassListRow[] | null) ?? []
+  )
+    .filter(
+      (classRow) =>
+        !teacher.location_id || classRow.location_id === teacher.location_id,
+    )
+    .map((classRow) => {
       const room = firstOrNull(classRow.rooms);
       const teacherEmbed = firstOrNull(classRow.teachers);
 
@@ -161,30 +176,37 @@ export default async function TutorDetailPage({
         room_number: room?.room_number ?? null,
         current_teacher_name: formatTeacherEmbedName(teacherEmbed),
       };
-    },
-  );
+    });
   const assignedClassIds = classRows.map((classRow) => classRow.id);
 
-  const { data: savedPaycheckPeriods } = await supabase
-    .from("teacher_paychecks")
-    .select("year, month")
-    .eq("teacher_id", teacherId);
+  let paycheckPeriods: TeacherPaycheckPeriodData[] = [];
+  let defaultPayRates: TeacherGroupPayRates = {};
+  try {
+    const { data: savedPaycheckPeriods } = await supabase
+      .from("teacher_paychecks")
+      .select("year, month")
+      .eq("teacher_id", teacherId);
 
-  const [paycheckPeriods, defaultPayRates] = await Promise.all([
-    loadTeacherPaycheckPeriods(
-      supabase,
-      teacherId,
-      listTeacherPaycheckPeriodOptions(
-        new Date(),
-        (savedPaycheckPeriods ?? []).map((row) => ({
-          year: row.year,
-          month: row.month,
-        })),
+    const [periods, classPayRates] = await Promise.all([
+      loadTeacherPaycheckPeriods(
+        supabase,
+        teacherId,
+        listTeacherPaycheckPeriodOptions(
+          new Date(),
+          (savedPaycheckPeriods ?? []).map((row) => ({
+            year: row.year,
+            month: row.month,
+          })),
+        ),
       ),
-    ),
-    loadTeacherClassPayRates(supabase, teacherId),
-  ]);
-
+      loadTeacherClassPayRates(supabase, teacherId),
+    ]);
+    paycheckPeriods = periods;
+    const allClassLines = periods.flatMap((period) => period.classLines);
+    defaultPayRates = classPayRatesToGroupRates(allClassLines, classPayRates);
+  } catch (error) {
+    console.error("Could not load teacher paycheck data:", error);
+  }
   return (
     <div>
       <div className="mb-6">
@@ -266,7 +288,7 @@ export default async function TutorDetailPage({
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
             {t("common.error.loadFailed", { entity: t("common.classes"), message: classesError.message })}
           </p>
-        ) : classRows.length === 0 ? (
+        ) : displayClassRows.length === 0 ? (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             {t("common.noClassesYet")}
           </p>
@@ -310,11 +332,11 @@ export default async function TutorDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                    {classRows.map((classRow) => {
+                    {displayClassRows.map((classRow) => {
                       const room = firstOrNull(classRow.rooms);
 
                       return (
-                        <tr key={classRow.id}>
+                        <tr key={classRow.subject}>
                           <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                             <Link
                               href={`/classes/${classRow.id}`}

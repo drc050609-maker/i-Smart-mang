@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 
+import { ClassPricePromotionsSection } from "@/components/class-price-promotions-section";
 import {
   TuitionsTable,
   type TuitionClassRow,
@@ -7,7 +8,12 @@ import {
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
-import { buildTuitionPricing } from "@/lib/tuition";
+import {
+  applyPromotionToPricing,
+  buildTuitionPricing,
+  findActivePromotionForClass,
+  type ClassPricePromotion,
+} from "@/lib/tuition";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -33,6 +39,10 @@ function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
+function todayIsoDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function TuitionsPage() {
   const staff = await requireStaff();
   const t = createTranslator(staff.preferred_language);
@@ -51,10 +61,12 @@ export default async function TuitionsPage() {
     );
   }
 
-  const { data: classes, error } = await supabase
-    .from("classes")
-    .select(
-      `
+  const [{ data: classes, error }, { data: promotions, error: promotionsError }] =
+    await Promise.all([
+      supabase
+        .from("classes")
+        .select(
+          `
       id,
       subject,
       duration_minutes,
@@ -66,13 +78,37 @@ export default async function TuitionsPage() {
       package_50_price_cents,
       teachers!classes_teacher_id_fkey ( first_name, last_name )
     `,
-    )
-    .eq("location_id", locationId)
-    .order("subject");
+        )
+        .eq("location_id", locationId)
+        .order("subject"),
+      supabase
+        .from("class_price_promotions")
+        .select(
+          "id, class_id, name, single_price_cents, package_20_price_cents, package_50_price_cents, start_date, end_date, is_active",
+        )
+        .order("start_date", { ascending: false }),
+    ]);
+
+  const promoRows = (promotions as ClassPricePromotion[] | null) ?? [];
+  const today = todayIsoDate();
 
   const tuitionRows: TuitionClassRow[] =
     (classes as ClassRow[] | null)?.map((classRow) => {
       const teacher = firstOrNull(classRow.teachers);
+      const basePricing = buildTuitionPricing(
+        classRow.duration_minutes,
+        classRow.lesson_type,
+        {
+          single_price_cents: classRow.single_price_cents,
+          package_20_price_cents: classRow.package_20_price_cents,
+          package_50_price_cents: classRow.package_50_price_cents,
+        },
+      );
+      const activePromo = findActivePromotionForClass(
+        promoRows,
+        classRow.id,
+        today,
+      );
 
       return {
         id: classRow.id,
@@ -82,17 +118,16 @@ export default async function TuitionsPage() {
         class_track: classRow.class_track,
         is_active: classRow.is_active,
         teacher,
-        pricing: buildTuitionPricing(
-          classRow.duration_minutes,
-          classRow.lesson_type,
-          {
-            single_price_cents: classRow.single_price_cents,
-            package_20_price_cents: classRow.package_20_price_cents,
-            package_50_price_cents: classRow.package_50_price_cents,
-          },
-        ),
+        pricing: applyPromotionToPricing(basePricing, activePromo),
+        activePromotionName: activePromo?.name ?? null,
       };
     }) ?? [];
+
+  const classOptions =
+    (classes as ClassRow[] | null)?.map((classRow) => ({
+      id: classRow.id,
+      subject: classRow.subject,
+    })) ?? [];
 
   return (
     <div>
@@ -109,12 +144,22 @@ export default async function TuitionsPage() {
         <p className="mt-4 text-sm text-red-600 dark:text-red-400">
           {t("common.error.loadFailed", { entity: t("nav.tuitions"), message: error.message })}
         </p>
-      ) : tuitionRows.length === 0 ? (
-        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.noClassesYet")}
-        </p>
       ) : (
         <TuitionsTable classes={tuitionRows} />
+      )}
+
+      {promotionsError ? (
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
+          {t("common.error.loadFailed", {
+            entity: t("common.specialPacks"),
+            message: promotionsError.message,
+          })}
+        </p>
+      ) : (
+        <ClassPricePromotionsSection
+          classes={classOptions}
+          promotions={promoRows}
+        />
       )}
     </div>
   );

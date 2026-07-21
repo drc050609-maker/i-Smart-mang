@@ -11,6 +11,7 @@ import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { addMinutesToScheduleTime } from "@/lib/class-schedule";
 import { parseLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { parseClassTrack, type ClassTrack } from "@/lib/class-track";
+import { parseDollarsToCents } from "@/lib/money";
 export type ActionState = {
   error?: string;
   success?: boolean;
@@ -39,7 +40,7 @@ function getServiceClient() {
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 }
@@ -158,6 +159,131 @@ export async function createClass(
 
   revalidatePath("/classes");
   revalidatePath("/tutors", "layout");
+  revalidatePath("/tuitions");
+  return { success: true };
+}
+
+export async function createClassWithPricing(
+  _prevState: CreateClassState,
+  formData: FormData,
+): Promise<CreateClassState> {
+  const fields = parseClassFields(formData);
+  const validationError = validateClassFields(fields);
+
+  if (validationError) {
+    return validationError;
+  }
+
+  const single = parseDollarsToCents(formData.get("singlePrice"), {
+    fieldLabel: "Single class price",
+  });
+  if (!single.ok) {
+    return { error: single.error };
+  }
+
+  const isTrial = fields.lessonType === "trial";
+  let package20Cents: number | null = null;
+  let package50Cents: number | null = null;
+
+  if (!isTrial) {
+    const package20Raw = formData.get("package20Price")?.toString().trim() ?? "";
+    const package50Raw = formData.get("package50Price")?.toString().trim() ?? "";
+
+    if (package20Raw) {
+      const package20 = parseDollarsToCents(package20Raw, {
+        fieldLabel: "20-class package price",
+      });
+      if (!package20.ok) {
+        return { error: package20.error };
+      }
+      package20Cents = package20.cents;
+    }
+
+    if (package50Raw) {
+      const package50 = parseDollarsToCents(package50Raw, {
+        fieldLabel: "50-class package price",
+      });
+      if (!package50.ok) {
+        return { error: package50.error };
+      }
+      package50Cents = package50.cents;
+    }
+
+    if ((package20Cents == null) !== (package50Cents == null)) {
+      return {
+        error: "Provide both package prices, or leave both empty.",
+      };
+    }
+  }
+
+  const staff = await requireStaff();
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const locationId = await getActiveCampusLocationId(
+    client.supabase,
+    staff,
+  );
+  if (!locationId) {
+    return { error: "Campus location could not be resolved." };
+  }
+
+  const { error: classError } = await client.supabase.from("classes").insert({
+    subject: fields.subject!,
+    teacher_id: fields.teacherId,
+    room_id: fields.roomId,
+    duration_minutes: fields.durationMinutes,
+    lesson_type: fields.lessonType as LessonType,
+    class_track: fields.classTrack as ClassTrack,
+    location_id: locationId,
+    single_price_cents: single.cents,
+    package_20_price_cents: isTrial ? null : package20Cents,
+    package_50_price_cents: isTrial ? null : package50Cents,
+  });
+
+  if (classError) {
+    return { error: classError.message };
+  }
+
+  revalidatePath("/classes");
+  revalidatePath("/tutors", "layout");
+  revalidatePath("/tuitions");
+  return { success: true };
+}
+
+export async function updateClassSubject(
+  _prevState: UpdateClassState,
+  formData: FormData,
+): Promise<UpdateClassState> {
+  const classId = Number(formData.get("classId"));
+  const subject = formData.get("subject")?.toString().trim();
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  if (!subject) {
+    return { error: "Course name is required." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error: classError } = await client.supabase
+    .from("classes")
+    .update({ subject })
+    .eq("id", classId);
+
+  if (classError) {
+    return { error: classError.message };
+  }
+
+  revalidateClass(classId);
+  revalidatePath("/tuitions");
   return { success: true };
 }
 
@@ -247,6 +373,11 @@ function parseClassScheduleFields(formData: FormData) {
   const scheduleDate = parseScheduleDate(formData.get("scheduleDate"));
   const scheduleStartTime = parseScheduleTime(formData.get("scheduleStartTime"));
   const scheduleEndTime = parseScheduleTime(formData.get("scheduleEndTime"));
+  const studentIdRaw = formData.get("studentId");
+  const studentId =
+    studentIdRaw === null || studentIdRaw.toString().trim() === ""
+      ? null
+      : parseOptionalId(studentIdRaw);
 
   return {
     isRecurring,
@@ -254,6 +385,7 @@ function parseClassScheduleFields(formData: FormData) {
     scheduleDate,
     scheduleStartTime,
     scheduleEndTime,
+    studentId,
   };
 }
 
@@ -261,6 +393,10 @@ function validateClassScheduleFields(
   fields: ReturnType<typeof parseClassScheduleFields>,
   durationMinutes: number | null,
 ) {
+  if (fields.studentId === undefined) {
+    return { error: "Invalid student." };
+  }
+
   if (fields.scheduleDayOfWeek === undefined) {
     return { error: "Invalid day of week." };
   }
@@ -373,6 +509,23 @@ async function saveClassSchedule(
     return validationError;
   }
 
+  if (typeof fields.studentId === "number") {
+    const { data: enrollment, error: enrollmentError } = await client.supabase
+      .from("enrollments")
+      .select("id")
+      .eq("class id", classId)
+      .eq("student id", fields.studentId)
+      .maybeSingle();
+
+    if (enrollmentError) {
+      return { error: enrollmentError.message };
+    }
+
+    if (!enrollment) {
+      return { error: "Student is not enrolled in this class." };
+    }
+  }
+
   const scheduleEndTime = resolveScheduleEndTime(
     fields,
     classRow.duration_minutes,
@@ -388,6 +541,7 @@ async function saveClassSchedule(
     schedule_date: fields.isRecurring ? null : fields.scheduleDate,
     schedule_start_time: fields.scheduleStartTime!,
     schedule_end_time: scheduleEndTime,
+    student_id: fields.studentId,
   };
 
   if (scheduleId === null) {

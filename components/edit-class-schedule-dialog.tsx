@@ -15,6 +15,7 @@ import {
   type UpdateClassScheduleState,
 } from "@/app/(dashboard)/classes/actions";
 import { useLanguage } from "@/components/language-provider";
+import type { StudentOption } from "@/components/student-combobox";
 import {
   addMinutesToTimeInput,
   type ClassScheduleFields,
@@ -24,13 +25,15 @@ import {
   toDateInputValue,
   toTimeInputValue,
 } from "@/lib/class-schedule";
+import { formatStudentName, sortStudents } from "@/lib/person-name";
 
-const emptySchedule: ClassScheduleFields = {
+const emptySchedule: ClassScheduleFields & { student_id?: number | null } = {
   is_recurring: true,
   schedule_day_of_week: null,
   schedule_date: null,
   schedule_start_time: null,
   schedule_end_time: null,
+  student_id: null,
 };
 
 const inputClassName =
@@ -50,12 +53,14 @@ export function ClassScheduleDialog({
   classId,
   schedule,
   durationMinutes,
+  enrolledStudents = [],
   triggerLabel,
   triggerVariant = "primary",
 }: {
   classId: number;
   schedule?: ClassScheduleRow;
   durationMinutes: number | null;
+  enrolledStudents?: StudentOption[];
   triggerLabel?: string;
   triggerVariant?: "primary" | "text";
 }) {
@@ -67,12 +72,16 @@ export function ClassScheduleDialog({
     Number.isInteger(durationMinutes) &&
     durationMinutes > 0;
   const initialStartTime = toTimeInputValue(scheduleValues.schedule_start_time);
+  const sortedStudents = sortStudents(enrolledStudents);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRecurring, setIsRecurring] = useState(scheduleValues.is_recurring);
   const [startTime, setStartTime] = useState(initialStartTime);
   const [endTime, setEndTime] = useState(
     toTimeInputValue(scheduleValues.schedule_end_time),
+  );
+  const [studentId, setStudentId] = useState(
+    scheduleValues.student_id?.toString() ?? "",
   );
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
@@ -94,6 +103,7 @@ export function ClassScheduleDialog({
     setIsRecurring(scheduleValues.is_recurring);
     setStartTime(initialStartTime);
     setEndTime(toTimeInputValue(scheduleValues.schedule_end_time));
+    setStudentId(scheduleValues.student_id?.toString() ?? "");
   }
 
   function openDialog() {
@@ -172,7 +182,7 @@ export function ClassScheduleDialog({
               </p>
 
               <form
-                key={`${classId}-${schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${durationMinutes}`}
+                key={`${classId}-${schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${scheduleValues.student_id ?? ""}-${durationMinutes}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
@@ -227,6 +237,36 @@ export function ClassScheduleDialog({
                     </label>
                   </div>
                 </fieldset>
+
+                {sortedStudents.length > 0 ? (
+                  <div>
+                    <label htmlFor="scheduleStudentId" className={labelClassName}>
+                      {t("common.scheduleStudentOptional")}
+                    </label>
+                    <div className="relative mt-2">
+                      <select
+                        id="scheduleStudentId"
+                        name="studentId"
+                        value={studentId}
+                        onChange={(event) => setStudentId(event.target.value)}
+                        className={selectClassName}
+                      >
+                        <option value="">{t("common.unassigned")}</option>
+                        {sortedStudents.map((student) => (
+                          <option key={student.id} value={student.id}>
+                            {formatStudentName(student)}
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDownIcon
+                        aria-hidden="true"
+                        className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <input type="hidden" name="studentId" value="" />
+                )}
 
                 {isRecurring ? (
                   <div>

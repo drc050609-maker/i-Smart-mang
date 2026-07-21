@@ -35,6 +35,9 @@ export type TranslationKey =
   | "settings.savingLanguage"
   | "common.openSidebar"
   | "common.closeSidebar"
+  | "common.hideSidebar"
+  | "common.showSidebar"
+  | "common.resizeSidebar"
   | "common.notAvailable"
   | "common.active"
   | "common.inactive"
@@ -67,7 +70,9 @@ export type TranslationKey =
   | "common.student"
   | "common.class"
   | "common.date"
+  | "common.day"
   | "common.time"
+  | "common.scheduleStudentOptional"
   | "common.amount"
   | "common.plan"
   | "common.total"
@@ -116,6 +121,31 @@ export type TranslationKey =
   | "common.editStatementAmount"
   | "common.editRecurringAmount"
   | "common.editPricing"
+  | "common.changePricing"
+  | "common.deletePricing"
+  | "common.deletePricingConfirm"
+  | "common.deletePricingFieldConfirm"
+  | "common.clearedClassPricing"
+  | "common.noLinkedClass"
+  | "common.editGrade"
+  | "common.editGradeLevel"
+  | "common.gradeLevel"
+  | "common.noGradeLevel"
+  | "common.customGradeLevel"
+  | "common.gradeLevelHelp"
+  | "common.artMaterialFeeNote"
+  | "common.monthlyRateOnly"
+  | "common.specialPacks"
+  | "common.specialPacksSubtitle"
+  | "common.addSpecialPack"
+  | "common.noSpecialPacks"
+  | "common.specialPackPriceHelp"
+  | "common.promoActiveNow"
+  | "common.promoScheduled"
+  | "common.promoBadge"
+  | "common.dates"
+  | "common.startDate"
+  | "common.endDate"
   | "common.originalAmount"
   | "common.currentAmount"
   | "common.newAmount"
@@ -179,6 +209,9 @@ export type TranslationKey =
   | "common.activate"
   | "common.deactivate"
   | "common.cannotDeactivateSelf"
+  | "common.deleteAccount"
+  | "common.deleteAccountConfirm"
+  | "common.cannotDeleteSelf"
   | "common.street"
   | "common.city"
   | "common.state"
@@ -221,6 +254,12 @@ export type TranslationKey =
   | "common.allTeachers"
   | "common.previousWeek"
   | "common.nextWeek"
+  | "common.previousDay"
+  | "common.nextDay"
+  | "common.weekView"
+  | "common.dayView"
+  | "common.hideTeacherFilters"
+  | "common.showTeacherFilters"
   | "common.clearFilter"
   | "common.showingClassesFor"
   | "common.noScheduledClasses"
@@ -301,6 +340,11 @@ export type TranslationKey =
   | "common.addNewStudents"
   | "common.addNewTutor"
   | "common.addNewClass"
+  | "common.addCourse"
+  | "common.addCourseHelp"
+  | "common.courseName"
+  | "common.courseNamePlaceholder"
+  | "common.renameCourse"
   | "common.saveStudent"
   | "common.saveTutor"
   | "common.saveClass"
@@ -364,10 +408,37 @@ export type TranslationKey =
   | "common.comingUpToday"
   | "common.classesStillScheduled"
   | "common.noMoreClassesToday"
+  | "common.lowCreditsTitle"
+  | "common.lowCreditsSubtitle"
+  | "common.lowCreditsEmpty"
+  | "common.creditsRemainingCount"
   | "common.allTracks"
   | "common.classTracks"
   | "common.noClassesInTrack"
   | "common.tuitionsSubtitle"
+  | "sheet.officialTitle"
+  | "sheet.officialSubtitle"
+  | "sheet.piano1v1"
+  | "sheet.violin1v1"
+  | "sheet.level1v1Hint"
+  | "sheet.smartPianoGroup"
+  | "sheet.otherInstrument1v1"
+  | "sheet.ensembleGroup"
+  | "sheet.specialtyGroup"
+  | "sheet.art"
+  | "sheet.dance"
+  | "sheet.band"
+  | "sheet.specialEducation"
+  | "sheet.grade.g0_2"
+  | "sheet.grade.g3_4"
+  | "sheet.grade.g5_6"
+  | "sheet.grade.g7_8"
+  | "sheet.grade.performance"
+  | "sheet.perMonth"
+  | "sheet.materialFeeAdd"
+  | "sheet.bandMonthlyNote"
+  | "sheet.otherClasses"
+  | "sheet.otherClassesSubtitle"
   | "common.paymentsSubtitle"
   | "common.purchasesSubtitle"
   | "common.statementsSubtitle"
@@ -377,6 +448,11 @@ export type TranslationKey =
   | "common.attendanceFooter"
   | "common.rescheduleThisOccurrence"
   | "common.rescheduleAllFuture"
+  | "common.originalTime"
+  | "common.newTime"
+  | "common.originalDuration"
+  | "common.newDuration"
+  | "common.changeDuration"
   | "common.updateClassTime"
   | "common.searchClassesPrices"
   | "common.packageOff"
@@ -649,7 +725,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.students": "Students",
     "nav.leads": "Leads",
     "nav.classes": "Classes",
-    "nav.tutors": "Tutors",
+    "nav.tutors": "Teachers",
     "nav.tuitions": "Tuitions",
     "nav.payments": "Payments",
     "nav.purchases": "Books & Purchases",
@@ -676,6 +752,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "settings.savingLanguage": "Saving…",
     "common.openSidebar": "Open sidebar",
     "common.closeSidebar": "Close sidebar",
+    "common.hideSidebar": "Hide sidebar",
+    "common.showSidebar": "Show sidebar",
+    "common.resizeSidebar": "Resize sidebar",
     "common.notAvailable": "—",
     "common.active": "Active",
     "common.inactive": "Inactive",
@@ -708,7 +787,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.student": "Student",
     "common.class": "Class",
     "common.date": "Date",
+    "common.day": "Day",
     "common.time": "Time",
+    "common.scheduleStudentOptional": "Student (optional)",
     "common.amount": "Amount",
     "common.plan": "Plan",
     "common.total": "Total",
@@ -757,6 +838,37 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editStatementAmount": "Edit statement amount",
     "common.editRecurringAmount": "Edit recurring amount",
     "common.editPricing": "Edit pricing",
+    "common.changePricing": "Change price",
+    "common.deletePricing": "Delete price",
+    "common.deletePricingConfirm":
+      "Clear this class’s custom prices? It will fall back to calculated rates.",
+    "common.deletePricingFieldConfirm":
+      "Clear {field}? It will fall back to the calculated rate.",
+    "common.clearedClassPricing": "Cleared class pricing",
+    "common.noLinkedClass": "No linked class",
+    "common.editGrade": "Edit grade",
+    "common.editGradeLevel": "Edit grade level",
+    "common.gradeLevel": "Grade level",
+    "common.noGradeLevel": "No grade",
+    "common.customGradeLevel": "Custom grade",
+    "common.gradeLevelHelp":
+      "Shown as Subject (G5). Choose a preset or enter a custom level.",
+    "common.artMaterialFeeNote":
+      "Material fee: +${pack20} (20-pack) / +${pack50} (50-pack)",
+    "common.monthlyRateOnly": "Monthly rate (no lesson packs)",
+    "common.specialPacks": "Special packs",
+    "common.specialPacksSubtitle":
+      "Limited-time promotional prices with a start and end date.",
+    "common.addSpecialPack": "Add special pack",
+    "common.noSpecialPacks": "No special packs yet.",
+    "common.specialPackPriceHelp":
+      "Leave unused price fields blank. At least one price is required.",
+    "common.promoActiveNow": "Active now",
+    "common.promoScheduled": "Scheduled",
+    "common.promoBadge": "Promo: {name}",
+    "common.dates": "Dates",
+    "common.startDate": "Start date",
+    "common.endDate": "End date",
     "common.originalAmount": "Original amount",
     "common.currentAmount": "Current amount",
     "common.newAmount": "New amount",
@@ -788,7 +900,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noDataYet": "No data yet.",
     "common.searchStudents": "Search students…",
     "common.searchStudentsByName": "Search students by name",
-    "common.searchTutorsByName": "Search tutors by name",
+    "common.searchTutorsByName": "Search teachers by name",
     "common.searchClasses": "Search classes…",
     "common.searchStaff": "Search by name, email, or role",
     "common.searchTeachers": "Search or select a teacher",
@@ -797,8 +909,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectClass": "Select a class",
     "common.noStudentsYet": "No students yet.",
     "common.noStudentsFound": "No students found.",
-    "common.noTutorsYet": "No tutors yet.",
-    "common.noTutorsFound": "No tutors found.",
+    "common.noTutorsYet": "No teachers yet.",
+    "common.noTutorsFound": "No teachers found.",
     "common.noClassesYet": "No classes yet.",
     "common.noClassesFound": "No classes found.",
     "common.noClassesAvailable": "No classes available.",
@@ -824,7 +936,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.packageCountPack": "{count}-pack",
     "common.backToStudents": "← Back to students",
     "common.backToClasses": "← Back to classes",
-    "common.backToTutors": "← Back to tutors",
+    "common.backToTutors": "← Back to teachers",
     "common.backToStatements": "← All statements",
     "common.redNamesNoCredits": "Red names have no class credits remaining",
     "common.lessonType": "Lesson type",
@@ -832,6 +944,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.activate": "Activate",
     "common.deactivate": "Deactivate",
     "common.cannotDeactivateSelf": "You cannot deactivate your own account.",
+    "common.deleteAccount": "Delete",
+    "common.deleteAccountConfirm":
+      "This permanently deletes {email} and frees the email so you can create a new account with it.",
+    "common.cannotDeleteSelf": "You cannot delete your own account.",
     "common.street": "Street",
     "common.city": "City",
     "common.state": "State",
@@ -850,10 +966,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noIncome": "No income recorded for this month yet.",
     "common.noExpenses": "No expenses recorded for this month yet.",
     "common.noFixedExpenses": "No fixed expenses this month. Recurring items like rent appear here.",
-    "common.noVariableExpenses": "No variable expenses this month. Tutor paychecks and one-off costs appear here.",
+    "common.noVariableExpenses": "No variable expenses this month. Teacher paychecks and one-off costs appear here.",
     "common.fromPayment": "From payment",
     "common.fromPurchase": "From purchase",
-    "common.fromPaycheck": "Tutor paycheck",
+    "common.fromPaycheck": "Teacher paycheck",
     "common.fromRecurring": "Recurring",
     "common.addIncome": "Add income",
     "common.addExpense": "Add expense",
@@ -874,6 +990,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.allTeachers": "All teachers",
     "common.previousWeek": "Previous week",
     "common.nextWeek": "Next week",
+    "common.previousDay": "Previous day",
+    "common.nextDay": "Next day",
+    "common.weekView": "Week",
+    "common.dayView": "Day",
+    "common.hideTeacherFilters": "Hide teachers",
+    "common.showTeacherFilters": "Show teachers",
     "common.clearFilter": "Clear filter",
     "common.showingClassesFor": "Showing classes for {name}",
     "common.noScheduledClasses": "No scheduled classes found.",
@@ -952,10 +1074,16 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.recorded": "Recorded ·",
     "common.addNewStudent": "Add new student",
     "common.addNewStudents": "Add new students",
-    "common.addNewTutor": "Add new tutor",
+    "common.addNewTutor": "Add new teacher",
     "common.addNewClass": "Add new class",
+    "common.addCourse": "Add course",
+    "common.addCourseHelp":
+      "Create a course with its name, duration, type, and prices.",
+    "common.courseName": "Course name",
+    "common.courseNamePlaceholder": "e.g. Guitar",
+    "common.renameCourse": "Rename course",
     "common.saveStudent": "Save student",
-    "common.saveTutor": "Save tutor",
+    "common.saveTutor": "Save teacher",
     "common.saveClass": "Save class",
     "common.saveClasses": "Save classes",
     "common.saveAddress": "Save address",
@@ -973,7 +1101,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteAddressConfirm": "This will permanently delete this address.",
     "common.editDateOfBirth": "Edit date of birth",
     "common.editClass": "Edit class",
-    "common.editTutor": "Edit tutor",
+    "common.editTutor": "Edit teacher",
     "common.editAddress": "Edit address",
     "common.addAddress": "Add address",
     "common.assignClasses": "Assign classes",
@@ -991,7 +1119,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notEnrolled": "Not enrolled in any classes.",
     "common.totalClassesTaken": "Total classes taken",
     "common.studentId": "Student ID",
-    "common.tutorId": "Tutor ID",
+    "common.tutorId": "Teacher ID",
     "common.classId": "Class ID",
     "common.classes": "Classes",
     "common.enrollToTrack": "Enroll this student in classes to track prepaid sessions.",
@@ -1004,7 +1132,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.sessionsOnDate": "Sessions on {date}",
     "common.purchases": "Purchases",
     "common.deleteClassSchedule": "Delete",
-    "common.scheduleHelp": "A class can meet multiple times per week. Add each meeting time separately.",
+    "common.scheduleHelp": "Pair each meeting time with a student when possible. A class can meet multiple times per week.",
     "common.noMeetingTimes": "No meeting times set yet.",
     "common.activeEnrollment": "Active enrollment",
     "common.inactiveEnrollment": "Inactive enrollment",
@@ -1017,10 +1145,40 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.comingUpToday": "Coming up today",
     "common.classesStillScheduled": "Classes still on the calendar today",
     "common.noMoreClassesToday": "No more classes scheduled for today.",
+    "common.lowCreditsTitle": "Low class credits",
+    "common.lowCreditsSubtitle": "Students with 0 or 1 credit left across their classes",
+    "common.lowCreditsEmpty": "No students are down to 0 or 1 credit.",
+    "common.creditsRemainingCount": "{count} left",
     "common.allTracks": "All tracks",
     "common.classTracks": "Class tracks",
     "common.noClassesInTrack": "No {status} classes in this track.",
-    "common.tuitionsSubtitle": "Per-class rates and prepaid packages for private and group lessons.",
+    "common.tuitionsSubtitle": "Official price sheet: per-class rates, prepaid packages, and dated special packs.",
+    "sheet.officialTitle": "iSmart Music Center — unit price list",
+    "sheet.officialSubtitle":
+      "Prices follow the official chart. Piano and Violin 1V1 use duration and grade level to show the matching rate.",
+    "sheet.piano1v1": "Piano 1V1",
+    "sheet.violin1v1": "Violin 1V1",
+    "sheet.level1v1Hint":
+      "Choose duration and grade tier (G0–G2 → Levels 0–2, etc.) to see single, 20-pack, and 50-pack prices.",
+    "sheet.smartPianoGroup": "Smart Piano / Acoustic Piano / Violin group — 60 min",
+    "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Zither / Cello 1V1",
+    "sheet.ensembleGroup": "Ensemble group lessons (Piano / Violin / Guitar / Drum / Zither / Vocal) — 60 min",
+    "sheet.specialtyGroup": "Sing & Play / Model / Music Theory / Vocal small group — 60 min",
+    "sheet.art": "Art",
+    "sheet.dance": "Jazz & Chinese dance / Hip Hop — 90 min",
+    "sheet.band": "Band — 90 min",
+    "sheet.specialEducation": "1-to-1 Special Education — 60 min",
+    "sheet.grade.g0_2": "Levels 0–2",
+    "sheet.grade.g3_4": "Levels 3–4",
+    "sheet.grade.g5_6": "Levels 5–6",
+    "sheet.grade.g7_8": "Levels 7–8",
+    "sheet.grade.performance": "Performance",
+    "sheet.perMonth": "/ month",
+    "sheet.materialFeeAdd": "+${amount} materials",
+    "sheet.bandMonthlyNote": "$40/month (4 lessons); no 20/50 packs.",
+    "sheet.otherClasses": "Other classes",
+    "sheet.otherClassesSubtitle":
+      "Classes not listed on the official sheet. Pricing here still drives payments and edits.",
     "common.paymentsSubtitle": "Record class payments. Completed payments appear in Statements automatically.",
     "common.purchasesSubtitle": "Books, materials, and other student purchases.",
     "common.statementsSubtitle": "Monthly income and expense summaries.",
@@ -1030,6 +1188,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.attendanceFooter": "Use the student profile to grant make-up credits for excused absences.",
     "common.rescheduleThisOccurrence": "This occurrence only",
     "common.rescheduleAllFuture": "All future occurrences",
+    "common.originalTime": "Original time",
+    "common.newTime": "New time",
+    "common.originalDuration": "Original duration",
+    "common.newDuration": "New duration",
+    "common.changeDuration": "Change duration",
     "common.updateClassTime": "Update class time",
     "common.searchClassesPrices": "Search classes, teachers, or prices…",
     "common.packageOff": "{count}-class package, {rate}% off — private & group only",
@@ -1064,11 +1227,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.refundAction": "Refund",
     "common.grantAction": "Grant",
     "common.makeUpAction": "Make-up",
-    "common.searchClassesFull": "Search classes by subject, track, tutor, room, or type",
+    "common.searchClassesFull": "Search classes by subject, track, teacher, room, or type",
     "common.searchAndSelectClasses": "Search and select classes",
     "common.searchAndSelectStudents": "Search and select students",
-    "common.addNewTutorInline": "Add new tutor",
-    "common.noTutorsAddFirst": "No tutors yet. Add one first.",
+    "common.addNewTutorInline": "Add new teacher",
+    "common.noTutorsAddFirst": "No teachers yet. Add one first.",
     "common.noRoomsAvailable": "No rooms available.",
     "common.placeholderSubject": "e.g. Piano, Voice, Ballet",
     "common.placeholderDescription": "Description",
@@ -1285,12 +1448,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.whatPayingFor": "What they are paying for",
     "common.item": "Item",
     "common.assignClassesForPaycheck":
-      "Assign classes to this tutor before calculating a paycheck.",
+      "Assign classes to this teacher before calculating a paycheck.",
     "common.classesThisPeriod": "{count} classes this period",
     "common.recordedAt": "Recorded {date}",
     "common.recordedAsExpenseFor": "Recorded as an expense for {month}.",
     "common.paycheckRatesHelp":
-      "Class counts are based on sessions used or marked absent. Pay rates are saved per class and carry over to other months until you change them.",
+      "Sessions are grouped by subject and grade level (e.g. Violin Levels 0–2). Counts use sessions marked used or absent. Rates are saved per subject+level and carry over until you change them.",
     "common.subtotal": "Subtotal",
     "common.confirmPaycheckReview":
       "Review the full class list for {month} before recording this expense.",
@@ -1337,7 +1500,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.students": "学生",
     "nav.leads": "潜在客户",
     "nav.classes": "课程",
-    "nav.tutors": "导师",
+    "nav.tutors": "老师",
     "nav.tuitions": "学费",
     "nav.payments": "付款",
     "nav.purchases": "书籍与购买",
@@ -1362,6 +1525,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "settings.savingLanguage": "保存中…",
     "common.openSidebar": "打开侧边栏",
     "common.closeSidebar": "关闭侧边栏",
+    "common.hideSidebar": "隐藏侧边栏",
+    "common.showSidebar": "显示侧边栏",
+    "common.resizeSidebar": "调整侧边栏宽度",
     "common.notAvailable": "—",
     "common.active": "活跃",
     "common.inactive": "非活跃",
@@ -1384,7 +1550,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "编号",
     "common.email": "邮箱",
     "common.phone": "电话",
-    "common.teacher": "导师",
+    "common.teacher": "老师",
     "common.room": "教室",
     "common.subject": "科目",
     "common.track": "类别",
@@ -1394,7 +1560,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.student": "学生",
     "common.class": "课程",
     "common.date": "日期",
+    "common.day": "星期",
     "common.time": "时间",
+    "common.scheduleStudentOptional": "学生（可选）",
     "common.amount": "金额",
     "common.plan": "方案",
     "common.total": "总计",
@@ -1424,7 +1592,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.hours": "{count}小时",
     "common.minutes": "{count}分钟",
     "common.capacity": "（容量 {count}）",
-    "common.noTeacherAssigned": "未分配导师",
+    "common.noTeacherAssigned": "未分配老师",
     "common.inSession": "进行中",
     "common.noStudentsEnrolled": "暂无学生报名",
     "common.enrolled": "已报名 {count} 人",
@@ -1443,6 +1611,36 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editStatementAmount": "编辑报表金额",
     "common.editRecurringAmount": "编辑经常性金额",
     "common.editPricing": "编辑定价",
+    "common.changePricing": "修改价格",
+    "common.deletePricing": "删除价格",
+    "common.deletePricingConfirm":
+      "确定清除此课程的自定义价格？将恢复为系统计算价格。",
+    "common.deletePricingFieldConfirm":
+      "确定清除{field}？将恢复为系统计算价格。",
+    "common.clearedClassPricing": "已清除课程定价",
+    "common.noLinkedClass": "无关联课程",
+    "common.editGrade": "编辑级别",
+    "common.editGradeLevel": "编辑年级/级别",
+    "common.gradeLevel": "级别",
+    "common.noGradeLevel": "无级别",
+    "common.customGradeLevel": "自定义级别",
+    "common.gradeLevelHelp":
+      "显示为 科目 (G5)。可选择预设或输入自定义级别。",
+    "common.artMaterialFeeNote":
+      "材料费：+${pack20}（20节）/ +${pack50}（50节）",
+    "common.monthlyRateOnly": "月费（无课时套餐）",
+    "common.specialPacks": "特价套餐",
+    "common.specialPacksSubtitle": "带开始和结束日期的限时促销价格。",
+    "common.addSpecialPack": "添加特价套餐",
+    "common.noSpecialPacks": "暂无特价套餐。",
+    "common.specialPackPriceHelp":
+      "未使用的价格可留空，至少填写一项价格。",
+    "common.promoActiveNow": "进行中",
+    "common.promoScheduled": "已安排",
+    "common.promoBadge": "促销：{name}",
+    "common.dates": "日期",
+    "common.startDate": "开始日期",
+    "common.endDate": "结束日期",
     "common.originalAmount": "原始金额",
     "common.currentAmount": "当前金额",
     "common.newAmount": "新金额",
@@ -1474,17 +1672,17 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noDataYet": "暂无数据。",
     "common.searchStudents": "搜索学生…",
     "common.searchStudentsByName": "按姓名搜索学生",
-    "common.searchTutorsByName": "按姓名搜索导师",
+    "common.searchTutorsByName": "按姓名搜索老师",
     "common.searchClasses": "搜索课程…",
     "common.searchStaff": "按姓名、邮箱或角色搜索",
-    "common.searchTeachers": "搜索或选择导师",
+    "common.searchTeachers": "搜索或选择老师",
     "common.selectStudent": "选择学生",
-    "common.selectTeacher": "选择导师",
+    "common.selectTeacher": "选择老师",
     "common.selectClass": "选择课程",
     "common.noStudentsYet": "暂无学生。",
     "common.noStudentsFound": "未找到学生。",
-    "common.noTutorsYet": "暂无导师。",
-    "common.noTutorsFound": "未找到导师。",
+    "common.noTutorsYet": "暂无老师。",
+    "common.noTutorsFound": "未找到老师。",
     "common.noClassesYet": "暂无课程。",
     "common.noClassesFound": "未找到课程。",
     "common.noClassesAvailable": "暂无可用课程。",
@@ -1509,7 +1707,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.packageCountPack": "{count}节课套餐",
     "common.backToStudents": "← 返回学生列表",
     "common.backToClasses": "← 返回课程列表",
-    "common.backToTutors": "← 返回导师列表",
+    "common.backToTutors": "← 返回老师列表",
     "common.backToStatements": "← 全部财务报表",
     "common.redNamesNoCredits": "红色姓名表示课时已用完",
     "common.lessonType": "课程类型",
@@ -1517,6 +1715,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.activate": "激活",
     "common.deactivate": "停用",
     "common.cannotDeactivateSelf": "您不能停用自己的账户。",
+    "common.deleteAccount": "删除",
+    "common.deleteAccountConfirm":
+      "这将永久删除 {email}，并释放该邮箱以便重新创建账户。",
+    "common.cannotDeleteSelf": "您不能删除自己的账户。",
     "common.street": "街道",
     "common.city": "城市",
     "common.state": "州",
@@ -1535,10 +1737,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noIncome": "本月暂无收入记录。",
     "common.noExpenses": "本月暂无支出记录。",
     "common.noFixedExpenses": "本月暂无固定支出。租金等定期项目会显示在这里。",
-    "common.noVariableExpenses": "本月暂无变动支出。导师工资和一次性费用会显示在这里。",
+    "common.noVariableExpenses": "本月暂无变动支出。老师工资和一次性费用会显示在这里。",
     "common.fromPayment": "来自付款",
     "common.fromPurchase": "来自购买",
-    "common.fromPaycheck": "导师工资",
+    "common.fromPaycheck": "老师工资",
     "common.fromRecurring": "定期",
     "common.addIncome": "添加收入",
     "common.addExpense": "添加支出",
@@ -1556,9 +1758,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noEnrolledStudents": "暂无报名学生",
     "common.selectStudentAbove": "请在上方选择学生以标记考勤。",
     "common.noClassesScheduled": "{name} 在此日期没有安排课程。",
-    "common.allTeachers": "全部导师",
+    "common.allTeachers": "全部老师",
     "common.previousWeek": "上一周",
     "common.nextWeek": "下一周",
+    "common.previousDay": "上一天",
+    "common.nextDay": "下一天",
+    "common.weekView": "周",
+    "common.dayView": "日",
+    "common.hideTeacherFilters": "隐藏老师筛选",
+    "common.showTeacherFilters": "显示老师筛选",
     "common.clearFilter": "清除筛选",
     "common.showingClassesFor": "显示 {name} 的课程",
     "common.noScheduledClasses": "未找到已安排的课程。",
@@ -1586,7 +1794,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.allCreditsFromPayment": "此付款的全部 {count} 课时",
     "common.howManyClasses": "多少节课？",
     "common.selectStudentFirst": "请先选择学生。",
-    "common.selectTeacherFirst": "请先选择导师。",
+    "common.selectTeacherFirst": "请先选择老师。",
     "common.selectClassFirst": "请先选择课程。",
     "common.createEvent": "创建活动",
     "common.postEvent": "发布",
@@ -1637,10 +1845,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.recorded": "已记录 ·",
     "common.addNewStudent": "添加新学生",
     "common.addNewStudents": "添加新学生",
-    "common.addNewTutor": "添加新导师",
+    "common.addNewTutor": "添加新老师",
     "common.addNewClass": "添加新课程",
+    "common.addCourse": "添加课程",
+    "common.addCourseHelp": "创建课程名称、时长、类型和价格。",
+    "common.courseName": "课程名称",
+    "common.courseNamePlaceholder": "例如：吉他",
+    "common.renameCourse": "重命名课程",
     "common.saveStudent": "保存学生",
-    "common.saveTutor": "保存导师",
+    "common.saveTutor": "保存老师",
     "common.saveClass": "保存课程",
     "common.saveClasses": "保存课程",
     "common.saveAddress": "保存地址",
@@ -1658,7 +1871,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteAddressConfirm": "这将永久删除此地址。",
     "common.editDateOfBirth": "编辑出生日期",
     "common.editClass": "编辑课程",
-    "common.editTutor": "编辑导师",
+    "common.editTutor": "编辑老师",
     "common.editAddress": "编辑地址",
     "common.addAddress": "添加地址",
     "common.assignClasses": "分配课程",
@@ -1676,7 +1889,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notEnrolled": "未报名任何课程。",
     "common.totalClassesTaken": "总上课次数",
     "common.studentId": "学生编号",
-    "common.tutorId": "导师编号",
+    "common.tutorId": "老师编号",
     "common.classId": "课程编号",
     "common.classes": "课程",
     "common.enrollToTrack": "为该学生报名课程以跟踪预付费课时。",
@@ -1689,23 +1902,53 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.sessionsOnDate": "{date} 的课程",
     "common.purchases": "购买",
     "common.deleteClassSchedule": "删除",
-    "common.scheduleHelp": "一门课程可以每周上多次。请分别添加每个上课时间。",
+    "common.scheduleHelp": "尽量为每个上课时间关联学生。一门课程可以每周上多次。",
     "common.noMeetingTimes": "暂无上课时间。",
     "common.activeEnrollment": "活跃报名",
     "common.inactiveEnrollment": "非活跃报名",
     "common.toggleActiveStatus": "切换 {name} 的活跃状态",
     "common.quickLinks": "快捷链接",
-    "common.todaysOverview": "今日动态，以及学生、导师和课程的快捷入口。",
+    "common.todaysOverview": "今日动态，以及学生、老师和课程的快捷入口。",
     "common.happeningNow": "正在进行",
     "common.classesInSession": "当前正在进行的课程",
     "common.noClassesMeetingNow": "目前没有正在进行的课程。",
     "common.comingUpToday": "今日即将开始",
     "common.classesStillScheduled": "今天剩余的课程安排",
     "common.noMoreClassesToday": "今天没有更多课程安排。",
+    "common.lowCreditsTitle": "课时不足",
+    "common.lowCreditsSubtitle": "各课程合计剩余 0 或 1 课时的学生",
+    "common.lowCreditsEmpty": "暂无剩余 0 或 1 课时的学生。",
+    "common.creditsRemainingCount": "剩余 {count}",
     "common.allTracks": "全部类别",
     "common.classTracks": "课程类别",
     "common.noClassesInTrack": "此类别暂无{status}课程。",
-    "common.tuitionsSubtitle": "一对一和小组课程的每节课费率和预付费套餐。",
+    "common.tuitionsSubtitle": "官方价目表：单节课费率、预付费套餐，以及限时特价套餐。",
+    "sheet.officialTitle": "iSmart Music center 云乐艺校单价表",
+    "sheet.officialSubtitle":
+      "按官方价目表排序。钢琴 / 小提琴一对一通过时长与级别选择对应价格。",
+    "sheet.piano1v1": "钢琴一对一",
+    "sheet.violin1v1": "小提琴一对一",
+    "sheet.level1v1Hint":
+      "选择时长与级别（G0–G2 对应 0–2 级等），查看单节、20 节、50 节价格。",
+    "sheet.smartPianoGroup": "智能钢琴 / 原声钢琴 / 小提琴小组课 — 60 分钟",
+    "sheet.otherInstrument1v1": "吉他 / 架子鼓 / 声乐 / 古筝 / 大提琴一对一",
+    "sheet.ensembleGroup": "合奏小组课（钢琴 / 小提琴 / 吉他 / 架子鼓 / 古筝 / 声乐）— 60 分钟",
+    "sheet.specialtyGroup": "边弹边唱 / 模特 / 乐理 / 声乐小班 — 60 分钟",
+    "sheet.art": "画画",
+    "sheet.dance": "爵士舞 & 中国舞 / 街舞 — 90 分钟",
+    "sheet.band": "乐队 — 90 分钟",
+    "sheet.specialEducation": "一对一特教 — 60 分钟",
+    "sheet.grade.g0_2": "0–2 级",
+    "sheet.grade.g3_4": "3–4 级",
+    "sheet.grade.g5_6": "5–6 级",
+    "sheet.grade.g7_8": "7–8 级",
+    "sheet.grade.performance": "演奏级",
+    "sheet.perMonth": "/ 月",
+    "sheet.materialFeeAdd": "+${amount} 材料费",
+    "sheet.bandMonthlyNote": "每月 $40（4 节课）；无 20/50 节套餐。",
+    "sheet.otherClasses": "其他课程",
+    "sheet.otherClassesSubtitle":
+      "未列入官方价目表的课程。此处价格仍用于付款与编辑。",
     "common.paymentsSubtitle": "记录课程付款。已完成的付款会自动出现在财务报表中。",
     "common.purchasesSubtitle": "书籍、材料和其他学生购买。",
     "common.statementsSubtitle": "月度收支汇总。",
@@ -1715,8 +1958,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.attendanceFooter": "使用学生档案为请假缺勤授予补课课时。",
     "common.rescheduleThisOccurrence": "仅此次",
     "common.rescheduleAllFuture": "所有未来课程",
+    "common.originalTime": "原时间",
+    "common.newTime": "新时间",
+    "common.originalDuration": "原时长",
+    "common.newDuration": "新时长",
+    "common.changeDuration": "修改时长",
     "common.updateClassTime": "更新上课时间",
-    "common.searchClassesPrices": "搜索课程、导师或价格…",
+    "common.searchClassesPrices": "搜索课程、老师或价格…",
     "common.packageOff": "{count}节课套餐，{rate}% 折扣 — 仅限一对一和小组",
     "common.trialNoPackages": "试课（无套餐）",
     "common.classCount": "{count} 节课",
@@ -1749,11 +1997,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.refundAction": "退款",
     "common.grantAction": "授予",
     "common.makeUpAction": "补课",
-    "common.searchClassesFull": "按科目、类别、导师、教室或类型搜索课程",
+    "common.searchClassesFull": "按科目、类别、老师、教室或类型搜索课程",
     "common.searchAndSelectClasses": "搜索并选择课程",
     "common.searchAndSelectStudents": "搜索并选择学生",
-    "common.addNewTutorInline": "添加新导师",
-    "common.noTutorsAddFirst": "暂无导师，请先添加。",
+    "common.addNewTutorInline": "添加新老师",
+    "common.noTutorsAddFirst": "暂无老师，请先添加。",
     "common.noRoomsAvailable": "暂无可用教室。",
     "common.placeholderSubject": "例如：钢琴、声乐、芭蕾",
     "common.placeholderDescription": "描述",
@@ -1771,7 +2019,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noStudentsEnrolledInClass": "此课程暂无学生报名。",
     "common.classPayments": "课程付款",
     "common.studentPurchases": "学生购买",
-    "common.teacherPaycheck": "导师工资",
+    "common.teacherPaycheck": "老师工资",
     "common.statementMonthIncome": "{month} 的收支。",
     "common.statementMonthExpense": "{month} 的支出明细。",
     "common.allExpenses": "全部支出",
@@ -1941,7 +2189,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.paymentOptionUnavailable": "此课程不支持该付款选项。",
     "common.noActiveClassesFor": "{name} 暂无活跃课程。",
     "common.recordPaymentDialogHelp":
-      "选择学生、导师、课程和付款课时数。收入会自动添加到财务报表。",
+      "选择学生、老师、课程和付款课时数。收入会自动添加到财务报表。",
     "common.confirmPaymentBeforeRecord": "记录前请确认此付款。",
     "common.paidFor": "为",
     "common.addedToStatementsIncome": "这将添加到本月财务报表的收入中。",
@@ -1958,12 +2206,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "书籍、材料等。收入会自动添加到本月财务报表。",
     "common.whatPayingFor": "购买内容",
     "common.item": "物品",
-    "common.assignClassesForPaycheck": "请先为该导师分配课程再计算工资。",
+    "common.assignClassesForPaycheck": "请先为该老师分配课程再计算工资。",
     "common.classesThisPeriod": "本期 {count} 节课",
     "common.recordedAt": "记录于 {date}",
     "common.recordedAsExpenseFor": "已记录为 {month} 的支出。",
     "common.paycheckRatesHelp":
-      "课时数基于已使用或标记缺席的课程。每节课费率会保存并在其他月份沿用，直到您更改。",
+      "课时按科目和级别汇总（例如「小提琴 0–2 级」）。数量基于已使用或标记缺席的课程。费率按科目+级别保存，并在其他月份沿用，直到您更改。",
     "common.subtotal": "小计",
     "common.confirmPaycheckReview":
       "记录前请审核 {month} 的完整课程列表。",
@@ -1971,9 +2219,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "{count} 节课将记录为 {month} 财务报表的支出。",
     "common.statementsAutoMonths":
       "暂无财务报表。记录付款后月份会自动出现。",
-    "common.teachers": "导师",
+    "common.teachers": "老师",
     "common.teacherFilterHelp":
-      "选择一个或多个导师。全部不选则显示所有人。",
+      "选择一个或多个老师。全部不选则显示所有人。",
     "common.clearStudentFilter": "清除学生筛选",
     "common.noScheduleAddOnClass":
       "暂无课程日程。请在课程详情页添加上课时间。",
@@ -2008,12 +2256,15 @@ export function translate(
   key: TranslationKey,
   params?: Record<string, string | number>,
 ) {
-  let text = translations[language][key];
+  const dictionary = translations[language] ?? translations.en;
+  let text = dictionary[key] ?? translations.en[key] ?? String(key);
+
   if (params) {
     for (const [param, value] of Object.entries(params)) {
-      text = text.replace(new RegExp(`\\{${param}\\}`, "g"), String(value));
+      text = text.replaceAll(`{${param}}`, String(value));
     }
   }
+
   return text;
 }
 

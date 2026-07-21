@@ -134,20 +134,24 @@ export function LeadsListTable({ leads }: { leads: LeadProspectRow[] }) {
 
   return (
     <div className="mt-6 space-y-4">
-      <ActiveInactiveTabs
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        activeCount={activeCount}
-        inactiveCount={inactiveCount}
-        entityLabel={t("nav.leads")}
-      />
+      <div className="flex flex-wrap items-end gap-4">
+        <ActiveInactiveTabs
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          activeCount={activeCount}
+          inactiveCount={inactiveCount}
+          entityLabel={t("nav.leads")}
+        />
 
-      <ListSearchInput
-        id="leadsSearch"
-        value={query}
-        onChange={setQuery}
-        placeholder={t("leads.searchPlaceholder")}
-      />
+        <ListSearchInput
+          id="leadsSearch"
+          value={query}
+          onChange={setQuery}
+          placeholder={t("leads.searchPlaceholder")}
+          label={t("common.name")}
+          className="min-w-56 max-w-md flex-1"
+        />
+      </div>
 
       {filteredLeads.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">

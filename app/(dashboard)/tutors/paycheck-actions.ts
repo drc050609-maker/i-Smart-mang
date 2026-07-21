@@ -14,6 +14,8 @@ export type PaycheckActionState = {
 
 type PaycheckLineInput = {
   classId: number;
+  classIds: number[];
+  gradeTier: string;
   sessionCount: number;
   rateCents: number;
 };
@@ -44,13 +46,31 @@ function parsePaycheckLines(formData: FormData): PaycheckLineInput[] | null {
 
     const classId = Number((item as { classId?: unknown }).classId);
     const sessionCount = Number((item as { sessionCount?: unknown }).sessionCount);
+    const gradeTierRaw = (item as { gradeTier?: unknown }).gradeTier;
+    const gradeTier =
+      typeof gradeTierRaw === "string" && gradeTierRaw.trim()
+        ? gradeTierRaw.trim()
+        : "G0-2";
     const rateRaw = (item as { rate?: unknown }).rate;
     const parsedRate = parseDollarsToCents(
       rateRaw == null ? "" : String(rateRaw),
       { allowZero: true, fieldLabel: "Rate" },
     );
 
+    const rawClassIds = (item as { classIds?: unknown }).classIds;
+    const classIds = Array.isArray(rawClassIds)
+      ? rawClassIds
+          .map((id) => Number(id))
+          .filter((id) => Number.isInteger(id) && id > 0)
+      : Number.isInteger(classId) && classId > 0
+        ? [classId]
+        : [];
+
     if (!Number.isInteger(classId) || classId <= 0) {
+      return null;
+    }
+
+    if (classIds.length === 0) {
       return null;
     }
 
@@ -64,6 +84,8 @@ function parsePaycheckLines(formData: FormData): PaycheckLineInput[] | null {
 
     lines.push({
       classId,
+      classIds: classIds.includes(classId) ? classIds : [classId, ...classIds],
+      gradeTier,
       sessionCount,
       rateCents: parsedRate.cents,
     });
@@ -116,14 +138,20 @@ export async function recordTeacherPaycheck(
     return { error: "You must be signed in to record a paycheck." };
   }
 
+  // One aggregated line per subject+level group (representative class id).
+  const recordLines = lines.filter(
+    (line) => line.sessionCount > 0 || line.rateCents > 0,
+  );
+
   const { error } = await supabase.rpc("record_teacher_paycheck", {
     p_teacher_id: teacherId,
     p_year: year,
     p_month: month,
-    p_lines: lines.map((line) => ({
+    p_lines: recordLines.map((line) => ({
       class_id: line.classId,
       session_count: line.sessionCount,
       rate_cents: line.rateCents,
+      grade_tier: line.gradeTier,
     })),
     p_created_by: user.id,
   });
@@ -143,17 +171,23 @@ export async function recordTeacherPaycheck(
   return { success: true };
 }
 
-export async function saveTeacherClassPayRate(
+/** Save the same rate onto every class in a subject+level group. */
+export async function saveTeacherGroupPayRate(
   teacherId: number,
-  classId: number,
+  classIds: number[],
   rate: number,
+  gradeTier = "G0-2",
 ): Promise<PaycheckActionState> {
   if (!Number.isInteger(teacherId) || teacherId <= 0) {
     return { error: "Invalid tutor." };
   }
 
-  if (!Number.isInteger(classId) || classId <= 0) {
-    return { error: "Invalid class." };
+  const uniqueClassIds = [...new Set(classIds)].filter(
+    (id) => Number.isInteger(id) && id > 0,
+  );
+
+  if (uniqueClassIds.length === 0) {
+    return { error: "Invalid class group." };
   }
 
   if (!Number.isFinite(rate) || rate < 0) {
@@ -179,44 +213,64 @@ export async function saveTeacherClassPayRate(
   }
 
   const rateCents = parsedRate.cents;
+  const tier = gradeTier.trim() || "G0-2";
+  let sawSchemaCacheError = false;
 
-  const { error: rpcError } = await supabase.rpc("upsert_teacher_class_pay_rate", {
-    p_teacher_id: teacherId,
-    p_class_id: classId,
-    p_rate_cents: rateCents,
-    p_updated_by: user.id,
-  });
+  for (const classId of uniqueClassIds) {
+    const { error: rpcError } = await supabase.rpc("upsert_teacher_class_pay_rate", {
+      p_teacher_id: teacherId,
+      p_class_id: classId,
+      p_rate_cents: rateCents,
+      p_updated_by: user.id,
+      p_grade_tier: tier,
+    });
 
-  if (!rpcError) {
-    return { success: true };
-  }
-
-  const { error } = await supabase.from("teacher_class_pay_rates").upsert(
-    {
-      teacher_id: teacherId,
-      class_id: classId,
-      rate_cents: rateCents,
-      updated_by: user.id,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "teacher_id,class_id" },
-  );
-
-  if (error) {
-    if (
-      rpcError.message.includes("schema cache") ||
-      error.message.includes("schema cache")
-    ) {
-      return {
-        error:
-          "Pay rates are syncing — your rate will be saved when you record the paycheck.",
-      };
+    if (!rpcError) {
+      continue;
     }
 
-    return { error: error.message };
+    const { error } = await supabase.from("teacher_class_pay_rates").upsert(
+      {
+        teacher_id: teacherId,
+        class_id: classId,
+        grade_tier: tier,
+        rate_cents: rateCents,
+        updated_by: user.id,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "teacher_id,class_id,grade_tier" },
+    );
+
+    if (error) {
+      if (
+        rpcError.message.includes("schema cache") ||
+        error.message.includes("schema cache")
+      ) {
+        sawSchemaCacheError = true;
+        continue;
+      }
+
+      return { error: error.message };
+    }
+  }
+
+  if (sawSchemaCacheError) {
+    return {
+      error:
+        "Pay rates are syncing — your rate will be saved when you record the paycheck.",
+    };
   }
 
   return { success: true };
+}
+
+/** @deprecated Prefer saveTeacherGroupPayRate for subject+level groups. */
+export async function saveTeacherClassPayRate(
+  teacherId: number,
+  classId: number,
+  rate: number,
+): Promise<PaycheckActionState> {
+  return saveTeacherGroupPayRate(teacherId, [classId], rate);
 }
 
 async function persistPaycheckLineRates(
@@ -231,13 +285,34 @@ async function persistPaycheckLineRates(
     return;
   }
 
+  const classRatePairs: Array<{
+    classId: number;
+    gradeTier: string;
+    rateCents: number;
+  }> = [];
+  const seen = new Set<string>();
+
+  for (const line of rateLines) {
+    for (const classId of line.classIds) {
+      const key = `${classId}|${line.gradeTier}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      classRatePairs.push({
+        classId,
+        gradeTier: line.gradeTier,
+        rateCents: line.rateCents,
+      });
+    }
+  }
+
   await Promise.all(
-    rateLines.map((line) =>
+    classRatePairs.map((pair) =>
       supabase.rpc("upsert_teacher_class_pay_rate", {
         p_teacher_id: teacherId,
-        p_class_id: line.classId,
-        p_rate_cents: line.rateCents,
+        p_class_id: pair.classId,
+        p_rate_cents: pair.rateCents,
         p_updated_by: userId,
+        p_grade_tier: pair.gradeTier,
       }),
     ),
   );

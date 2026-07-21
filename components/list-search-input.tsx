@@ -10,27 +10,41 @@ export function ListSearchInput({
   value,
   onChange,
   placeholder,
+  className,
+  label,
 }: {
   id: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
+  className?: string;
+  label?: string;
 }) {
   return (
-    <div className="relative max-w-md">
-      <MagnifyingGlassIcon
-        aria-hidden="true"
-        className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
-      />
-      <input
-        id={id}
-        type="search"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        autoComplete="off"
-        className={inputClassName}
-      />
+    <div className={className ?? "relative max-w-md"}>
+      {label ? (
+        <label
+          htmlFor={id}
+          className="block text-sm/6 font-medium text-gray-900 dark:text-white"
+        >
+          {label}
+        </label>
+      ) : null}
+      <div className={label ? "relative mt-2" : "relative"}>
+        <MagnifyingGlassIcon
+          aria-hidden="true"
+          className="pointer-events-none absolute top-1/2 left-3 size-5 -translate-y-1/2 text-gray-400 dark:text-gray-500"
+        />
+        <input
+          id={id}
+          type="search"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          autoComplete="off"
+          className={inputClassName}
+        />
+      </div>
     </div>
   );
 }

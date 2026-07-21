@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { getCurrentStaff } from "@/lib/auth";
 import {
   ALLOWED_EVENT_MEDIA_MIME_TYPES,
   EVENT_MEDIA_BUCKET,
@@ -25,7 +26,7 @@ function getServiceClient() {
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 }
@@ -51,6 +52,11 @@ export async function createEvent(
   _prevState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff || staff.role !== "admin") {
+    return { error: "Only admins can manage events." };
+  }
+
   const { title, body } = parseEventFields(formData);
   const files = parseMediaFiles(formData);
 
@@ -167,6 +173,11 @@ export async function deleteEvent(
   _prevState: EventActionState,
   formData: FormData,
 ): Promise<EventActionState> {
+  const staff = await getCurrentStaff();
+  if (!staff || staff.role !== "admin") {
+    return { error: "Only admins can manage events." };
+  }
+
   const eventId = Number(formData.get("eventId"));
 
   if (!Number.isInteger(eventId) || eventId <= 0) {

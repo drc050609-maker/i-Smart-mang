@@ -16,7 +16,11 @@ import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
 import { sortClassesBySubject } from "@/lib/class-list";
-import { formatClassSubject } from "@/lib/class-subject";
+import { EditEnrollmentGradeDialog } from "@/components/edit-enrollment-grade-dialog";
+import {
+  formatClassSubject,
+  formatClassSubjectWithGrade,
+} from "@/lib/class-subject";
 import {
   getStudentTotalClassesTaken,
   loadStudentClassHistory,
@@ -55,6 +59,7 @@ type EnrollmentEmbed = {
   id: number;
   is_active: boolean | null;
   created_date: string | null;
+  grade_level: string | null;
   classes: ClassEmbed | ClassEmbed[] | null;
 };
 
@@ -146,6 +151,7 @@ export default async function StudentDetailPage({
         id,
         is_active,
         created_date,
+        grade_level,
         classes (
           id,
           subject,
@@ -406,6 +412,12 @@ export default async function StudentDetailPage({
                       </th>
                       <th
                         scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {t("common.gradeLevel")}
+                      </th>
+                      <th
+                        scope="col"
                         className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-0 dark:text-white"
                       >
                         {t("common.status")}
@@ -419,6 +431,11 @@ export default async function StudentDetailPage({
 
                       const teacher = firstOrNull(classRow.teachers);
                       const room = firstOrNull(classRow.rooms);
+                      const subjectWithGrade = formatClassSubjectWithGrade(
+                        classRow.subject,
+                        enrollment.grade_level,
+                        staff.preferred_language,
+                      );
 
                       return (
                         <tr key={enrollment.id}>
@@ -427,7 +444,7 @@ export default async function StudentDetailPage({
                               href={`/classes/${classRow.id}`}
                               className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                             >
-                              {formatClassSubject(classRow.subject, staff.preferred_language)}
+                              {subjectWithGrade}
                             </Link>
                           </td>
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
@@ -435,6 +452,22 @@ export default async function StudentDetailPage({
                           </td>
                           <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                             {room?.room_number ?? "—"}
+                          </td>
+                          <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                            <div className="flex items-center gap-3">
+                              <span>
+                                {enrollment.grade_level?.trim() || "—"}
+                              </span>
+                              <EditEnrollmentGradeDialog
+                                enrollmentId={enrollment.id}
+                                studentId={studentId}
+                                subjectLabel={formatClassSubject(
+                                  classRow.subject,
+                                  staff.preferred_language,
+                                )}
+                                gradeLevel={enrollment.grade_level}
+                              />
+                            </div>
                           </td>
                           <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
                             <span

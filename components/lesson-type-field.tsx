@@ -11,7 +11,7 @@ const labelClassName =
 
 export function LessonTypeField({
   idPrefix,
-  defaultValue = "group",
+  defaultValue = "private",
 }: {
   idPrefix: string;
   defaultValue?: LessonType | null;
@@ -34,7 +34,7 @@ export function LessonTypeField({
               name="lessonType"
               type="radio"
               value={option.value}
-              defaultChecked={(defaultValue ?? "group") === option.value}
+              defaultChecked={(defaultValue ?? "private") === option.value}
               required
               className="mt-0.5 size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-white/20 dark:bg-white/5"
             />

@@ -4,6 +4,7 @@ import { AddTeacherDialog } from "@/components/add-teacher-dialog";
 import { TutorsListTable } from "@/components/tutors-list-table";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
+import { uniqueClassesBySubject } from "@/lib/class-subject";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
 
@@ -65,8 +66,11 @@ export default async function TutorsPage() {
       last_name: teacher.last_name,
       dob: teacher.dob,
       is_active: teacher.is_active,
-      classes: asClassList(teacher.classes).sort((a, b) =>
-        a.subject.localeCompare(b.subject, undefined, { sensitivity: "base" }),
+      classes: uniqueClassesBySubject(asClassList(teacher.classes)).sort(
+        (a, b) =>
+          a.subject.localeCompare(b.subject, undefined, {
+            sensitivity: "base",
+          }),
       ),
     })) ?? [];
 

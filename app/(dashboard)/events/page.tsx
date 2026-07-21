@@ -7,7 +7,7 @@ import {
   sortEventMedia,
   type EventPost,
 } from "@/lib/event-media";
-import { requireStaff } from "@/lib/auth";
+import { requireAdmin } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
 
@@ -34,7 +34,7 @@ function listOrEmpty<T>(value: T | T[] | null | undefined): T[] {
 }
 
 export default async function EventsPage() {
-  const staff = await requireStaff();
+  const staff = await requireAdmin();
   const t = createTranslator(staff.preferred_language);
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);

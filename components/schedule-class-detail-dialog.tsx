@@ -35,12 +35,33 @@ export function ScheduleClassDetailDialog({
   }
 
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
+  // Prefer the slot-linked student(s). For group/unassigned slots, fall back to
+  // student_ids resolved against the active student list (class roster).
   const studentById = new Map(students.map((student) => [student.id, student]));
-  const enrolledStudents = sortStudents(
+  const slotStudents = sortStudents(instance.students);
+  const rosterStudents = sortStudents(
     instance.student_ids
       .map((id) => studentById.get(id))
       .filter((student): student is ScheduleStudent => student !== undefined),
   );
+  const displayStudents =
+    slotStudents.length > 0
+      ? slotStudents
+      : instance.schedule_student_id == null
+        ? rosterStudents
+        : [];
+  const studentHeading =
+    instance.schedule_student_id != null
+      ? t("common.student")
+      : instance.lesson_type === "group"
+        ? t("enum.lessonType.group")
+        : t("common.student");
+  const studentSummary =
+    displayStudents.length === 0
+      ? t("common.noStudentsEnrolled")
+      : instance.schedule_student_id != null
+        ? formatStudentName(displayStudents[0]!)
+        : t("common.enrolled", { count: displayStudents.length });
 
   return (
     <Dialog open onClose={onClose} className="relative z-50">
@@ -114,23 +135,21 @@ export function ScheduleClassDetailDialog({
 
               <div>
                 <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                  {t("common.student")}
+                  {studentHeading}
                 </dt>
                 <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                  {enrolledStudents.length === 0
-                    ? t("common.noStudentsEnrolled")
-                    : t("common.enrolled", { count: enrolledStudents.length })}
+                  {studentSummary}
                 </dd>
               </div>
             </dl>
 
-            {enrolledStudents.length > 0 ? (
+            {displayStudents.length > 0 ? (
               <ul className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-md border border-gray-200 px-3 py-2 dark:border-white/10">
-                {enrolledStudents.map((student) => (
+                {displayStudents.map((student) => (
                   <li key={student.id}>
                     <Link
                       href={`/students/${student.id}`}
-                      className="text-sm text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                      className="text-sm text-violet-700 hover:text-violet-600 dark:text-violet-300 dark:hover:text-violet-200"
                     >
                       {formatStudentName(student)}
                     </Link>
@@ -149,7 +168,7 @@ export function ScheduleClassDetailDialog({
               </button>
               <Link
                 href={`/classes/${instance.classId}`}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-indigo-500"
+                className="rounded-md bg-violet-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-violet-500"
               >
                 {t("common.viewClass")}
               </Link>

@@ -2,8 +2,12 @@
 
 import { useMemo, useState, useTransition } from "react";
 
-import { setStaffAccountActive } from "@/app/(dashboard)/settings/actions";
+import {
+  deleteStaffAccount,
+  setStaffAccountActive,
+} from "@/app/(dashboard)/settings/actions";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ListSearchInput } from "@/components/list-search-input";
 import { useLanguage } from "@/components/language-provider";
 import type { AppLanguage } from "@/lib/language";
@@ -129,6 +133,62 @@ function StaffActiveToggle({
   );
 }
 
+function StaffDeleteButton({
+  staffId,
+  email,
+  isSelf,
+}: {
+  staffId: string;
+  email: string;
+  isSelf: boolean;
+}) {
+  const { t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+
+  function handleConfirm() {
+    setError(null);
+    startTransition(async () => {
+      const result = await deleteStaffAccount(staffId);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      setOpen(false);
+    });
+  }
+
+  return (
+    <div className="flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        disabled={isSelf || pending}
+        title={isSelf ? t("common.cannotDeleteSelf") : undefined}
+        className="text-sm font-medium text-red-600 hover:text-red-500 disabled:cursor-not-allowed disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
+      >
+        {t("common.deleteAccount")}
+      </button>
+      {error ? (
+        <span className="max-w-40 text-right text-xs text-red-600 dark:text-red-400">
+          {error}
+        </span>
+      ) : null}
+
+      <ConfirmDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        onConfirm={handleConfirm}
+        title={t("common.areYouSure")}
+        description={t("common.deleteAccountConfirm", { email })}
+        confirmLabel={t("common.delete")}
+        pending={pending}
+      />
+    </div>
+  );
+}
+
 export function StaffAccountsTable({
   accounts,
   currentStaffId,
@@ -223,6 +283,14 @@ export function StaffAccountsTable({
                     >
                       {t("common.status")}
                     </th>
+                    {canManageAccounts ? (
+                      <th
+                        scope="col"
+                        className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-0 dark:text-white"
+                      >
+                        {t("common.actions")}
+                      </th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10">
@@ -256,6 +324,15 @@ export function StaffAccountsTable({
                           isSelf={account.id === currentStaffId}
                         />
                       </td>
+                      {canManageAccounts ? (
+                        <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
+                          <StaffDeleteButton
+                            staffId={account.id}
+                            email={account.email}
+                            isSelf={account.id === currentStaffId}
+                          />
+                        </td>
+                      ) : null}
                     </tr>
                   ))}
                 </tbody>

@@ -24,7 +24,7 @@ function getServiceClient() {
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 }
@@ -141,6 +141,50 @@ export async function setStaffAccountActive(
 
   if (error) {
     return { error: error.message };
+  }
+
+  revalidateStaffSettings();
+  return { success: true };
+}
+
+export async function deleteStaffAccount(
+  staffId: string,
+): Promise<ActionState> {
+  const actor = await getCurrentStaff();
+
+  if (!actor || actor.role !== "admin") {
+    return { error: "Only admins can delete staff accounts." };
+  }
+
+  if (actor.id === staffId) {
+    return { error: "You cannot delete your own account." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: target, error: lookupError } = await client.supabase
+    .from("staff_accounts")
+    .select("id")
+    .eq("id", staffId)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { error: lookupError.message };
+  }
+
+  if (!target) {
+    return { error: "That staff account was not found." };
+  }
+
+  // Removes auth.users; staff_accounts row cascades so the email can be reused.
+  const { error: deleteError } =
+    await client.supabase.auth.admin.deleteUser(staffId);
+
+  if (deleteError) {
+    return { error: deleteError.message };
   }
 
   revalidateStaffSettings();

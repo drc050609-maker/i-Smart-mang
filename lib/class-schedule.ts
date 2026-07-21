@@ -31,6 +31,7 @@ export type ClassScheduleFields = {
 
 export type ClassScheduleRow = ClassScheduleFields & {
   id: number;
+  student_id?: number | null;
 };
 
 export function hasClassSchedule(schedule: ClassScheduleFields) {

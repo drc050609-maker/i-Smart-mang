@@ -53,7 +53,7 @@ export async function createStudent(
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 
@@ -221,7 +221,7 @@ function getServiceClient() {
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 }
@@ -396,6 +396,51 @@ export async function updateStudentDob(
 
   if (studentError) {
     return { error: studentError.message };
+  }
+
+  revalidateStudent(studentId);
+  return { success: true };
+}
+
+export type UpdateEnrollmentGradeState = ActionState;
+
+export async function updateEnrollmentGradeLevel(
+  _prevState: UpdateEnrollmentGradeState,
+  formData: FormData,
+): Promise<UpdateEnrollmentGradeState> {
+  const enrollmentId = Number(formData.get("enrollmentId"));
+  const studentId = Number(formData.get("studentId"));
+  const preset = formData.get("gradePreset")?.toString().trim() ?? "";
+  const custom = formData.get("gradeCustom")?.toString().trim() ?? "";
+
+  let gradeLevel: string | null = null;
+  if (preset === "__custom__" || (!preset && custom)) {
+    gradeLevel = custom || null;
+  } else if (preset) {
+    gradeLevel = preset;
+  }
+
+  if (!Number.isInteger(enrollmentId) || enrollmentId <= 0) {
+    return { error: "Invalid enrollment." };
+  }
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error } = await client.supabase
+    .from("enrollments")
+    .update({ grade_level: gradeLevel })
+    .eq("id", enrollmentId)
+    .eq("student id", studentId);
+
+  if (error) {
+    return { error: error.message };
   }
 
   revalidateStudent(studentId);

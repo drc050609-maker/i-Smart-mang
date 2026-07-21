@@ -30,7 +30,7 @@ async function clearSeedTables(supabase: SupabaseClient<Database>): Promise<void
   console.log("Cleanup done.");
 }
 
-const ROOM_COUNT = 15;
+const ROOM_COUNT = 14;
 const STUDENT_COUNT = 100;
 /** One address per student; each row sets `student` FK to that student’s id. */
 const ADDRESS_COUNT = STUDENT_COUNT;
@@ -99,8 +99,13 @@ function buildAddressesForStudents(studentIds: number[]): AddressInsert[] {
 function buildRooms(count: number): RoomInsert[] {
   faker.seed(8484);
 
-  return Array.from({ length: count }, (_, i) => ({
-    room_number: String(200 + i + 1),
+  const roomNames = [
+    ...Array.from({ length: 13 }, (_, i) => `Room ${i + 1}`),
+    "Art room",
+  ];
+
+  return roomNames.slice(0, count).map((room_number) => ({
+    room_number,
     class_size: faker.number.int({ min: 8, max: 30 }),
   }));
 }

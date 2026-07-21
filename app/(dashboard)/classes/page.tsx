@@ -6,14 +6,12 @@ import {
   type TeacherOption,
 } from "@/components/add-class-dialog";
 import { ClassesListTable } from "@/components/classes-list-table";
-import { TrialClassDialog } from "@/components/trial-class-dialog";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
 import type { ClassSearchRow } from "@/lib/class-list";
-import { formatTeacherName, sortTeachers } from "@/lib/person-name";
-import { TRIAL_CLASS_SUBJECTS } from "@/lib/trial-class";
+import { sortTeachers } from "@/lib/person-name";
 
 type TeacherEmbed = {
   first_name: string;
@@ -115,10 +113,6 @@ export default async function ClassesPage() {
   ]);
 
   const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
-  const trialTeachers = teacherOptions.map((teacher) => ({
-    id: teacher.id,
-    name: formatTeacherName(teacher),
-  }));
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
   const classRows: ClassSearchRow[] =
     (classes as ClassWithDetails[] | null)?.map((classRow) => {
@@ -150,13 +144,7 @@ export default async function ClassesPage() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {t("nav.classes")}
         </h1>
-        <div className="flex items-center gap-3">
-          <TrialClassDialog
-            subjects={[...TRIAL_CLASS_SUBJECTS]}
-            teachers={trialTeachers}
-          />
-          <AddClassDialog teachers={teacherOptions} rooms={roomOptions} />
-        </div>
+        <AddClassDialog teachers={teacherOptions} rooms={roomOptions} />
       </div>
 
       {error ? (

@@ -114,20 +114,24 @@ export function StudentsListTable({
 
   return (
     <div className="mt-6 space-y-4">
-      <ActiveInactiveTabs
-        activeTab={activeTab}
-        onChange={setActiveTab}
-        activeCount={activeCount}
-        inactiveCount={inactiveCount}
-        entityLabel={t("nav.students")}
-      />
+      <div className="flex flex-wrap items-end gap-4">
+        <ActiveInactiveTabs
+          activeTab={activeTab}
+          onChange={setActiveTab}
+          activeCount={activeCount}
+          inactiveCount={inactiveCount}
+          entityLabel={t("nav.students")}
+        />
 
-      <ListSearchInput
-        id="studentsSearch"
-        value={query}
-        onChange={setQuery}
-        placeholder={t("common.searchStudentsByName")}
-      />
+        <ListSearchInput
+          id="studentsSearch"
+          value={query}
+          onChange={setQuery}
+          placeholder={t("common.searchStudentsByName")}
+          label={t("common.name")}
+          className="min-w-56 max-w-md flex-1"
+        />
+      </div>
 
       {filteredStudents.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">

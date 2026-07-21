@@ -15,11 +15,13 @@ export function StaffProfileFooter({
   email,
   role,
   location,
+  compact,
 }: {
   fullName: string | null;
   email: string;
   role: StaffRole;
   location: StaffLocation;
+  compact?: boolean;
 }) {
   const { language, t } = useLanguage();
   const displayName = fullName?.trim() || email;
@@ -29,10 +31,24 @@ export function StaffProfileFooter({
     .map((part) => part[0]?.toUpperCase() ?? "")
     .join("");
 
+  if (compact) {
+    return (
+      <div className="mt-auto flex justify-center border-t border-violet-100/80 py-3 dark:border-white/10">
+        <span
+          title={displayName}
+          className="flex size-8 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-200"
+        >
+          {initials || "IS"}
+          <span className="sr-only">{displayName}</span>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="-mx-6 mt-auto border-t border-gray-200 px-6 py-3 dark:border-white/10">
       <div className="flex items-center gap-x-4 text-sm/6 font-semibold text-gray-900 dark:text-white">
-        <span className="flex size-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-white/10 dark:text-indigo-300">
+        <span className="flex size-8 items-center justify-center rounded-full bg-violet-50 text-xs font-bold text-violet-700 dark:bg-violet-500/15 dark:text-violet-200">
           {initials || "IS"}
         </span>
         <div className="min-w-0 flex-1">

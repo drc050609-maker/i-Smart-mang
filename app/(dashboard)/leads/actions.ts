@@ -164,7 +164,7 @@ function getServiceClient():
   } catch {
     return {
       error:
-        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY to .env.local.",
+        "Server is missing Supabase credentials. Add SUPABASE_SERVICE_ROLE_KEY in Vercel → Settings → Environment Variables, then Redeploy.",
     };
   }
 }

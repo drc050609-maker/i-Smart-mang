@@ -37,10 +37,10 @@ export function LeadsMonthSummaryDialog({
         type="button"
         onClick={() => setOpen(true)}
         aria-haspopup="dialog"
-        className="shrink-0 border-b-2 border-transparent px-1 py-3 text-sm font-medium whitespace-nowrap text-gray-500 transition-colors hover:border-gray-300 hover:text-gray-700 dark:text-gray-400 dark:hover:border-white/20 dark:hover:text-gray-300"
+        className="mb-2 ml-auto shrink-0 self-center rounded-md bg-violet-100 px-3 py-1.5 text-sm font-semibold text-violet-800 shadow-xs ring-1 ring-violet-200/80 hover:bg-violet-50 dark:bg-violet-500/15 dark:text-violet-200 dark:ring-violet-400/20 dark:hover:bg-violet-500/25"
       >
         {t("leads.tabThisMonth")}
-        <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-white/10 dark:text-gray-400">
+        <span className="ml-2 rounded-full bg-violet-200/70 px-2 py-0.5 text-xs text-violet-800 dark:bg-violet-500/20 dark:text-violet-200">
           {monthCount}
         </span>
       </button>

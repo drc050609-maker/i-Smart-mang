@@ -418,6 +418,56 @@ export type Database = {
           },
         ]
       }
+      class_price_promotions: {
+        Row: {
+          class_id: number
+          created_at: string
+          created_by: string | null
+          end_date: string
+          id: number
+          is_active: boolean
+          name: string
+          package_20_price_cents: number | null
+          package_50_price_cents: number | null
+          single_price_cents: number | null
+          start_date: string
+        }
+        Insert: {
+          class_id: number
+          created_at?: string
+          created_by?: string | null
+          end_date: string
+          id?: number
+          is_active?: boolean
+          name: string
+          package_20_price_cents?: number | null
+          package_50_price_cents?: number | null
+          single_price_cents?: number | null
+          start_date: string
+        }
+        Update: {
+          class_id?: number
+          created_at?: string
+          created_by?: string | null
+          end_date?: string
+          id?: number
+          is_active?: boolean
+          name?: string
+          package_20_price_cents?: number | null
+          package_50_price_cents?: number | null
+          single_price_cents?: number | null
+          start_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_price_promotions_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_schedule_exceptions: {
         Row: {
           id: number
@@ -465,6 +515,7 @@ export type Database = {
           schedule_day_of_week: number | null
           schedule_end_time: string
           schedule_start_time: string
+          student_id: number | null
         }
         Insert: {
           class_id: number
@@ -474,6 +525,7 @@ export type Database = {
           schedule_day_of_week?: number | null
           schedule_end_time: string
           schedule_start_time: string
+          student_id?: number | null
         }
         Update: {
           class_id?: number
@@ -483,6 +535,7 @@ export type Database = {
           schedule_day_of_week?: number | null
           schedule_end_time?: string
           schedule_start_time?: string
+          student_id?: number | null
         }
         Relationships: [
           {
@@ -490,6 +543,13 @@ export type Database = {
             columns: ["class_id"]
             isOneToOne: false
             referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_schedules_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -626,6 +686,7 @@ export type Database = {
         Row: {
           "class id": number
           created_date: string | null
+          grade_level: string | null
           id: number
           is_active: boolean | null
           "student id": number | null
@@ -634,6 +695,7 @@ export type Database = {
         Insert: {
           "class id": number
           created_date?: string | null
+          grade_level?: string | null
           id?: number
           is_active?: boolean | null
           "student id"?: number | null
@@ -642,6 +704,7 @@ export type Database = {
         Update: {
           "class id"?: number
           created_date?: string | null
+          grade_level?: string | null
           id?: number
           is_active?: boolean | null
           "student id"?: number | null
@@ -1409,6 +1472,7 @@ export type Database = {
       teacher_class_pay_rates: {
         Row: {
           class_id: number
+          grade_tier: string
           rate_cents: number
           teacher_id: number
           updated_at: string
@@ -1416,6 +1480,7 @@ export type Database = {
         }
         Insert: {
           class_id: number
+          grade_tier?: string
           rate_cents: number
           teacher_id: number
           updated_at?: string
@@ -1423,6 +1488,7 @@ export type Database = {
         }
         Update: {
           class_id?: number
+          grade_tier?: string
           rate_cents?: number
           teacher_id?: number
           updated_at?: string
@@ -1448,6 +1514,7 @@ export type Database = {
       teacher_paycheck_lines: {
         Row: {
           class_id: number
+          grade_tier: string
           id: number
           line_total_cents: number
           paycheck_id: number
@@ -1456,6 +1523,7 @@ export type Database = {
         }
         Insert: {
           class_id: number
+          grade_tier?: string
           id?: never
           line_total_cents: number
           paycheck_id: number
@@ -1464,6 +1532,7 @@ export type Database = {
         }
         Update: {
           class_id?: number
+          grade_tier?: string
           id?: never
           line_total_cents?: number
           paycheck_id?: number
@@ -1637,6 +1706,7 @@ export type Database = {
         Args: { p_teacher_id: number }
         Returns: {
           class_id: number
+          grade_tier: string
           rate_cents: number
         }[]
       }
@@ -1818,6 +1888,7 @@ export type Database = {
       upsert_teacher_class_pay_rate: {
         Args: {
           p_class_id: number
+          p_grade_tier?: string
           p_rate_cents: number
           p_teacher_id: number
           p_updated_by?: string

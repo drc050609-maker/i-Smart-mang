@@ -4,10 +4,17 @@ import type { ClassTrack } from "@/lib/class-track";
 import { translate, type TranslationKey } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 import { appLanguageLocale } from "@/lib/language";
+import { formatStudentName, sortStudents } from "@/lib/person-name";
 
 export const HOUR_HEIGHT_PX = 64;
 export const DEFAULT_START_HOUR = 8;
 export const DEFAULT_END_HOUR = 20;
+
+export type ScheduleStudent = {
+  id: number;
+  "first name": string;
+  "last name": string | null;
+};
 
 export type ScheduleEvent = {
   scheduleId: number;
@@ -23,7 +30,16 @@ export type ScheduleEvent = {
   room_number: string | null;
   is_active: boolean;
   class_track: ClassTrack | string | null;
+  lesson_type: string | null;
+  /** Student linked to this schedule slot (private lessons). Null for group/shared. */
+  schedule_student_id: number | null;
+  /**
+   * Student ids used for filtering.
+   * Slot student when set; otherwise enrolled roster (group/unassigned slots).
+   */
   student_ids: number[];
+  /** Students shown on the calendar block — slot student only, not the full roster. */
+  students: ScheduleStudent[];
 };
 
 export type ScheduleException = {
@@ -53,11 +69,17 @@ export type ScheduleTeacher = {
   class_count: number;
 };
 
-export type ScheduleStudent = {
-  id: number;
-  "first name": string;
-  "last name": string | null;
-};
+/** Compact calendar label: one name, two names, or "First +N". */
+export function formatScheduleEventStudentLabel(
+  students: ScheduleStudent[],
+  fallback: string,
+) {
+  const names = sortStudents(students).map(formatStudentName);
+  if (names.length === 0) return fallback;
+  if (names.length === 1) return names[0]!;
+  if (names.length === 2) return `${names[0]}, ${names[1]}`;
+  return `${names[0]} +${names.length - 1}`;
+}
 
 export function timeToMinutes(time: string) {
   const [hoursStr, minutesStr] = time.slice(0, 5).split(":");
@@ -265,6 +287,16 @@ export function formatWeekRange(
   return `${startMonth} ${startDay} – ${endMonth} ${endDay}, ${year}`;
 }
 
+export function formatDayTitle(date: Date, language: AppLanguage = "en") {
+  const locale = appLanguageLocale(language);
+  return date.toLocaleDateString(locale, {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 const WEEKDAY_KEYS: TranslationKey[] = [
   "enum.weekday.sunday",
   "enum.weekday.monday",
@@ -387,18 +419,21 @@ export function buildScheduleEvents(
     ClassScheduleFields & {
       id: number;
       class_id: number;
+      student_id?: number | null;
+      schedule_student?: ScheduleStudent | null;
       classes: {
         id: number;
         subject: string;
         teacher_id: number | null;
         is_active: boolean;
         class_track: string | null;
+        lesson_type?: string | null;
         teachers: { first_name: string; last_name: string | null } | null;
         rooms: { room_number: string } | null;
       } | null;
     }
   >,
-  enrollmentsByClass: Map<number, number[]>,
+  enrollmentsByClass: Map<number, ScheduleStudent[]>,
   formatTeacherName: (teacher: {
     first_name: string;
     last_name: string | null;
@@ -408,6 +443,23 @@ export function buildScheduleEvents(
     .filter((scheduleRow) => hasClassSchedule(scheduleRow) && scheduleRow.classes)
     .map((scheduleRow) => {
       const classRow = scheduleRow.classes!;
+      const enrolled = sortStudents(enrollmentsByClass.get(classRow.id) ?? []);
+      const scheduleStudentId = scheduleRow.student_id ?? null;
+
+      let students: ScheduleStudent[] = [];
+      if (scheduleStudentId != null) {
+        const fromEmbed = scheduleRow.schedule_student;
+        if (fromEmbed && fromEmbed.id === scheduleStudentId) {
+          students = [fromEmbed];
+        } else {
+          const fromRoster = enrolled.find(
+            (student) => student.id === scheduleStudentId,
+          );
+          if (fromRoster) {
+            students = [fromRoster];
+          }
+        }
+      }
 
       return {
         scheduleId: scheduleRow.id,
@@ -425,7 +477,13 @@ export function buildScheduleEvents(
         room_number: classRow.rooms?.room_number ?? null,
         is_active: classRow.is_active,
         class_track: classRow.class_track,
-        student_ids: enrollmentsByClass.get(classRow.id) ?? [],
+        lesson_type: classRow.lesson_type ?? null,
+        schedule_student_id: scheduleStudentId,
+        student_ids:
+          scheduleStudentId != null
+            ? [scheduleStudentId]
+            : enrolled.map((student) => student.id),
+        students,
       };
     });
 }

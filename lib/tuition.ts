@@ -108,3 +108,87 @@ export function buildTuitionPricing(
     package50: packageTuition(perClass, PACKAGE_50_COUNT, PACKAGE_50_DISCOUNT),
   };
 }
+
+/** Art classes charge material fees on top of tuition packs (price sheet). */
+export function isArtSubject(subject: string | null | undefined) {
+  if (!subject?.trim()) return false;
+  return /(?:^|\b)(?:art|画画)\b/i.test(subject.trim());
+}
+
+export const ART_MATERIAL_FEE_PACK_20_USD = 70;
+export const ART_MATERIAL_FEE_PACK_50_USD = 100;
+
+export function artMaterialFeeNote(
+  t: (
+    key: "common.artMaterialFeeNote",
+    params?: Record<string, string | number>,
+  ) => string,
+) {
+  return t("common.artMaterialFeeNote", {
+    pack20: ART_MATERIAL_FEE_PACK_20_USD,
+    pack50: ART_MATERIAL_FEE_PACK_50_USD,
+  });
+}
+
+export type ClassPricePromotion = {
+  id: number;
+  class_id: number;
+  name: string;
+  single_price_cents: number | null;
+  package_20_price_cents: number | null;
+  package_50_price_cents: number | null;
+  start_date: string;
+  end_date: string;
+  is_active: boolean;
+};
+
+export function isPromotionActiveOnDate(
+  promotion: Pick<
+    ClassPricePromotion,
+    "is_active" | "start_date" | "end_date"
+  >,
+  onDate: string,
+) {
+  if (!promotion.is_active) return false;
+  return promotion.start_date <= onDate && promotion.end_date >= onDate;
+}
+
+export function applyPromotionToPricing(
+  base: TuitionPricing,
+  promotion: Pick<
+    ClassPricePromotion,
+    | "single_price_cents"
+    | "package_20_price_cents"
+    | "package_50_price_cents"
+  > | null,
+): TuitionPricing {
+  if (!promotion) return base;
+
+  return {
+    perClass:
+      promotion.single_price_cents != null
+        ? promotion.single_price_cents / 100
+        : base.perClass,
+    package20:
+      promotion.package_20_price_cents != null
+        ? promotion.package_20_price_cents / 100
+        : base.package20,
+    package50:
+      promotion.package_50_price_cents != null
+        ? promotion.package_50_price_cents / 100
+        : base.package50,
+  };
+}
+
+export function findActivePromotionForClass(
+  promotions: ClassPricePromotion[],
+  classId: number,
+  onDate: string,
+) {
+  return (
+    promotions.find(
+      (promo) =>
+        promo.class_id === classId && isPromotionActiveOnDate(promo, onDate),
+    ) ?? null
+  );
+}

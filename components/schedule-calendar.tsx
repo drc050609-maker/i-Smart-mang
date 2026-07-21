@@ -42,7 +42,9 @@ import {
   formatDateYMD,
   formatDayHeader,
   formatHourLabel,
+  formatScheduleEventStudentLabel,
   formatWeekRange,
+  formatDayTitle,
   getInstancePosition,
   getTeacherEventColors,
   getWeekDays,
@@ -96,11 +98,25 @@ function ScheduleEventBlock({
   isDragging: boolean;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
-  const { language } = useLanguage();
+  const { language, t } = useLanguage();
   const colors = getTeacherEventColors(instance.teacher_id);
   const { top, height } = getInstancePosition(instance, startHour);
   const displayHeight = Math.max(height, COMPACT_MIN_HEIGHT);
   const subjectLabel = formatClassSubject(instance.subject, language);
+  const unassignedLabel =
+    instance.lesson_type === "group"
+      ? t("enum.lessonType.group")
+      : subjectLabel;
+  const studentLabel = formatScheduleEventStudentLabel(
+    instance.students,
+    unassignedLabel,
+  );
+  const showSubjectSecondary =
+    displayHeight >= 36 && studentLabel !== subjectLabel;
+  const tooltip =
+    studentLabel === subjectLabel
+      ? subjectLabel
+      : `${studentLabel} · ${subjectLabel}`;
 
   return (
     <div
@@ -115,11 +131,16 @@ function ScheduleEventBlock({
         dimmed && "opacity-30",
         isDragging && "opacity-40",
       )}
-      title={subjectLabel}
+      title={tooltip}
     >
       <p className="truncate text-[11px] font-semibold leading-tight">
-        {subjectLabel}
+        {studentLabel}
       </p>
+      {showSubjectSecondary ? (
+        <p className="truncate text-[10px] leading-tight opacity-70">
+          {subjectLabel}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -147,7 +168,12 @@ export function ScheduleCalendar({
     return now;
   }, []);
 
-  const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()));
+  const [viewMode, setViewMode] = useState<"week" | "day">("week");
+  const [focusDate, setFocusDate] = useState(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return now;
+  });
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<ScheduleStudent | null>(
     null,
@@ -177,7 +203,20 @@ export function ScheduleCalendar({
     setSelectedInstance(null);
   }, []);
 
+  const weekStart = useMemo(() => startOfWeek(focusDate), [focusDate]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
+  const displayDays = useMemo(() => {
+    if (viewMode === "day") {
+      const dayIndex = focusDate.getDay();
+      return [{ date: weekDays[dayIndex]!, dayIndex }];
+    }
+    return weekDays.map((date, dayIndex) => ({ date, dayIndex }));
+  }, [viewMode, focusDate, weekDays]);
+  const dayColumnCount = displayDays.length;
+
+  useEffect(() => {
+    dayColumnRefs.current = Array.from({ length: 7 }, () => null);
+  }, [viewMode, weekStart]);
 
   const teacherFilteredEvents = useMemo(
     () => filterEventsByTeachers(events, selectedTeacherIds),
@@ -382,18 +421,22 @@ export function ScheduleCalendar({
     };
   }, [dragState, handlePointerMove, handlePointerUp]);
 
-  function goToPreviousWeek() {
-    setWeekStart((current) => addDays(current, -7));
+  function goToPrevious() {
+    setFocusDate((current) =>
+      addDays(current, viewMode === "day" ? -1 : -7),
+    );
     setSelectedInstance(null);
   }
 
-  function goToNextWeek() {
-    setWeekStart((current) => addDays(current, 7));
+  function goToNext() {
+    setFocusDate((current) => addDays(current, viewMode === "day" ? 1 : 7));
     setSelectedInstance(null);
   }
 
   function goToToday() {
-    setWeekStart(startOfWeek(new Date()));
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    setFocusDate(now);
     setSelectedInstance(null);
   }
 
@@ -527,24 +570,58 @@ export function ScheduleCalendar({
             <div className="flex items-center gap-1">
               <button
                 type="button"
-                onClick={goToPreviousWeek}
+                onClick={goToPrevious}
                 className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
-                aria-label={t("common.previousWeek")}
+                aria-label={
+                  viewMode === "day"
+                    ? t("common.previousDay")
+                    : t("common.previousWeek")
+                }
               >
                 <ChevronLeftIcon className="size-5" />
               </button>
               <button
                 type="button"
-                onClick={goToNextWeek}
+                onClick={goToNext}
                 className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-white"
-                aria-label={t("common.nextWeek")}
+                aria-label={
+                  viewMode === "day" ? t("common.nextDay") : t("common.nextWeek")
+                }
               >
                 <ChevronRightIcon className="size-5" />
               </button>
             </div>
             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {formatWeekRange(weekStart, language)}
+              {viewMode === "day"
+                ? formatDayTitle(focusDate, language)
+                : formatWeekRange(weekStart, language)}
             </h2>
+            <div className="ml-1 inline-flex rounded-md shadow-xs inset-ring inset-ring-gray-300 dark:inset-ring-white/10">
+              <button
+                type="button"
+                onClick={() => setViewMode("day")}
+                className={classNames(
+                  viewMode === "day"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/20",
+                  "rounded-l-md px-3 py-1.5 text-sm font-semibold",
+                )}
+              >
+                {t("common.dayView")}
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("week")}
+                className={classNames(
+                  viewMode === "week"
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/20",
+                  "rounded-r-md px-3 py-1.5 text-sm font-semibold",
+                )}
+              >
+                {t("common.weekView")}
+              </button>
+            </div>
           </div>
 
           <div className="relative w-full max-w-sm">
@@ -618,7 +695,11 @@ export function ScheduleCalendar({
             {t("common.showingClassesFor", {
               name: formatStudentName(selectedStudent),
             })}
-            {weekInstances.length === 0
+            {weekInstances.filter((instance) =>
+              viewMode === "day"
+                ? instance.displayDayIndex === focusDate.getDay()
+                : true,
+            ).length === 0
               ? t("common.showingClassesNoneFound")
               : "."}
           </p>
@@ -630,9 +711,14 @@ export function ScheduleCalendar({
           </p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-            <div className="grid grid-cols-[4rem_repeat(7,minmax(0,1fr))] border-b border-gray-200 dark:border-white/10">
+            <div
+              className="grid border-b border-gray-200 dark:border-white/10"
+              style={{
+                gridTemplateColumns: `4rem repeat(${dayColumnCount}, minmax(0, 1fr))`,
+              }}
+            >
               <div className="border-r border-gray-200 dark:border-white/10" />
-              {weekDays.map((day) => {
+              {displayDays.map(({ date: day }) => {
                 const header = formatDayHeader(day, today, language);
 
                 return (
@@ -661,8 +747,11 @@ export function ScheduleCalendar({
             <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
               <div
                 ref={gridRef}
-                className="relative grid grid-cols-[4rem_repeat(7,minmax(0,1fr))]"
-                style={{ height: gridHeight }}
+                className="relative grid"
+                style={{
+                  height: gridHeight,
+                  gridTemplateColumns: `4rem repeat(${dayColumnCount}, minmax(0, 1fr))`,
+                }}
               >
                 <div className="relative border-r border-gray-200 dark:border-white/10">
                   {hours.map((hour, index) => (
@@ -678,7 +767,7 @@ export function ScheduleCalendar({
                   ))}
                 </div>
 
-                {weekDays.map((day, dayIndex) => {
+                {displayDays.map(({ date: day, dayIndex }) => {
                   const dayInstances = weekInstances.filter(
                     (instance) => instance.displayDayIndex === dayIndex,
                   );

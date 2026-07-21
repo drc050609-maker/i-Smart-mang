@@ -28,24 +28,40 @@ type ClassEmbed = {
   teacher_id: number | null;
   is_active: boolean;
   class_track: string | null;
+  lesson_type: string | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
+};
+
+type ScheduleStudentEmbed = {
+  id: number;
+  "first name": string;
+  "last name": string | null;
 };
 
 type ScheduleRow = {
   id: number;
   class_id: number;
+  student_id: number | null;
   is_recurring: boolean;
   schedule_day_of_week: number | null;
   schedule_date: string | null;
   schedule_start_time: string;
   schedule_end_time: string;
+  students: ScheduleStudentEmbed | ScheduleStudentEmbed[] | null;
   classes: ClassEmbed | ClassEmbed[] | null;
+};
+
+type EnrollmentStudentEmbed = {
+  id: number;
+  "first name": string;
+  "last name": string | null;
 };
 
 type EnrollmentRow = {
   "class id": number;
   "student id": number | null;
+  students: EnrollmentStudentEmbed | EnrollmentStudentEmbed[] | null;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -84,17 +100,20 @@ export default async function SchedulePage() {
         `
         id,
         class_id,
+        student_id,
         is_recurring,
         schedule_day_of_week,
         schedule_date,
         schedule_start_time,
         schedule_end_time,
+        students ( id, "first name", "last name" ),
         classes!inner (
           id,
           subject,
           teacher_id,
           is_active,
           class_track,
+          lesson_type,
           location_id,
           teachers!classes_teacher_id_fkey ( first_name, last_name ),
           rooms ( room_number )
@@ -130,7 +149,14 @@ export default async function SchedulePage() {
       .order("first name"),
     supabase
       .from("enrollments")
-      .select('"class id", "student id", classes!inner ( location_id )')
+      .select(
+        `
+        "class id",
+        "student id",
+        students ( id, "first name", "last name" ),
+        classes!inner ( location_id )
+      `,
+      )
       .eq("classes.location_id", locationId)
       .not("student id", "is", null),
   ]);
@@ -143,28 +169,45 @@ export default async function SchedulePage() {
     enrollmentsError?.message ??
     null;
 
-  const enrollmentsByClass = new Map<number, number[]>();
+  const enrollmentsByClass = new Map<number, ScheduleStudent[]>();
 
   for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
     const classId = enrollment["class id"];
-    const studentId = enrollment["student id"];
+    const student = firstOrNull(enrollment.students);
 
-    if (studentId === null) {
+    if (!student) {
       continue;
     }
 
     const existing = enrollmentsByClass.get(classId) ?? [];
-    existing.push(studentId);
+    if (existing.some((enrolled) => enrolled.id === student.id)) {
+      continue;
+    }
+
+    existing.push({
+      id: student.id,
+      "first name": student["first name"],
+      "last name": student["last name"],
+    });
     enrollmentsByClass.set(classId, existing);
   }
 
   const scheduleEvents = buildScheduleEvents(
     ((scheduleRows as ScheduleRow[] | null) ?? []).map((scheduleRow) => {
       const classRow = firstOrNull(scheduleRow.classes);
+      const scheduleStudent = firstOrNull(scheduleRow.students);
 
       return {
         id: scheduleRow.id,
         class_id: scheduleRow.class_id,
+        student_id: scheduleRow.student_id,
+        schedule_student: scheduleStudent
+          ? {
+              id: scheduleStudent.id,
+              "first name": scheduleStudent["first name"],
+              "last name": scheduleStudent["last name"],
+            }
+          : null,
         is_recurring: scheduleRow.is_recurring,
         schedule_day_of_week: scheduleRow.schedule_day_of_week,
         schedule_date: scheduleRow.schedule_date,
@@ -177,6 +220,7 @@ export default async function SchedulePage() {
               teacher_id: classRow.teacher_id,
               is_active: classRow.is_active,
               class_track: classRow.class_track,
+              lesson_type: classRow.lesson_type,
               teachers: firstOrNull(classRow.teachers),
               rooms: firstOrNull(classRow.rooms),
             }
