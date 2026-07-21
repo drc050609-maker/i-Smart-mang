@@ -3,17 +3,29 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/types/database.types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+function getSupabaseEnv() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add both in Vercel → Settings → Environment Variables, then redeploy.",
+    );
+  }
+
+  return { supabaseUrl, supabaseKey };
+}
 
 export async function updateSession(request: NextRequest) {
+  const { supabaseUrl, supabaseKey } = getSupabaseEnv();
+
   let supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  const supabase = createServerClient<Database>(supabaseUrl!, supabaseKey!, {
+  const supabase = createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();

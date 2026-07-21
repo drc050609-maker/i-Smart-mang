@@ -3,13 +3,19 @@ import { cookies } from "next/headers";
 
 import type { Database } from "@/types/database.types";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
 export const createClient = (
   cookieStore: Awaited<ReturnType<typeof cookies>>,
 ) => {
-  return createServerClient<Database>(supabaseUrl!, supabaseKey!, {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    throw new Error(
+      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add both in Vercel → Settings → Environment Variables, then redeploy.",
+    );
+  }
+
+  return createServerClient<Database>(supabaseUrl, supabaseKey, {
     cookies: {
       getAll() {
         return cookieStore.getAll();
