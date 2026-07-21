@@ -2,22 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 
 import type { Database } from "@/types/database.types";
-
-function getSupabaseEnv() {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-
-  if (!supabaseUrl || !supabaseKey) {
-    throw new Error(
-      "Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY. Add both in Vercel → Settings → Environment Variables, then redeploy.",
-    );
-  }
-
-  return { supabaseUrl, supabaseKey };
-}
+import { getSupabasePublicEnv } from "@/utils/supabase/env";
 
 export async function updateSession(request: NextRequest) {
-  const { supabaseUrl, supabaseKey } = getSupabaseEnv();
+  const { supabaseUrl, supabaseKey } = getSupabasePublicEnv();
 
   let supabaseResponse = NextResponse.next({
     request: {
