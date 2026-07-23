@@ -9,6 +9,7 @@ import { AddClassStudentsDialog } from "@/components/add-class-students-dialog";
 import { RemoveClassStudentButton } from "@/components/remove-class-student-button";
 import { ClassSessionActionButtons } from "@/components/class-session-action-buttons";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
+import { SameSubjectTeacherSelect } from "@/components/same-subject-teacher-select";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -23,9 +24,15 @@ import type { TeacherOption } from "@/components/teacher-combobox";
 import type { RoomOption } from "@/components/add-class-dialog";
 import type { StudentOption } from "@/components/student-multi-combobox";
 import type { ClassScheduleRow } from "@/lib/class-schedule";
-import { formatClassSchedule, sortClassSchedules } from "@/lib/class-schedule";
+import {
+  formatClassSchedule,
+  sortClassSchedules,
+} from "@/lib/class-schedule";
 import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
-import { formatClassSubject } from "@/lib/class-subject";
+import {
+  classSubjectKey,
+} from "@/lib/class-list";
+import { formatClassSubject, listKnownClassSubjects } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
 import {
   compareStudentNames,
@@ -33,6 +40,7 @@ import {
   sortStudents,
   sortTeachers,
 } from "@/lib/person-name";
+import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 
 import type { Database } from "@/types/database.types";
 
@@ -80,10 +88,18 @@ type ClassDetail = Pick<
   | "lesson_type"
   | "class_track"
   | "is_active"
+  | "location_id"
 > & {
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
   class_schedules: ClassScheduleEmbed | ClassScheduleEmbed[] | null;
+};
+
+type SiblingClassRow = {
+  id: number;
+  subject: string;
+  is_active: boolean;
+  teachers: TeacherEmbed | TeacherEmbed[] | null;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -198,6 +214,7 @@ export default async function ClassDetailPage({
       lesson_type,
       class_track,
       is_active,
+      location_id,
       teachers!classes_teacher_id_fkey ( first_name, last_name ),
       rooms ( room_number, class_size ),
       class_schedules (
@@ -259,8 +276,48 @@ export default async function ClassDetailPage({
   const detail = classRow as ClassDetail;
   const teacher = firstOrNull(detail.teachers);
   const room = firstOrNull(detail.rooms);
+
+  const subjectKey = classSubjectKey(detail.subject);
+  let sameSubjectClasses: {
+    id: number;
+    teacher: TeacherEmbed | null;
+  }[] = [];
+
+  if (detail.location_id != null) {
+    const { data: campusClasses } = await supabase
+      .from("classes")
+      .select(
+        `
+      id,
+      subject,
+      is_active,
+      teachers!classes_teacher_id_fkey ( first_name, last_name )
+    `,
+      )
+      .eq("location_id", detail.location_id)
+      .eq("is_active", true);
+
+    sameSubjectClasses = ((campusClasses as SiblingClassRow[] | null) ?? [])
+      .filter((row) => classSubjectKey(row.subject) === subjectKey)
+      .map((row) => ({
+        id: row.id,
+        teacher: firstOrNull(row.teachers),
+      }));
+
+    if (!sameSubjectClasses.some((row) => row.id === classId)) {
+      sameSubjectClasses.push({
+        id: detail.id,
+        teacher,
+      });
+    }
+  }
+
   const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
+  const subjectOptions = listKnownClassSubjects([
+    ...listPriceSheetSubjects(),
+    detail.subject,
+  ]);
   const enrollmentRows = sortEnrollmentsForDisplay(
     (enrollments as EnrollmentEmbed[] | null) ?? [],
   );
@@ -336,6 +393,7 @@ export default async function ClassDetailPage({
               }}
               teachers={teacherOptions}
               rooms={roomOptions}
+              subjects={subjectOptions}
             />
             <DeleteClassButton
               classId={classId}
@@ -349,7 +407,14 @@ export default async function ClassDetailPage({
               {t("common.teacher")}
             </dt>
             <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {formatTeacherName(teacher)}
+              {sameSubjectClasses.length > 1 ? (
+                <SameSubjectTeacherSelect
+                  currentClassId={classId}
+                  options={sameSubjectClasses}
+                />
+              ) : (
+                formatTeacherName(teacher)
+              )}
             </dd>
           </div>
           <div>

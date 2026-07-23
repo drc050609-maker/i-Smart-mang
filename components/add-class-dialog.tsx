@@ -17,6 +17,7 @@ import {
   TeacherCombobox,
   type TeacherOption,
 } from "@/components/teacher-combobox";
+import { SubjectCombobox } from "@/components/subject-combobox";
 import { LessonTypeField } from "@/components/lesson-type-field";
 import { ClassTrackField } from "@/components/class-track-field";
 import { useLanguage } from "@/components/language-provider";
@@ -42,9 +43,11 @@ const initialState: CreateClassState = {};
 export function AddClassDialog({
   teachers,
   rooms,
+  subjects,
 }: {
   teachers: TeacherOption[];
   rooms: RoomOption[];
+  subjects: string[];
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -54,6 +57,7 @@ export function AddClassDialog({
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
     null,
   );
+  const [selectedSubject, setSelectedSubject] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createClass,
@@ -76,12 +80,14 @@ export function AddClassDialog({
   function openDialog() {
     setError(null);
     setSelectedTeacher(null);
+    setSelectedSubject("");
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
     setSelectedTeacher(null);
+    setSelectedSubject("");
     setOpen(false);
   }
 
@@ -93,6 +99,7 @@ export function AddClassDialog({
     if (state.success) {
       formRef.current?.reset();
       setSelectedTeacher(null);
+      setSelectedSubject("");
       setError(null);
       setOpen(false);
     }
@@ -159,13 +166,12 @@ export function AddClassDialog({
                         {t("common.subject")}
                       </label>
                       <div className="mt-2">
-                        <input
+                        <SubjectCombobox
                           id="classSubject"
-                          name="subject"
-                          type="text"
+                          subjects={subjects}
+                          value={selectedSubject}
+                          onChange={setSelectedSubject}
                           required
-                          placeholder={t("common.placeholderSubject")}
-                          className={inputClassName}
                         />
                       </div>
                     </div>

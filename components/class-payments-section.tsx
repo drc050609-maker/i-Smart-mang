@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -20,6 +19,10 @@ import {
 } from "@/app/(dashboard)/finance-actions";
 import { EditAmountDialog } from "@/components/edit-amount-dialog";
 import {
+  ClassCombobox,
+  type ClassOption,
+} from "@/components/class-combobox";
+import {
   StudentCombobox,
   type StudentOption,
 } from "@/components/student-combobox";
@@ -28,7 +31,6 @@ import {
   TeacherCombobox,
   type TeacherOption,
 } from "@/components/teacher-combobox";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { formatClassSubject } from "@/lib/class-subject";
 import { appLanguageLocale } from "@/lib/language";
 import {
@@ -142,7 +144,6 @@ export function ClassPaymentsSection({
   recentPayments: PaymentHistoryRow[];
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const lastHandledPaymentIdRef = useRef<number | null>(null);
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>("form");
@@ -182,12 +183,33 @@ export function ClassPaymentsSection({
     );
   }, [classes, selectedTeacher]);
 
+  const classOptionsForTeacher = useMemo<ClassOption[]>(
+    () =>
+      classesForTeacher.map((classRow) => ({
+        id: classRow.id,
+        subject: classRow.subject,
+        teacher: classRow.teacher,
+        lesson_type: classRow.lesson_type,
+      })),
+    [classesForTeacher],
+  );
+
   const selectedClass = useMemo(
     () =>
       typeof selectedClassId === "number"
         ? (classes.find((classRow) => classRow.id === selectedClassId) ?? null)
         : null,
     [classes, selectedClassId],
+  );
+
+  const selectedClassOption = useMemo(
+    () =>
+      selectedClass
+        ? (classOptionsForTeacher.find(
+            (classRow) => classRow.id === selectedClass.id,
+          ) ?? null)
+        : null,
+    [classOptionsForTeacher, selectedClass],
   );
 
   const availablePlans = useMemo(() => {
@@ -223,7 +245,6 @@ export function ClassPaymentsSection({
         }),
       );
       resetDialog();
-      router.refresh();
     }
   }, [
     state.error,
@@ -231,7 +252,6 @@ export function ClassPaymentsSection({
     state.paymentId,
     pendingPayment,
     selectedStudent,
-    router,
     t,
     language,
   ]);
@@ -544,29 +564,19 @@ export function ClassPaymentsSection({
                             })}
                           </p>
                         ) : (
-                          <select
-                            id="payment-class"
-                            value={selectedClassId}
-                            onChange={(event) => {
-                              setSelectedClassId(
-                                event.target.value
-                                  ? Number(event.target.value)
-                                  : "",
-                              );
-                              setSelectedPlan("");
-                            }}
-                            className={`${inputClassName} mt-2`}
-                          >
-                            <option value="">{t("common.selectClass")}</option>
-                            {classesForTeacher.map((classRow) => (
-                              <option key={classRow.id} value={classRow.id}>
-                                {formatClassSubject(classRow.subject, language)}
-                                {classRow.lesson_type
-                                  ? ` · ${formatLessonType(classRow.lesson_type as LessonType, language)}`
-                                  : ""}
-                              </option>
-                            ))}
-                          </select>
+                          <div className="mt-2">
+                            <ClassCombobox
+                              id="payment-class"
+                              classes={classOptionsForTeacher}
+                              value={selectedClassOption}
+                              onChange={(classRow) => {
+                                setSelectedClassId(classRow?.id ?? "");
+                                setSelectedPlan("");
+                              }}
+                              name={null}
+                              placeholder={t("common.searchClasses")}
+                            />
+                          </div>
                         )}
                       </div>
                     ) : null}

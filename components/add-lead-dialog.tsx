@@ -91,8 +91,6 @@ export function AddLeadDialog({
 
       if (result.leadId) {
         router.push(`/leads/${result.leadId}`);
-      } else {
-        router.refresh();
       }
     });
   }

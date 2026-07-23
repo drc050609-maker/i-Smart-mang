@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -71,7 +70,6 @@ export function StudentPurchasesSection({
   recentPurchases: PurchaseHistoryRow[];
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const lastHandledPurchaseIdRef = useRef<number | null>(null);
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
   const [dialogStep, setDialogStep] = useState<DialogStep>("form");
@@ -110,7 +108,6 @@ export function StudentPurchasesSection({
         }),
       );
       resetDialog();
-      router.refresh();
     }
   }, [
     state.error,
@@ -118,7 +115,6 @@ export function StudentPurchasesSection({
     state.purchaseId,
     pendingPurchase,
     selectedStudent,
-    router,
     t,
   ]);
 

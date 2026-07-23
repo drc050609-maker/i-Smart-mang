@@ -63,7 +63,6 @@ export function MakeOfficialStudentDialog(props: InquiryProps | TrialProps) {
       setError(null);
       setOpen(false);
       router.push(`/students/${state.studentId}`);
-      router.refresh();
     }
   }, [router, state.error, state.studentId, state.success]);
 

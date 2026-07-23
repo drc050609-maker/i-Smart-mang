@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -96,7 +95,6 @@ function PaycheckPeriodCard({
   ) => void;
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const [state, formAction, isPending] = useActionState(
     recordTeacherPaycheck,
     initialState,
@@ -114,13 +112,10 @@ function PaycheckPeriodCard({
   }, [period.year, period.month]);
 
   useEffect(() => {
-    if (!state.success) {
-      return;
+    if (state.success) {
+      setConfirmOpen(false);
     }
-
-    setConfirmOpen(false);
-    router.refresh();
-  }, [state.success, router]);
+  }, [state.success]);
 
   useEffect(() => {
     if (state.error) {

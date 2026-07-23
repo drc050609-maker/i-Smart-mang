@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
 import { TrashIcon } from "@heroicons/react/24/outline";
 
 import {
@@ -31,7 +30,6 @@ export function DeleteClassPricingButton({
   field: PricingField;
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const fieldTitle = t(FIELD_TITLE_KEY[field]);
@@ -40,7 +38,6 @@ export function DeleteClassPricingButton({
       const result = await clearClassPricingField(prev, formData);
       if (result.success) {
         setOpen(false);
-        router.refresh();
       }
       return result;
     },

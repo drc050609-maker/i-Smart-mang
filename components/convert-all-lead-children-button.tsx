@@ -61,8 +61,6 @@ export function ConvertAllLeadChildrenButton({
       setOpen(false);
       if (state.studentId) {
         router.push(`/students/${state.studentId}`);
-      } else {
-        router.refresh();
       }
     }
   }, [router, state.error, state.studentId, state.success]);

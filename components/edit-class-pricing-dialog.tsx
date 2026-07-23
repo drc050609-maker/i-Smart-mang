@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -75,14 +74,12 @@ export function EditClassPricingDialog({
   field?: PricingField;
 }) {
   const { t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (prev: MoneyActionState, formData: FormData) => {
       const result = await updateClassPricing(prev, formData);
       if (result.success) {
         setOpen(false);
-        router.refresh();
       }
       return result;
     },

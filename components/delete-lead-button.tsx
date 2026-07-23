@@ -24,7 +24,6 @@ export function DeleteLeadButton({
     if (state.success) {
       setOpen(false);
       router.push("/leads");
-      router.refresh();
     }
   }, [state.success, router]);
 

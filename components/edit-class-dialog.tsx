@@ -18,6 +18,7 @@ import {
   type TeacherOption,
 } from "@/components/teacher-combobox";
 import type { RoomOption } from "@/components/add-class-dialog";
+import { SubjectCombobox } from "@/components/subject-combobox";
 import { LessonTypeField } from "@/components/lesson-type-field";
 import { ClassTrackField } from "@/components/class-track-field";
 import { useLanguage } from "@/components/language-provider";
@@ -56,10 +57,12 @@ export function EditClassDialog({
   classData,
   teachers,
   rooms,
+  subjects,
 }: {
   classData: ClassFormData;
   teachers: TeacherOption[];
   rooms: RoomOption[];
+  subjects: string[];
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -69,6 +72,7 @@ export function EditClassDialog({
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
     () => findTeacher(teachers, classData.teacher_id),
   );
+  const [selectedSubject, setSelectedSubject] = useState(classData.subject);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     updateClass,
@@ -78,6 +82,10 @@ export function EditClassDialog({
   useEffect(() => {
     setTeacherOptions(teachers);
   }, [teachers]);
+
+  useEffect(() => {
+    setSelectedSubject(classData.subject);
+  }, [classData.subject]);
 
   function handleTeacherAdded(teacher: TeacherOption) {
     setTeacherOptions((current) => {
@@ -91,12 +99,14 @@ export function EditClassDialog({
   function openDialog() {
     setError(null);
     setSelectedTeacher(findTeacher(teacherOptions, classData.teacher_id));
+    setSelectedSubject(classData.subject);
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
     setSelectedTeacher(findTeacher(teacherOptions, classData.teacher_id));
+    setSelectedSubject(classData.subject);
     setOpen(false);
   }
 
@@ -173,13 +183,12 @@ export function EditClassDialog({
                     {t("common.subject")}
                   </label>
                   <div className="mt-2">
-                    <input
+                    <SubjectCombobox
                       id="editClassSubject"
-                      name="subject"
-                      type="text"
+                      subjects={subjects}
+                      value={selectedSubject}
+                      onChange={setSelectedSubject}
                       required
-                      defaultValue={classData.subject}
-                      className={inputClassName}
                     />
                   </div>
                 </div>

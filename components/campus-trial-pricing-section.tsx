@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -86,14 +85,12 @@ export function CampusTrialPricingSection({
 
 function EditCampusTrialPricingDialog({ campus }: { campus: CampusPricingRow }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (prev: MoneyActionState, formData: FormData) => {
       const result = await updateCampusTrialPricing(prev, formData);
       if (result.success) {
         setOpen(false);
-        router.refresh();
       }
       return result;
     },

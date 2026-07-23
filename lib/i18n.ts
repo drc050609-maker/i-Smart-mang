@@ -171,6 +171,9 @@ export type TranslationKey =
   | "common.searchClasses"
   | "common.searchStaff"
   | "common.searchTeachers"
+  | "common.searchSubjects"
+  | "common.noSubjectsFound"
+  | "common.useCustomSubject"
   | "common.selectStudent"
   | "common.selectTeacher"
   | "common.selectClass"
@@ -717,7 +720,13 @@ export type TranslationKey =
   | "enum.classTrack.compositionDesc"
   | "enum.classTrack.danceDesc"
   | "enum.classTrack.music_educationDesc"
-  | "enum.classTrack.otherDesc";
+  | "enum.classTrack.otherDesc"
+  | "common.subjectClassCount"
+  | "common.showSubjectClasses"
+  | "common.hideSubjectClasses"
+  | "common.teacherCount"
+  | "common.durationsAvailable"
+  | "common.selectTeacherForSubject";
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -904,6 +913,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.searchClasses": "Search classes…",
     "common.searchStaff": "Search by name, email, or role",
     "common.searchTeachers": "Search or select a teacher",
+    "common.searchSubjects": "Search or type a subject",
+    "common.noSubjectsFound": "No matching subjects.",
+    "common.useCustomSubject": "Use “{subject}”",
     "common.selectStudent": "Select a student",
     "common.selectTeacher": "Select a teacher",
     "common.selectClass": "Select a class",
@@ -1161,8 +1173,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.level1v1Hint":
       "Choose duration and grade tier (G0–G2 → Levels 0–2, etc.) to see single, 20-pack, and 50-pack prices.",
     "sheet.smartPianoGroup": "Smart Piano / Acoustic Piano / Violin group — 60 min",
-    "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Zither / Cello 1V1",
-    "sheet.ensembleGroup": "Ensemble group lessons (Piano / Violin / Guitar / Drum / Zither / Vocal) — 60 min",
+    "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Guzheng / Cello 1V1",
+    "sheet.ensembleGroup": "Ensemble group lessons (Piano / Violin / Guitar / Drum / Guzheng / Vocal) — 60 min",
     "sheet.specialtyGroup": "Sing & Play / Model / Music Theory / Vocal small group — 60 min",
     "sheet.art": "Art",
     "sheet.dance": "Jazz & Chinese dance / Hip Hop — 90 min",
@@ -1462,6 +1474,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.statementsAutoMonths":
       "No statements yet. Months appear automatically when payments are recorded.",
     "common.teachers": "Teachers",
+    "common.subjectClassCount": "{count} classes",
+    "common.showSubjectClasses": "Show classes for {subject}",
+    "common.hideSubjectClasses": "Hide classes for {subject}",
+    "common.teacherCount": "{count} teachers",
+    "common.durationsAvailable": "Durations",
+    "common.selectTeacherForSubject":
+      "Select a teacher for this subject",
     "common.teacherFilterHelp":
       "Select one or more teachers. Leave all unchecked to show everyone.",
     "common.clearStudentFilter": "Clear student filter",
@@ -1676,6 +1695,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.searchClasses": "搜索课程…",
     "common.searchStaff": "按姓名、邮箱或角色搜索",
     "common.searchTeachers": "搜索或选择老师",
+    "common.searchSubjects": "搜索或输入科目",
+    "common.noSubjectsFound": "未找到匹配科目。",
+    "common.useCustomSubject": "使用“{subject}”",
     "common.selectStudent": "选择学生",
     "common.selectTeacher": "选择老师",
     "common.selectClass": "选择课程",
@@ -2220,6 +2242,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.statementsAutoMonths":
       "暂无财务报表。记录付款后月份会自动出现。",
     "common.teachers": "老师",
+    "common.subjectClassCount": "{count} 门课",
+    "common.showSubjectClasses": "显示{subject}的课程",
+    "common.hideSubjectClasses": "隐藏{subject}的课程",
+    "common.teacherCount": "{count} 位老师",
+    "common.durationsAvailable": "时长",
+    "common.selectTeacherForSubject": "选择该科目的老师",
     "common.teacherFilterHelp":
       "选择一个或多个老师。全部不选则显示所有人。",
     "common.clearStudentFilter": "清除学生筛选",

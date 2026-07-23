@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { ChevronRightIcon } from "@heroicons/react/20/solid";
 
 import { ListSearchInput } from "@/components/list-search-input";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
@@ -14,8 +15,10 @@ import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   filterClassesByQuery,
+  groupClassesBySubject,
   sortClassesBySubject,
   type ClassSearchRow,
+  type SubjectClassGroup,
 } from "@/lib/class-list";
 import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
 import {
@@ -33,7 +36,10 @@ import {
 
 function formatDuration(
   minutes: number | null,
-  t: (key: "common.notAvailable" | "common.hour" | "common.hours" | "common.minutes", params?: Record<string, string | number>) => string,
+  t: (
+    key: "common.notAvailable" | "common.hour" | "common.hours" | "common.minutes",
+    params?: Record<string, string | number>,
+  ) => string,
 ) {
   if (!minutes) return t("common.notAvailable");
   if (minutes % 60 === 0) {
@@ -45,7 +51,11 @@ function formatDuration(
   return t("common.minutes", { count: minutes });
 }
 
-function getTrackLabel(track: ClassTrackTab, language: AppLanguage, t: (key: "common.allTracks") => string) {
+function getTrackLabel(
+  track: ClassTrackTab,
+  language: AppLanguage,
+  t: (key: "common.allTracks") => string,
+) {
   if (track === "all") return t("common.allTracks");
   return formatClassTrack(track, language);
 }
@@ -82,11 +92,110 @@ function formatClassesInTrackCount(
   });
 }
 
+function ClassTableRow({
+  classRow,
+  language,
+  t,
+  indented = false,
+}: {
+  classRow: ClassSearchRow;
+  language: AppLanguage;
+  t: ReturnType<typeof useLanguage>["t"];
+  indented?: boolean;
+}) {
+  return (
+    <tr>
+      <td
+        className={`py-4 pr-3 text-sm font-medium whitespace-nowrap text-gray-900 dark:text-white ${
+          indented ? "pl-10 sm:pl-8" : "pl-4 sm:pl-0"
+        }`}
+      >
+        <Link
+          href={`/classes/${classRow.id}`}
+          className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+        >
+          {formatClassSubject(classRow.subject, language)}
+        </Link>
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        {formatClassTrack(classRow.class_track as ClassTrack | null, language)}
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        {formatLessonType(classRow.lesson_type as LessonType | null, language)}
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        {classRow.teacher
+          ? formatTeacherName(classRow.teacher)
+          : t("common.notAvailable")}
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        {classRow.room_number ?? t("common.notAvailable")}
+      </td>
+      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+        {formatDuration(classRow.duration_minutes, t)}
+      </td>
+      <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
+        <ActiveStatusBadge isActive={classRow.is_active} />
+      </td>
+      <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
+        {classRow.id}
+      </td>
+    </tr>
+  );
+}
+
+function SubjectGroupSummary({
+  group,
+  t,
+}: {
+  group: SubjectClassGroup;
+  t: ReturnType<typeof useLanguage>["t"];
+}) {
+  const durationLabels = group.durations.map((minutes) =>
+    formatDuration(minutes, t),
+  );
+  const teacherLabels = group.teachers.map((teacher) =>
+    formatTeacherName(teacher),
+  );
+
+  return (
+    <>
+      <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs font-normal text-gray-500 dark:text-gray-400">
+        {durationLabels.length > 0 ? (
+          <span>
+            <span className="font-medium text-gray-600 dark:text-gray-300">
+              {t("common.durationsAvailable")}:
+            </span>{" "}
+            {durationLabels.join(", ")}
+          </span>
+        ) : null}
+        {teacherLabels.length > 0 ? (
+          <span>{t("common.teacherCount", { count: teacherLabels.length })}</span>
+        ) : null}
+        <span className="text-gray-400 dark:text-gray-500">
+          {t("common.subjectClassCount", { count: group.classes.length })}
+        </span>
+      </div>
+      {teacherLabels.length > 0 ? (
+        <details className="mt-1.5 text-xs font-normal text-gray-500 dark:text-gray-400">
+          <summary className="cursor-pointer select-none font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300">
+            {t("common.teachers")}
+          </summary>
+          <p className="mt-2 pl-0.5">{teacherLabels.join(", ")}</p>
+        </details>
+      ) : null}
+    </>
+  );
+}
+
 export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
   const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [trackTab, setTrackTab] = useState<ClassTrackTab>("all");
   const [activeTab, setActiveTab] = useState<ActiveTab>("active");
+  const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(
+    () => new Set(),
+  );
 
   const statusFilteredClasses = useMemo(
     () =>
@@ -116,6 +225,28 @@ export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
     () => filterClassesByQuery(sortedClasses, query, language),
     [sortedClasses, query, language],
   );
+  const subjectGroups = useMemo(
+    () => groupClassesBySubject(filteredClasses),
+    [filteredClasses],
+  );
+
+  const isSearching = query.trim().length > 0;
+
+  function isSubjectExpanded(subjectKey: string) {
+    return isSearching || expandedSubjects.has(subjectKey);
+  }
+
+  function toggleSubject(subjectKey: string) {
+    setExpandedSubjects((prev) => {
+      const next = new Set(prev);
+      if (next.has(subjectKey)) {
+        next.delete(subjectKey);
+      } else {
+        next.add(subjectKey);
+      }
+      return next;
+    });
+  }
 
   const statusLabel =
     activeTab === "active"
@@ -260,47 +391,87 @@ export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                  {filteredClasses.map((classRow) => (
-                      <tr key={classRow.id}>
-                        <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
-                          <Link
-                            href={`/classes/${classRow.id}`}
-                            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                  {subjectGroups.map((group) => {
+                    if (group.classes.length === 1) {
+                      return (
+                        <ClassTableRow
+                          key={group.classes[0].id}
+                          classRow={group.classes[0]}
+                          language={language}
+                          t={t}
+                        />
+                      );
+                    }
+
+                    const expanded = isSubjectExpanded(group.subjectKey);
+                    const subjectLabel = formatClassSubject(
+                      group.subject,
+                      language,
+                    );
+
+                    return (
+                      <Fragment key={group.subjectKey}>
+                        <tr className="bg-gray-50/80 dark:bg-white/5">
+                          <td
+                            colSpan={8}
+                            className="py-3 pr-4 pl-4 text-sm sm:pl-0 sm:pr-0"
                           >
-                            {formatClassSubject(classRow.subject, language)}
-                          </Link>
-                        </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {formatClassTrack(
-                            classRow.class_track as ClassTrack | null,
-                            language,
-                          )}
-                        </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {formatLessonType(
-                            classRow.lesson_type as LessonType | null,
-                            language,
-                          )}
-                        </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {classRow.teacher
-                            ? formatTeacherName(classRow.teacher)
-                            : t("common.notAvailable")}
-                        </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {classRow.room_number ?? t("common.notAvailable")}
-                        </td>
-                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                          {formatDuration(classRow.duration_minutes, t)}
-                        </td>
-                        <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                          <ActiveStatusBadge isActive={classRow.is_active} />
-                        </td>
-                        <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
-                          {classRow.id}
-                        </td>
-                      </tr>
-                  ))}
+                            <div className="flex items-start gap-2">
+                              <button
+                                type="button"
+                                onClick={() => toggleSubject(group.subjectKey)}
+                                aria-expanded={expanded}
+                                aria-label={
+                                  expanded
+                                    ? t("common.hideSubjectClasses", {
+                                        subject: subjectLabel,
+                                      })
+                                    : t("common.showSubjectClasses", {
+                                        subject: subjectLabel,
+                                      })
+                                }
+                                className="mt-0.5 shrink-0 rounded text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
+                              >
+                                <ChevronRightIcon
+                                  aria-hidden="true"
+                                  className={`size-5 transition-transform ${
+                                    expanded ? "rotate-90" : ""
+                                  }`}
+                                />
+                              </button>
+                              <div className="min-w-0 flex-1">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleSubject(group.subjectKey)
+                                  }
+                                  aria-expanded={expanded}
+                                  className="text-left font-semibold text-gray-900 dark:text-white"
+                                >
+                                  {subjectLabel}
+                                </button>
+                                <SubjectGroupSummary
+                                  group={group}
+                                  t={t}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                        {expanded
+                          ? group.classes.map((classRow) => (
+                              <ClassTableRow
+                                key={classRow.id}
+                                classRow={classRow}
+                                language={language}
+                                t={t}
+                                indented
+                              />
+                            ))
+                          : null}
+                      </Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

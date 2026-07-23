@@ -1,7 +1,6 @@
 "use client";
 
 import { useTransition } from "react";
-import { useRouter } from "next/navigation";
 import {
   Menu,
   MenuButton,
@@ -27,7 +26,6 @@ export function AdminCampusSwitcher({
   canSwitch?: boolean;
 }) {
   const { language } = useLanguage();
-  const router = useRouter();
   const [pending, startTransition] = useTransition();
 
   const label = formatStaffLocationLabel(activeCampus, language);
@@ -45,7 +43,6 @@ export function AdminCampusSwitcher({
 
     startTransition(async () => {
       await setActiveCampus(location);
-      router.refresh();
     });
   }
 

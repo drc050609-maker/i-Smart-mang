@@ -123,6 +123,7 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
             "Guitar",
             "Drums",
             "Singing / Voice",
+            "Guzheng",
             "Zither",
             "Cello",
           ],
@@ -139,6 +140,7 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
             "Guitar",
             "Drums",
             "Singing / Voice",
+            "Guzheng",
             "Zither",
             "Cello",
           ],
@@ -359,5 +361,26 @@ export function collectSheetMatchedClassIds(classes: MatchableClass[]) {
   }
 
   return ids;
+}
+
+/** Unique subject names referenced by the official price sheet. */
+export function listPriceSheetSubjects() {
+  const subjects = new Set<string>();
+
+  for (const section of PRICE_SHEET_SECTIONS) {
+    if (section.kind === "level_1v1") {
+      subjects.add(section.subject);
+      continue;
+    }
+    for (const row of section.rows) {
+      for (const subject of row.match.subjects) {
+        subjects.add(subject);
+      }
+    }
+  }
+
+  return [...subjects].sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
+  );
 }
 

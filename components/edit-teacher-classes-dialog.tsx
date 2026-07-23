@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -13,8 +13,11 @@ import {
   updateTeacherClasses,
   type UpdateTeacherClassesState,
 } from "@/app/(dashboard)/tutors/actions";
+import {
+  ClassMultiCombobox,
+  type ClassOption,
+} from "@/components/class-multi-combobox";
 import { useLanguage } from "@/components/language-provider";
-import { formatClassSubject } from "@/lib/class-subject";
 
 export type TeacherClassOption = {
   id: number;
@@ -26,6 +29,24 @@ export type TeacherClassOption = {
 
 const initialState: UpdateTeacherClassesState = {};
 
+function toClassOption(
+  classRow: TeacherClassOption,
+  teacherId: number,
+): ClassOption {
+  const taughtByOther =
+    classRow.teacher_id !== null && classRow.teacher_id !== teacherId;
+
+  return {
+    id: classRow.id,
+    subject: classRow.subject,
+    teacher:
+      taughtByOther && classRow.current_teacher_name
+        ? { first_name: classRow.current_teacher_name, last_name: null }
+        : null,
+    room_number: classRow.room_number,
+  };
+}
+
 export function EditTeacherClassesDialog({
   teacherId,
   classes,
@@ -35,11 +56,20 @@ export function EditTeacherClassesDialog({
   classes: TeacherClassOption[];
   assignedClassIds: number[];
 }) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
-  const assignedSet = new Set(assignedClassIds);
+  const classOptions = useMemo(
+    () => classes.map((classRow) => toClassOption(classRow, teacherId)),
+    [classes, teacherId],
+  );
+  const assignedOptions = useMemo(() => {
+    const assignedSet = new Set(assignedClassIds);
+    return classOptions.filter((classRow) => assignedSet.has(classRow.id));
+  }, [assignedClassIds, classOptions]);
+  const [selectedClasses, setSelectedClasses] =
+    useState<ClassOption[]>(assignedOptions);
   const [state, formAction, pending] = useActionState(
     updateTeacherClasses,
     initialState,
@@ -47,11 +77,13 @@ export function EditTeacherClassesDialog({
 
   function openDialog() {
     setError(null);
+    setSelectedClasses(assignedOptions);
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
+    setSelectedClasses(assignedOptions);
     setOpen(false);
   }
 
@@ -117,55 +149,31 @@ export function EditTeacherClassesDialog({
                 className="mt-6 space-y-4"
               >
                 <input type="hidden" name="teacherId" value={teacherId} />
+                {selectedClasses.map((classRow) => (
+                  <input
+                    key={classRow.id}
+                    type="hidden"
+                    name="classIds"
+                    value={classRow.id}
+                  />
+                ))}
 
-                {classes.length === 0 ? (
+                {classOptions.length === 0 ? (
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {t("common.noClassesAvailable")}
                   </p>
                 ) : (
-                  <fieldset className="space-y-3">
-                    <legend className="sr-only">{t("common.classes")}</legend>
-                    {classes.map((classRow) => {
-                      const isAssigned = assignedSet.has(classRow.id);
-                      const taughtByOther =
-                        classRow.teacher_id !== null &&
-                        classRow.teacher_id !== teacherId;
-
-                      return (
-                        <label
-                          key={classRow.id}
-                          htmlFor={`class-${classRow.id}`}
-                          className="flex cursor-pointer items-start gap-3 rounded-md border border-gray-200 px-3 py-3 hover:bg-gray-50 dark:border-white/10 dark:hover:bg-white/5"
-                        >
-                          <input
-                            id={`class-${classRow.id}`}
-                            name="classIds"
-                            type="checkbox"
-                            value={classRow.id}
-                            defaultChecked={isAssigned}
-                            className="mt-0.5 size-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-white/20 dark:bg-white/5 dark:focus:ring-indigo-500"
-                          />
-                          <span className="min-w-0 flex-1">
-                            <span className="block text-sm font-medium text-gray-900 dark:text-white">
-                              {formatClassSubject(classRow.subject, language)}
-                            </span>
-                            <span className="mt-0.5 block text-sm text-gray-500 dark:text-gray-400">
-                              {[
-                                classRow.room_number
-                                  ? `${t("common.room")} ${classRow.room_number}`
-                                  : null,
-                                taughtByOther
-                                  ? `${t("common.teacher")}: ${classRow.current_teacher_name}`
-                                  : null,
-                              ]
-                                .filter(Boolean)
-                                .join(" · ") || t("common.unassigned")}
-                            </span>
-                          </span>
-                        </label>
-                      );
-                    })}
-                  </fieldset>
+                  <div>
+                    <label htmlFor="teacherClasses" className="sr-only">
+                      {t("common.classes")}
+                    </label>
+                    <ClassMultiCombobox
+                      id="teacherClasses"
+                      classes={classOptions}
+                      selected={selectedClasses}
+                      onChange={setSelectedClasses}
+                    />
+                  </div>
                 )}
 
                 {error ? (
@@ -184,7 +192,7 @@ export function EditTeacherClassesDialog({
                   </button>
                   <button
                     type="submit"
-                    disabled={pending || classes.length === 0}
+                    disabled={pending || classOptions.length === 0}
                     className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
                   >
                     {pending ? t("common.saving") : t("common.saveClasses")}

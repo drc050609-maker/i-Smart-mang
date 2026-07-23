@@ -2,7 +2,7 @@ import { translate } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 
 /** Exact English subject labels → Chinese display names. */
-const CLASS_SUBJECT_TRANSLATIONS: Record<string, string> = {
+export const CLASS_SUBJECT_TRANSLATIONS: Record<string, string> = {
   "Singing / Voice": "声乐",
   "Dance — Hip Hop": "街舞",
   "Violin I": "小提琴 I",
@@ -16,6 +16,7 @@ const CLASS_SUBJECT_TRANSLATIONS: Record<string, string> = {
   "Guitar Group": "吉他小组课",
   Drums: "架子鼓",
   "Drums Group": "架子鼓小组课",
+  Guzheng: "古筝",
   Zither: "古筝",
   "Vocal Group": "声乐小组课",
   "Sing & Play": "边弹边唱",
@@ -69,7 +70,7 @@ const CLASS_SUBJECT_KEYWORD_REPLACEMENTS: [RegExp, string][] = [
   [/ukulele/gi, "尤克里里"],
   [/clarinet/gi, "单簧管"],
   [/trumpet/gi, "小号"],
-  [/zither/gi, "古筝"],
+  [/guzheng|zither/gi, "古筝"],
   [/violin/gi, "小提琴"],
   [/cello/gi, "大提琴"],
   [/guitar/gi, "吉他"],
@@ -270,4 +271,38 @@ export function classSubjectSearchText(
     return `${trimmed} ${translateClassSubjectToChinese(subject).toLowerCase()}`;
   }
   return trimmed;
+}
+
+/** Catalog + optional campus subjects for comboboxes (deduped, sorted). */
+export function listKnownClassSubjects(extra: Iterable<string> = []) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const subject of [
+    ...Object.keys(CLASS_SUBJECT_TRANSLATIONS),
+    ...extra,
+  ]) {
+    const trimmed = subject.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(trimmed);
+  }
+
+  return result.sort((a, b) =>
+    a.localeCompare(b, undefined, { sensitivity: "base" }),
+  );
+}
+
+/** Filter known subjects by English or Chinese label. */
+export function filterSubjectsByQuery(subjects: string[], query: string) {
+  const q = query.trim().toLowerCase();
+  if (!q) return subjects;
+
+  return subjects.filter((subject) => {
+    const en = subject.trim().toLowerCase();
+    const zh = translateClassSubjectToChinese(subject).toLowerCase();
+    return en.includes(q) || zh.includes(q);
+  });
 }

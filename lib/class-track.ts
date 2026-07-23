@@ -148,7 +148,9 @@ export function inferClassTrackFromSubject(subject: string): ClassTrack {
     normalized.includes("saxophone") ||
     normalized.includes("trumpet") ||
     normalized.includes("clarinet") ||
-    normalized.includes("ukulele")
+    normalized.includes("ukulele") ||
+    normalized.includes("guzheng") ||
+    normalized.includes("zither")
   ) {
     return "instrumental";
   }

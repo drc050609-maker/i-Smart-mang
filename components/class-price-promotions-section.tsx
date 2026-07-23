@@ -1,24 +1,23 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { useRouter } from "next/navigation";
 
 import {
   createClassPricePromotion,
   deactivateClassPricePromotion,
   type MoneyActionState,
 } from "@/app/(dashboard)/finance-actions";
-import { useLanguage } from "@/components/language-provider";
 import {
-  SelectChevron,
-  selectFieldClassName,
-} from "@/components/select-chevron";
+  ClassCombobox,
+  type ClassOption as ClassPickerOption,
+} from "@/components/class-combobox";
+import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   formatTuition,
@@ -51,9 +50,21 @@ export function ClassPricePromotionsSection({
   promotions: ClassPricePromotion[];
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<ClassPickerOption | null>(
+    null,
+  );
   const today = todayIsoDate();
+
+  const classPickerOptions = useMemo<ClassPickerOption[]>(
+    () =>
+      classes.map((classRow) => ({
+        id: classRow.id,
+        subject: classRow.subject,
+        teacher: null,
+      })),
+    [classes],
+  );
 
   const subjectById = useMemo(() => {
     const map = new Map<number, string>();
@@ -78,13 +89,23 @@ export function ClassPricePromotionsSection({
     async (prev: MoneyActionState, formData: FormData) => {
       const result = await createClassPricePromotion(prev, formData);
       if (result.success) {
+        setSelectedClass(null);
         setOpen(false);
-        router.refresh();
       }
       return result;
     },
     initialState,
   );
+
+  function openDialog() {
+    setSelectedClass(null);
+    setOpen(true);
+  }
+
+  function closeDialog() {
+    setSelectedClass(null);
+    setOpen(false);
+  }
 
   return (
     <section className="mt-10">
@@ -99,7 +120,7 @@ export function ClassPricePromotionsSection({
         </div>
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={openDialog}
           className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
         >
           {t("common.addSpecialPack")}
@@ -205,7 +226,7 @@ export function ClassPricePromotionsSection({
         </div>
       )}
 
-      <Dialog open={open} onClose={setOpen} className="relative z-50">
+      <Dialog open={open} onClose={closeDialog} className="relative z-50">
         <DialogBackdrop
           transition
           className="fixed inset-0 bg-gray-900/50 transition-opacity duration-200 ease-out data-closed:opacity-0"
@@ -243,24 +264,16 @@ export function ClassPricePromotionsSection({
                   <label htmlFor="promo-class" className={labelClassName}>
                     {t("common.class")}
                   </label>
-                  <div className="relative mt-2 grid grid-cols-1">
-                    <select
+                  <div className="mt-2">
+                    <ClassCombobox
                       id="promo-class"
+                      classes={classPickerOptions}
+                      value={selectedClass}
+                      onChange={setSelectedClass}
                       name="classId"
                       required
-                      defaultValue=""
-                      className={selectFieldClassName}
-                    >
-                      <option value="" disabled>
-                        {t("common.selectClass")}
-                      </option>
-                      {classes.map((classRow) => (
-                        <option key={classRow.id} value={classRow.id}>
-                          {formatClassSubject(classRow.subject, language)}
-                        </option>
-                      ))}
-                    </select>
-                    <SelectChevron />
+                      placeholder={t("common.searchClasses")}
+                    />
                   </div>
                 </div>
 
@@ -357,14 +370,14 @@ export function ClassPricePromotionsSection({
                 <div className="flex justify-end gap-3">
                   <button
                     type="button"
-                    onClick={() => setOpen(false)}
+                    onClick={closeDialog}
                     className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
                   >
                     {t("common.cancel")}
                   </button>
                   <button
                     type="submit"
-                    disabled={createPending}
+                    disabled={createPending || !selectedClass}
                     className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                   >
                     {createPending ? t("common.saving") : t("common.saveChanges")}
@@ -381,23 +394,10 @@ export function ClassPricePromotionsSection({
 
 function DeactivatePromotionButton({ promotionId }: { promotionId: number }) {
   const { t } = useLanguage();
-  const router = useRouter();
   const [state, formAction, pending] = useActionState(
-    async (prev: MoneyActionState, formData: FormData) => {
-      const result = await deactivateClassPricePromotion(prev, formData);
-      if (result.success) {
-        router.refresh();
-      }
-      return result;
-    },
+    deactivateClassPricePromotion,
     initialState,
   );
-
-  useEffect(() => {
-    if (state.error) {
-      // Keep inline feedback minimal; toast not used elsewhere for money actions.
-    }
-  }, [state.error]);
 
   return (
     <form action={formAction}>

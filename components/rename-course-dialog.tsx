@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -32,14 +31,12 @@ export function RenameCourseDialog({
   subject: string;
 }) {
   const { t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (prev: UpdateClassState, formData: FormData) => {
       const result = await updateClassSubject(prev, formData);
       if (result.success) {
         setOpen(false);
-        router.refresh();
       }
       return result;
     },

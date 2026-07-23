@@ -24,7 +24,6 @@ export function DeleteStudentButton({
     if (state.success) {
       setOpen(false);
       router.push("/students");
-      router.refresh();
     }
   }, [state.success, router]);
 

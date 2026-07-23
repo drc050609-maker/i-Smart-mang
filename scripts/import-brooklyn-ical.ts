@@ -135,14 +135,16 @@ function inferSubject(calendarName: string, summary: string): string {
   if (/乐理/.test(hay)) return "Music Theory";
   if (/声乐|Singing|Voice|vocal/i.test(hay)) return "Singing / Voice";
   if (/小提琴|Violin/i.test(hay)) return "Violin";
-  if (/古筝|Zither/i.test(hay)) return "Zither";
+  if (/古筝|Guzheng|Zither/i.test(hay)) return "Guzheng";
   if (/架子鼓|Drum/i.test(hay) || (/鼓/.test(hay) && !/古筝/.test(hay))) {
     return "Drums";
   }
   if (/吉他|Guitar/i.test(hay)) return "Guitar";
   if (/大提琴|Cello/i.test(hay)) return "Cello";
+  if (/画画|美术|\bArt\b/i.test(hay)) return "Art";
   if (/钢琴|Piano/i.test(hay)) return "Piano";
   // Default from teacher calendar instrument guess
+  if (/画画|美术/.test(calendarName)) return "Art";
   if (/吉他/.test(calendarName)) return "Guitar";
   if (/钢琴/.test(calendarName)) return "Piano";
   return "Piano";
@@ -151,7 +153,7 @@ function inferSubject(calendarName: string, summary: string): string {
 function cleanStudentToken(token: string) {
   return token
     .replace(
-      /声乐|钢琴|吉他|小提琴|大提琴|古筝|架子鼓|试课|乐理|小组课?|老师转?/g,
+      /声乐|钢琴|吉他|小提琴|大提琴|古筝|架子鼓|画画|美术|试课|乐理|小组课?|老师转?/g,
       " ",
     )
     .replace(/[（(].*?[）)]/g, " ")
@@ -261,7 +263,7 @@ function personKey(firstName: string, lastName: string | null) {
 function teacherLookupKey(firstName: string, lastName: string | null) {
   return personKey(firstName, lastName)
     .replace(
-      /[-–—\s]*(小提琴|钢琴|吉他|古筝|架子鼓|声乐|大提琴|鼓|piano|violin|guitar|cello|drums?|voice|singing)\s*$/iu,
+      /[-–—\s]*(小提琴|钢琴|吉他|古筝|架子鼓|声乐|大提琴|鼓|画画|美术|piano|violin|guitar|cello|drums?|guzheng|zither|voice|singing|art)\s*$/iu,
       "",
     )
     .replace(/\s+/g, " ")

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -157,7 +156,6 @@ export function ScheduleCalendar({
   students: ScheduleStudent[];
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const gridRef = useRef<HTMLDivElement>(null);
   const dayColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragMovedRef = useRef(false);
@@ -194,10 +192,6 @@ export function ScheduleCalendar({
   const closeRescheduleDialog = useCallback(() => {
     setPendingReschedule(null);
   }, []);
-
-  const handleRescheduleSuccess = useCallback(() => {
-    router.refresh();
-  }, [router]);
 
   const closeClassDetail = useCallback(() => {
     setSelectedInstance(null);
@@ -872,7 +866,7 @@ export function ScheduleCalendar({
           key={`${pendingReschedule.instance.instanceKey}:${pendingReschedule.newDate}:${pendingReschedule.newStartTime}`}
           pending={pendingReschedule}
           onClose={closeRescheduleDialog}
-          onSuccess={handleRescheduleSuccess}
+          onSuccess={closeRescheduleDialog}
         />
       ) : null}
 

@@ -58,7 +58,6 @@ export function ConvertLeadChildDialog({
       setError(null);
       setOpen(false);
       router.push(`/students/${state.studentId}`);
-      router.refresh();
     }
   }, [router, state.error, state.studentId, state.success]);
 

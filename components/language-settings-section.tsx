@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 
 import {
   updateStaffLanguage,
@@ -21,7 +20,6 @@ export function LanguageSettingsSection({
   preferredLanguage: AppLanguage;
 }) {
   const { setLanguage, t } = useLanguage();
-  const router = useRouter();
   const [selectedLanguage, setSelectedLanguage] =
     useState<AppLanguage>(preferredLanguage);
   const [state, formAction, pending] = useActionState(
@@ -36,9 +34,8 @@ export function LanguageSettingsSection({
   useEffect(() => {
     if (state.success) {
       setLanguage(selectedLanguage);
-      router.refresh();
     }
-  }, [state.success, selectedLanguage, setLanguage, router]);
+  }, [state.success, selectedLanguage, setLanguage]);
 
   return (
     <section className="mt-8 rounded-lg border border-gray-200 p-4 dark:border-white/10">

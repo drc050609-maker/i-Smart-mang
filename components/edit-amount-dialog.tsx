@@ -1,7 +1,6 @@
 "use client";
 
 import { useActionState, useState, type ComponentProps } from "react";
-import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -49,14 +48,12 @@ export function EditAmountDialog({
   compact?: boolean;
 }) {
   const { language, t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [state, formAction, pending] = useActionState(
     async (prev: MoneyActionState, formData: FormData) => {
       const result = await action(prev, formData);
       if (result.success) {
         setOpen(false);
-        router.refresh();
       }
       return result;
     },

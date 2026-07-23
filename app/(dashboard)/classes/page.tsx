@@ -8,10 +8,12 @@ import {
 import { ClassesListTable } from "@/components/classes-list-table";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
+import { listKnownClassSubjects } from "@/lib/class-subject";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
 import type { ClassSearchRow } from "@/lib/class-list";
 import { sortTeachers } from "@/lib/person-name";
+import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 
 type TeacherEmbed = {
   first_name: string;
@@ -114,6 +116,10 @@ export default async function ClassesPage() {
 
   const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
+  const subjectOptions = listKnownClassSubjects([
+    ...listPriceSheetSubjects(),
+    ...((classes as ClassWithDetails[] | null)?.map((row) => row.subject) ?? []),
+  ]);
   const classRows: ClassSearchRow[] =
     (classes as ClassWithDetails[] | null)?.map((classRow) => {
       const teacher = firstOrNull(classRow.teachers);
@@ -144,7 +150,11 @@ export default async function ClassesPage() {
         <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
           {t("nav.classes")}
         </h1>
-        <AddClassDialog teachers={teacherOptions} rooms={roomOptions} />
+        <AddClassDialog
+          teachers={teacherOptions}
+          rooms={roomOptions}
+          subjects={subjectOptions}
+        />
       </div>
 
       {error ? (
