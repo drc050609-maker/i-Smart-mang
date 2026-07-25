@@ -3,10 +3,9 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { EditTeacherDialog } from "@/components/edit-teacher-dialog";
-import {
-  EditTeacherClassesDialog,
-  type TeacherClassOption,
-} from "@/components/edit-teacher-classes-dialog";
+import { EditTeacherClassesDialog } from "@/components/edit-teacher-classes-dialog";
+import { EditEnrollmentGradeDialog } from "@/components/edit-enrollment-grade-dialog";
+import type { RoomOption } from "@/components/add-class-dialog";
 import { TeacherPaycheckSection } from "@/components/teacher-paycheck-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
@@ -20,8 +19,11 @@ import {
 } from "@/lib/teacher-paycheck";
 import {
   formatClassSubject,
+  listKnownClassSubjects,
   uniqueClassesBySubject,
 } from "@/lib/class-subject";
+import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
+import { compareStudentNames, formatStudentName } from "@/lib/person-name";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -29,21 +31,6 @@ import { createClient } from "@/utils/supabase/server";
 import type { Database } from "@/types/database.types";
 
 type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
-
-type TeacherEmbed = {
-  id: number;
-  first_name: string;
-  last_name: string | null;
-};
-
-type ClassListRow = {
-  id: number;
-  subject: string;
-  teacher_id: number | null;
-  location_id: number | null;
-  rooms: RoomEmbed | RoomEmbed[] | null;
-  teachers: TeacherEmbed | TeacherEmbed[] | null;
-};
 
 type RoomEmbed = {
   room_number: string;
@@ -56,15 +43,24 @@ type ClassEmbed = {
   rooms: RoomEmbed | RoomEmbed[] | null;
 };
 
+type StudentEmbed = {
+  id: number;
+  "first name": string;
+  "last name": string | null;
+  is_active: boolean | null;
+};
+
+type EnrollmentRow = {
+  id: number;
+  grade_level: string | null;
+  is_active: boolean | null;
+  "class id": number | null;
+  students: StudentEmbed | StudentEmbed[] | null;
+};
+
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
-}
-
-function formatTeacherEmbedName(teacher: TeacherEmbed | null) {
-  if (!teacher) return null;
-  const last = teacher.last_name;
-  return last ? `${teacher.first_name} ${last}` : teacher.first_name;
 }
 
 function formatTeacherName(teacher: Pick<Teacher, "first_name" | "last_name">) {
@@ -111,17 +107,71 @@ export default async function TutorDetailPage({
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
+  const { data: teacher, error: teacherError } = await supabase
+    .from("teachers")
+    .select("id, first_name, last_name, dob, phone_number, is_active, location_id")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (teacherError) {
+    throw new Error(`Could not load teacher: ${teacherError.message}`);
+  }
+
+  if (!teacher) {
+    notFound();
+  }
+
+  const locationId = teacher.location_id;
+
   const [
-    { data: teacher, error: teacherError },
-    { data: classes, error: classesError },
-    { data: allClasses, error: allClassesError },
+    { data: classTeacherLinks },
+    { data: campusClassSubjects },
+    { data: rooms },
   ] = await Promise.all([
     supabase
-      .from("teachers")
-      .select("id, first_name, last_name, dob, phone_number, is_active, location_id")
-      .eq("id", teacherId)
-      .maybeSingle(),
-    supabase
+      .from("class_teachers")
+      .select("class_id")
+      .eq("teacher_id", teacherId),
+    locationId
+      ? supabase.from("classes").select("subject").eq("location_id", locationId)
+      : Promise.resolve({ data: [] as { subject: string }[] }),
+    locationId
+      ? supabase
+          .from("rooms")
+          .select("id, room_number, class_size")
+          .eq("location_id", locationId)
+          .order("room_number")
+      : Promise.resolve({ data: [] as RoomOption[] }),
+  ]);
+
+  const linkedClassIds = [
+    ...new Set(
+      ((classTeacherLinks as { class_id: number }[] | null) ?? []).map(
+        (row) => row.class_id,
+      ),
+    ),
+  ];
+
+  let classes: ClassEmbed[] | null = null;
+  let classesError: { message: string } | null = null;
+  if (linkedClassIds.length > 0) {
+    const result = await supabase
+      .from("classes")
+      .select(
+        `
+        id,
+        subject,
+        duration_minutes,
+        rooms ( room_number )
+      `,
+      )
+      .in("id", linkedClassIds)
+      .order("id");
+    classes = result.data as ClassEmbed[] | null;
+    classesError = result.error;
+  } else {
+    // Fallback for any rows not yet backfilled into class_teachers.
+    const result = await supabase
       .from("classes")
       .select(
         `
@@ -132,52 +182,61 @@ export default async function TutorDetailPage({
       `,
       )
       .eq("teacher_id", teacherId)
-      .order("id"),
-    supabase
-      .from("classes")
-      .select(
-        `
-        id,
-        subject,
-        teacher_id,
-        location_id,
-        rooms ( room_number ),
-        teachers!classes_teacher_id_fkey ( id, first_name, last_name )
-      `,
-      )
-      .order("subject"),
-  ]);
-
-  if (teacherError) {
-    throw new Error(`Could not load teacher: ${teacherError.message}`);
-  }
-
-  if (!teacher) {
-    notFound();
+      .order("id");
+    classes = result.data as ClassEmbed[] | null;
+    classesError = result.error;
   }
 
   const classRows = (classes as ClassEmbed[] | null) ?? [];
   const displayClassRows = uniqueClassesBySubject(classRows);
-  const classOptions: TeacherClassOption[] = (
-    (allClasses as ClassListRow[] | null) ?? []
-  )
-    .filter(
-      (classRow) =>
-        !teacher.location_id || classRow.location_id === teacher.location_id,
-    )
-    .map((classRow) => {
-      const room = firstOrNull(classRow.rooms);
-      const teacherEmbed = firstOrNull(classRow.teachers);
+  const subjectByClassId = new Map(
+    classRows.map((row) => [row.id, row.subject]),
+  );
 
+  let enrollmentRows: EnrollmentRow[] = [];
+  let enrollmentsError: { message: string } | null = null;
+  if (classRows.length > 0) {
+    const { data: enrollments, error } = await supabase
+      .from("enrollments")
+      .select(
+        'id, grade_level, is_active, "class id", students ( id, "first name", "last name", is_active )',
+      )
+      .in(
+        "class id",
+        classRows.map((row) => row.id),
+      )
+      .order("id");
+    enrollmentsError = error;
+    enrollmentRows = (enrollments as EnrollmentRow[] | null) ?? [];
+  }
+
+  const studentEnrollments = enrollmentRows
+    .map((enrollment) => {
+      const student = firstOrNull(enrollment.students);
+      const classId = enrollment["class id"];
+      if (!student || classId == null) return null;
       return {
-        id: classRow.id,
-        subject: classRow.subject,
-        teacher_id: classRow.teacher_id,
-        room_number: room?.room_number ?? null,
-        current_teacher_name: formatTeacherEmbedName(teacherEmbed),
+        enrollmentId: enrollment.id,
+        gradeLevel: enrollment.grade_level,
+        isActive: enrollment.is_active !== false && student.is_active !== false,
+        subject: subjectByClassId.get(classId) ?? `Class ${classId}`,
+        student,
       };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
+      const nameCmp = compareStudentNames(a.student, b.student);
+      if (nameCmp !== 0) return nameCmp;
+      return a.subject.localeCompare(b.subject);
     });
-  const assignedClassIds = classRows.map((classRow) => classRow.id);
+  const subjectOptions = listKnownClassSubjects([
+    ...listPriceSheetSubjects(),
+    ...((campusClassSubjects as { subject: string }[] | null)?.map(
+      (row) => row.subject,
+    ) ?? []),
+  ]);
+  const roomOptions = (rooms as RoomOption[] | null) ?? [];
 
   let paycheckPeriods: TeacherPaycheckPeriodData[] = [];
   let defaultPayRates: TeacherGroupPayRates = {};
@@ -273,16 +332,10 @@ export default async function TutorDetailPage({
           </h2>
           <EditTeacherClassesDialog
             teacherId={teacherId}
-            classes={classOptions}
-            assignedClassIds={assignedClassIds}
+            subjects={subjectOptions}
+            rooms={roomOptions}
           />
         </div>
-
-        {allClassesError ? (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
-            {t("common.error.loadFailed", { entity: t("nav.classes"), message: allClassesError.message })}
-          </p>
-        ) : null}
 
         {classesError ? (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
@@ -364,6 +417,87 @@ export default async function TutorDetailPage({
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-8">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {t("nav.students")}
+        </h2>
+
+        {enrollmentsError ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+            {t("common.error.loadFailed", { entity: t("nav.students"), message: enrollmentsError.message })}
+          </p>
+        ) : studentEnrollments.length === 0 ? (
+          <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
+            {t("common.noStudentsYet")}
+          </p>
+        ) : (
+          <div className="mt-4 flow-root">
+            <div className="-mx-4 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                <table className="min-w-full divide-y divide-gray-300 dark:divide-white/15">
+                  <thead>
+                    <tr>
+                      <th
+                        scope="col"
+                        className="py-3.5 pr-3 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0 dark:text-white"
+                      >
+                        {t("common.student")}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {t("common.subject")}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {t("common.gradeLevel")}
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 dark:divide-white/10">
+                    {studentEnrollments.map((row) => (
+                      <tr
+                        key={row.enrollmentId}
+                        className={row.isActive ? undefined : "opacity-60"}
+                      >
+                        <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
+                          <Link
+                            href={`/students/${row.student.id}`}
+                            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                          >
+                            {formatStudentName(row.student)}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {formatClassSubject(row.subject, staff.preferred_language)}
+                        </td>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          <div className="flex items-center gap-3">
+                            <span>{row.gradeLevel?.trim() || "—"}</span>
+                            <EditEnrollmentGradeDialog
+                              enrollmentId={row.enrollmentId}
+                              studentId={row.student.id}
+                              subjectLabel={formatClassSubject(
+                                row.subject,
+                                staff.preferred_language,
+                              )}
+                              gradeLevel={row.gradeLevel}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

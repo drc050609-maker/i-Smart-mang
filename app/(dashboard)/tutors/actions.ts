@@ -21,7 +21,6 @@ export type CreateTeacherState = ActionState & {
   teacher?: CreatedTeacher;
 };
 export type UpdateTeacherState = ActionState;
-export type UpdateTeacherClassesState = ActionState;
 
 function revalidateTeacher(teacherId: number) {
   revalidatePath("/tutors");
@@ -145,70 +144,6 @@ export async function updateTeacher(
   return { success: true };
 }
 
-function parseClassIds(formData: FormData) {
-  return formData
-    .getAll("classIds")
-    .map((value) => Number(value))
-    .filter((id) => Number.isInteger(id) && id > 0);
-}
-
-export async function updateTeacherClasses(
-  _prevState: UpdateTeacherClassesState,
-  formData: FormData,
-): Promise<UpdateTeacherClassesState> {
-  const teacherId = Number(formData.get("teacherId"));
-  const classIds = parseClassIds(formData);
-
-  if (!Number.isInteger(teacherId) || teacherId <= 0) {
-    return { error: "Invalid tutor." };
-  }
-
-  const client = getServiceClient();
-  if ("error" in client) {
-    return { error: client.error };
-  }
-
-  const { data: currentClasses, error: currentError } = await client.supabase
-    .from("classes")
-    .select("id")
-    .eq("teacher_id", teacherId);
-
-  if (currentError) {
-    return { error: currentError.message };
-  }
-
-  const currentIds = new Set((currentClasses ?? []).map((row) => row.id));
-  const nextIds = new Set(classIds);
-  const toUnassign = [...currentIds].filter((id) => !nextIds.has(id));
-  const toAssign = [...nextIds].filter((id) => !currentIds.has(id));
-
-  if (toUnassign.length > 0) {
-    const { error: unassignError } = await client.supabase
-      .from("classes")
-      .update({ teacher_id: null })
-      .eq("teacher_id", teacherId)
-      .in("id", toUnassign);
-
-    if (unassignError) {
-      return { error: unassignError.message };
-    }
-  }
-
-  if (toAssign.length > 0) {
-    const { error: assignError } = await client.supabase
-      .from("classes")
-      .update({ teacher_id: teacherId })
-      .in("id", toAssign);
-
-    if (assignError) {
-      return { error: assignError.message };
-    }
-  }
-
-  revalidateTeacherClasses(teacherId);
-  return { success: true };
-}
-
 export async function unassignTeacherClass(
   _prevState: ActionState,
   formData: FormData,
@@ -229,14 +164,49 @@ export async function unassignTeacherClass(
     return { error: client.error };
   }
 
-  const { error: unassignError } = await client.supabase
-    .from("classes")
-    .update({ teacher_id: null })
-    .eq("id", classId)
+  const { error: unlinkError } = await client.supabase
+    .from("class_teachers")
+    .delete()
+    .eq("class_id", classId)
     .eq("teacher_id", teacherId);
 
-  if (unassignError) {
-    return { error: unassignError.message };
+  if (unlinkError) {
+    return { error: unlinkError.message };
+  }
+
+  const { data: classRow } = await client.supabase
+    .from("classes")
+    .select("teacher_id")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (classRow?.teacher_id === teacherId) {
+    const { data: remaining } = await client.supabase
+      .from("class_teachers")
+      .select("teacher_id")
+      .eq("class_id", classId)
+      .order("is_primary", { ascending: false })
+      .limit(1);
+
+    const nextPrimaryId = remaining?.[0]?.teacher_id ?? null;
+
+    const { error: unassignError } = await client.supabase
+      .from("classes")
+      .update({ teacher_id: nextPrimaryId })
+      .eq("id", classId)
+      .eq("teacher_id", teacherId);
+
+    if (unassignError) {
+      return { error: unassignError.message };
+    }
+
+    if (nextPrimaryId != null) {
+      await client.supabase
+        .from("class_teachers")
+        .update({ is_primary: true })
+        .eq("class_id", classId)
+        .eq("teacher_id", nextPrimaryId);
+    }
   }
 
   revalidateTeacherClasses(teacherId);

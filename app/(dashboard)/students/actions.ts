@@ -210,6 +210,8 @@ export type UpdateStudentAddressState = ActionState;
 
 export type UpdateStudentDobState = ActionState;
 
+export type UpdateStudentNameState = ActionState;
+
 function revalidateStudent(studentId: number) {
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
@@ -402,6 +404,44 @@ export async function updateStudentDob(
   return { success: true };
 }
 
+export async function updateStudentName(
+  _prevState: UpdateStudentNameState,
+  formData: FormData,
+): Promise<UpdateStudentNameState> {
+  const studentId = Number(formData.get("studentId"));
+  const firstName = formData.get("firstName")?.toString().trim();
+  const lastName = formData.get("lastName")?.toString().trim() || null;
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!firstName) {
+    return { error: "First name is required." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error: studentError } = await client.supabase
+    .from("students")
+    .update({
+      "first name": firstName,
+      "last name": lastName,
+    })
+    .eq("id", studentId);
+
+  if (studentError) {
+    return { error: studentError.message };
+  }
+
+  revalidateStudent(studentId);
+  revalidatePath("/classes", "layout");
+  return { success: true };
+}
+
 export type UpdateEnrollmentGradeState = ActionState;
 
 export async function updateEnrollmentGradeLevel(
@@ -444,6 +484,7 @@ export async function updateEnrollmentGradeLevel(
   }
 
   revalidateStudent(studentId);
+  revalidatePath("/tutors", "layout");
   return { success: true };
 }
 

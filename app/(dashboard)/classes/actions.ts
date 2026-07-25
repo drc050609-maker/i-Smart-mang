@@ -71,10 +71,37 @@ function parseDurationMinutes(value: FormDataEntryValue | null) {
   return minutes;
 }
 
+function parseTeacherIds(formData: FormData) {
+  const fromMulti = formData
+    .getAll("teacherIds")
+    .map((value) => Number(value))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+  if (fromMulti.length > 0) {
+    return [...new Set(fromMulti)];
+  }
+
+  const single = parseOptionalId(formData.get("teacherId"));
+  if (single === undefined) {
+    return undefined;
+  }
+  if (single === null) {
+    return [] as number[];
+  }
+  return [single];
+}
+
 function parseClassFields(formData: FormData) {
+  const teacherIds = parseTeacherIds(formData);
   return {
     subject: formData.get("subject")?.toString().trim(),
-    teacherId: parseOptionalId(formData.get("teacherId")),
+    teacherIds,
+    teacherId:
+      teacherIds === undefined
+        ? undefined
+        : teacherIds.length > 0
+          ? teacherIds[0]
+          : null,
     roomId: parseOptionalId(formData.get("roomId")),
     durationMinutes: parseDurationMinutes(formData.get("durationMinutes")),
     lessonType: parseLessonType(formData.get("lessonType")),
@@ -103,7 +130,7 @@ function validateClassFields(fields: ReturnType<typeof parseClassFields>) {
     return { error: "Invalid class track." };
   }
 
-  if (fields.teacherId === undefined) {
+  if (fields.teacherIds === undefined) {
     return { error: "Invalid teacher." };
   }
 
@@ -113,6 +140,39 @@ function validateClassFields(fields: ReturnType<typeof parseClassFields>) {
 
   if (fields.durationMinutes === undefined) {
     return { error: "Duration must be a whole number of minutes." };
+  }
+
+  return null;
+}
+
+async function syncClassTeachers(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  classId: number,
+  teacherIds: number[],
+) {
+  const { error: deleteError } = await supabase
+    .from("class_teachers")
+    .delete()
+    .eq("class_id", classId);
+
+  if (deleteError) {
+    return deleteError.message;
+  }
+
+  if (teacherIds.length === 0) {
+    return null;
+  }
+
+  const { error: insertError } = await supabase.from("class_teachers").insert(
+    teacherIds.map((teacherId, index) => ({
+      class_id: classId,
+      teacher_id: teacherId,
+      is_primary: index === 0,
+    })),
+  );
+
+  if (insertError) {
+    return insertError.message;
   }
 
   return null;
@@ -143,22 +203,38 @@ export async function createClass(
     return { error: "Campus location could not be resolved." };
   }
 
-  const { error: classError } = await client.supabase.from("classes").insert({
-    subject: fields.subject!,
-    teacher_id: fields.teacherId,
-    room_id: fields.roomId,
-    duration_minutes: fields.durationMinutes,
-    lesson_type: fields.lessonType as LessonType,
-    class_track: fields.classTrack as ClassTrack,
-    location_id: locationId,
-  });
+  const { data: createdClass, error: classError } = await client.supabase
+    .from("classes")
+    .insert({
+      subject: fields.subject!,
+      teacher_id: fields.teacherId,
+      room_id: fields.roomId,
+      duration_minutes: fields.durationMinutes,
+      lesson_type: fields.lessonType as LessonType,
+      class_track: fields.classTrack as ClassTrack,
+      location_id: locationId,
+    })
+    .select("id")
+    .single();
 
   if (classError) {
     return { error: classError.message };
   }
 
+  const syncError = await syncClassTeachers(
+    client.supabase,
+    createdClass.id,
+    fields.teacherIds ?? [],
+  );
+  if (syncError) {
+    return { error: syncError };
+  }
+
   revalidatePath("/classes");
   revalidatePath("/tutors", "layout");
+  for (const teacherId of fields.teacherIds ?? []) {
+    revalidatePath(`/tutors/${teacherId}`);
+  }
   revalidatePath("/tuitions");
   return { success: true };
 }
@@ -230,25 +306,41 @@ export async function createClassWithPricing(
     return { error: "Campus location could not be resolved." };
   }
 
-  const { error: classError } = await client.supabase.from("classes").insert({
-    subject: fields.subject!,
-    teacher_id: fields.teacherId,
-    room_id: fields.roomId,
-    duration_minutes: fields.durationMinutes,
-    lesson_type: fields.lessonType as LessonType,
-    class_track: fields.classTrack as ClassTrack,
-    location_id: locationId,
-    single_price_cents: single.cents,
-    package_20_price_cents: isTrial ? null : package20Cents,
-    package_50_price_cents: isTrial ? null : package50Cents,
-  });
+  const { data: createdClass, error: classError } = await client.supabase
+    .from("classes")
+    .insert({
+      subject: fields.subject!,
+      teacher_id: fields.teacherId,
+      room_id: fields.roomId,
+      duration_minutes: fields.durationMinutes,
+      lesson_type: fields.lessonType as LessonType,
+      class_track: fields.classTrack as ClassTrack,
+      location_id: locationId,
+      single_price_cents: single.cents,
+      package_20_price_cents: isTrial ? null : package20Cents,
+      package_50_price_cents: isTrial ? null : package50Cents,
+    })
+    .select("id")
+    .single();
 
   if (classError) {
     return { error: classError.message };
   }
 
+  const syncError = await syncClassTeachers(
+    client.supabase,
+    createdClass.id,
+    fields.teacherIds ?? [],
+  );
+  if (syncError) {
+    return { error: syncError };
+  }
+
   revalidatePath("/classes");
   revalidatePath("/tutors", "layout");
+  for (const teacherId of fields.teacherIds ?? []) {
+    revalidatePath(`/tutors/${teacherId}`);
+  }
   revalidatePath("/tuitions");
   return { success: true };
 }
@@ -324,7 +416,19 @@ export async function updateClass(
     return { error: classError.message };
   }
 
+  const syncError = await syncClassTeachers(
+    client.supabase,
+    classId,
+    fields.teacherIds ?? [],
+  );
+  if (syncError) {
+    return { error: syncError };
+  }
+
   revalidateClass(classId);
+  for (const teacherId of fields.teacherIds ?? []) {
+    revalidatePath(`/tutors/${teacherId}`);
+  }
   return { success: true };
 }
 

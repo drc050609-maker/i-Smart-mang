@@ -13,10 +13,8 @@ import {
   createClass,
   type CreateClassState,
 } from "@/app/(dashboard)/classes/actions";
-import {
-  TeacherCombobox,
-  type TeacherOption,
-} from "@/components/teacher-combobox";
+import type { TeacherOption } from "@/components/teacher-combobox";
+import { TeacherMultiCombobox } from "@/components/teacher-multi-combobox";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import { LessonTypeField } from "@/components/lesson-type-field";
 import { ClassTrackField } from "@/components/class-track-field";
@@ -54,8 +52,8 @@ export function AddClassDialog({
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teacherOptions, setTeacherOptions] = useState(teachers);
-  const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
-    null,
+  const [selectedTeachers, setSelectedTeachers] = useState<TeacherOption[]>(
+    [],
   );
   const [selectedSubject, setSelectedSubject] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
@@ -79,14 +77,14 @@ export function AddClassDialog({
 
   function openDialog() {
     setError(null);
-    setSelectedTeacher(null);
+    setSelectedTeachers([]);
     setSelectedSubject("");
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
-    setSelectedTeacher(null);
+    setSelectedTeachers([]);
     setSelectedSubject("");
     setOpen(false);
   }
@@ -98,7 +96,7 @@ export function AddClassDialog({
 
     if (state.success) {
       formRef.current?.reset();
-      setSelectedTeacher(null);
+      setSelectedTeachers([]);
       setSelectedSubject("");
       setError(null);
       setOpen(false);
@@ -182,18 +180,21 @@ export function AddClassDialog({
 
                     <div>
                       <label htmlFor="classTeacher" className={labelClassName}>
-                        {t("common.teacher")}
+                        {t("common.teachers")}
                       </label>
                       <div className="mt-2">
-                        <TeacherCombobox
+                        <TeacherMultiCombobox
                           id="classTeacher"
                           teachers={teacherOptions}
-                          value={selectedTeacher}
-                          onChange={setSelectedTeacher}
+                          selected={selectedTeachers}
+                          onChange={setSelectedTeachers}
                           onTeacherAdded={handleTeacherAdded}
                           onQuickAddOpenChange={setQuickAddOpen}
                         />
                       </div>
+                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                        {t("common.assignMultipleTeachersHelp")}
+                      </p>
                       {teacherOptions.length === 0 ? (
                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                           {t("common.noTutorsAddFirst")}

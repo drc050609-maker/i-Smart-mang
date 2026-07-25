@@ -7,56 +7,47 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { ChevronDownIcon, PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 import {
-  createClass,
-  type CreateClassState,
-} from "@/app/(dashboard)/classes/actions";
-import type { RoomOption } from "@/components/add-class-dialog";
-import { ClassTrackField } from "@/components/class-track-field";
-import { LessonTypeField } from "@/components/lesson-type-field";
-import { SubjectCombobox } from "@/components/subject-combobox";
+  updateStudentName,
+  type UpdateStudentNameState,
+} from "@/app/(dashboard)/students/actions";
 import { useLanguage } from "@/components/language-provider";
 
 const inputClassName =
   "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
 
-const selectClassName = `${inputClassName} appearance-none pr-10`;
-
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
 
-const initialState: CreateClassState = {};
+const initialState: UpdateStudentNameState = {};
 
-export function EditTeacherClassesDialog({
-  teacherId,
-  subjects,
-  rooms,
+export function EditStudentNameDialog({
+  studentId,
+  firstName,
+  lastName,
 }: {
-  teacherId: number;
-  subjects: string[];
-  rooms: RoomOption[];
+  studentId: number;
+  firstName: string;
+  lastName: string | null;
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSubject, setSelectedSubject] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
-    createClass,
+    updateStudentName,
     initialState,
   );
 
   function openDialog() {
     setError(null);
-    setSelectedSubject("");
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
-    setSelectedSubject("");
     setOpen(false);
   }
 
@@ -66,8 +57,6 @@ export function EditTeacherClassesDialog({
     }
 
     if (state.success) {
-      formRef.current?.reset();
-      setSelectedSubject("");
       setError(null);
       setOpen(false);
     }
@@ -78,10 +67,10 @@ export function EditTeacherClassesDialog({
       <button
         type="button"
         onClick={openDialog}
-        className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
+        className="inline-flex items-center gap-x-1.5 rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
       >
-        <PlusIcon aria-hidden="true" className="size-4" />
-        {t("common.assignClasses")}
+        <PencilIcon aria-hidden="true" className="size-4" />
+        {t("common.edit")}
       </button>
 
       <Dialog open={open} onClose={closeDialog} className="relative z-50">
@@ -111,87 +100,55 @@ export function EditTeacherClassesDialog({
                 as="h3"
                 className="text-lg font-semibold text-gray-900 dark:text-white"
               >
-                {t("common.assignClasses")}
+                {t("common.editStudent")}
               </DialogTitle>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {t("common.createClassForTeacherHelp")}
-              </p>
 
               <form
+                key={`${studentId}-${firstName}-${lastName ?? ""}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
               >
-                <input type="hidden" name="teacherId" value={teacherId} />
+                <input type="hidden" name="studentId" value={studentId} />
 
-                <div>
-                  <label htmlFor="teacherClassSubject" className={labelClassName}>
-                    {t("common.subject")}
-                  </label>
-                  <div className="mt-2">
-                    <SubjectCombobox
-                      id="teacherClassSubject"
-                      subjects={subjects}
-                      value={selectedSubject}
-                      onChange={setSelectedSubject}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <LessonTypeField idPrefix="teacherAssignLessonType" />
-
-                <ClassTrackField idPrefix="teacherAssignClassTrack" />
-
-                <div>
-                  <label htmlFor="teacherClassRoom" className={labelClassName}>
-                    {t("common.room")}
-                  </label>
-                  <div className="relative mt-2">
-                    <select
-                      id="teacherClassRoom"
-                      name="roomId"
-                      defaultValue=""
-                      className={selectClassName}
+                <div className="grid gap-5 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="editStudentFirstName"
+                      className={labelClassName}
                     >
-                      <option value="">{t("common.unassigned")}</option>
-                      {rooms.map((room) => (
-                        <option key={room.id} value={room.id}>
-                          {t("common.room")} {room.room_number}{" "}
-                          {t("common.capacity", { count: room.class_size })}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDownIcon
-                      aria-hidden="true"
-                      className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
-                    />
+                      {t("common.firstName")}
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        id="editStudentFirstName"
+                        name="firstName"
+                        type="text"
+                        required
+                        defaultValue={firstName}
+                        autoComplete="given-name"
+                        className={inputClassName}
+                      />
+                    </div>
                   </div>
-                  {rooms.length === 0 ? (
-                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                      {t("common.noRoomsAvailable")}
-                    </p>
-                  ) : null}
-                </div>
 
-                <div>
-                  <label
-                    htmlFor="teacherClassDuration"
-                    className={labelClassName}
-                  >
-                    {t("common.duration")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="teacherClassDuration"
-                      name="durationMinutes"
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      required
-                      className={inputClassName}
-                    />
+                  <div>
+                    <label
+                      htmlFor="editStudentLastName"
+                      className={labelClassName}
+                    >
+                      {t("common.lastName")}
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        id="editStudentLastName"
+                        name="lastName"
+                        type="text"
+                        defaultValue={lastName ?? ""}
+                        autoComplete="family-name"
+                        className={inputClassName}
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -214,7 +171,7 @@ export function EditTeacherClassesDialog({
                     disabled={pending}
                     className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
                   >
-                    {pending ? t("common.saving") : t("common.saveClass")}
+                    {pending ? t("common.saving") : t("common.saveChanges")}
                   </button>
                 </div>
               </form>

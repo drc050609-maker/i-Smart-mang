@@ -13,10 +13,8 @@ import {
   updateClass,
   type UpdateClassState,
 } from "@/app/(dashboard)/classes/actions";
-import {
-  TeacherCombobox,
-  type TeacherOption,
-} from "@/components/teacher-combobox";
+import type { TeacherOption } from "@/components/teacher-combobox";
+import { TeacherMultiCombobox } from "@/components/teacher-multi-combobox";
 import type { RoomOption } from "@/components/add-class-dialog";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import { LessonTypeField } from "@/components/lesson-type-field";
@@ -29,6 +27,7 @@ export type ClassFormData = {
   id: number;
   subject: string;
   teacher_id: number | null;
+  teacher_ids: number[];
   room_id: number | null;
   duration_minutes: number | null;
   lesson_type: LessonType | null;
@@ -45,12 +44,14 @@ const labelClassName =
 
 const initialState: UpdateClassState = {};
 
-function findTeacher(
+function findTeachers(
   teachers: TeacherOption[],
-  teacherId: number | null,
-): TeacherOption | null {
-  if (teacherId === null) return null;
-  return teachers.find((teacher) => teacher.id === teacherId) ?? null;
+  teacherIds: number[],
+): TeacherOption[] {
+  const byId = new Map(teachers.map((teacher) => [teacher.id, teacher]));
+  return teacherIds
+    .map((id) => byId.get(id))
+    .filter((teacher): teacher is TeacherOption => teacher != null);
 }
 
 export function EditClassDialog({
@@ -69,8 +70,8 @@ export function EditClassDialog({
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [teacherOptions, setTeacherOptions] = useState(teachers);
-  const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
-    () => findTeacher(teachers, classData.teacher_id),
+  const [selectedTeachers, setSelectedTeachers] = useState<TeacherOption[]>(
+    () => findTeachers(teachers, classData.teacher_ids),
   );
   const [selectedSubject, setSelectedSubject] = useState(classData.subject);
   const formRef = useRef<HTMLFormElement>(null);
@@ -98,14 +99,14 @@ export function EditClassDialog({
 
   function openDialog() {
     setError(null);
-    setSelectedTeacher(findTeacher(teacherOptions, classData.teacher_id));
+    setSelectedTeachers(findTeachers(teacherOptions, classData.teacher_ids));
     setSelectedSubject(classData.subject);
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
-    setSelectedTeacher(findTeacher(teacherOptions, classData.teacher_id));
+    setSelectedTeachers(findTeachers(teacherOptions, classData.teacher_ids));
     setSelectedSubject(classData.subject);
     setOpen(false);
   }
@@ -171,7 +172,7 @@ export function EditClassDialog({
               </DialogTitle>
 
               <form
-                key={`${classData.id}-${classData.subject}-${classData.teacher_id}-${classData.room_id}-${classData.duration_minutes}-${classData.lesson_type}-${classData.class_track}`}
+                key={`${classData.id}-${classData.subject}-${classData.teacher_ids.join(",")}-${classData.room_id}-${classData.duration_minutes}-${classData.lesson_type}-${classData.class_track}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
@@ -205,18 +206,21 @@ export function EditClassDialog({
 
                 <div>
                   <label htmlFor="editClassTeacher" className={labelClassName}>
-                    {t("common.teacher")}
+                    {t("common.teachers")}
                   </label>
                   <div className="mt-2">
-                    <TeacherCombobox
+                    <TeacherMultiCombobox
                       id="editClassTeacher"
                       teachers={teacherOptions}
-                      value={selectedTeacher}
-                      onChange={setSelectedTeacher}
+                      selected={selectedTeachers}
+                      onChange={setSelectedTeachers}
                       onTeacherAdded={handleTeacherAdded}
                       onQuickAddOpenChange={setQuickAddOpen}
                     />
                   </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    {t("common.assignMultipleTeachersHelp")}
+                  </p>
                 </div>
 
                 <div>

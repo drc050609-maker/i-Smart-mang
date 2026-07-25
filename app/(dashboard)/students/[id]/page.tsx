@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 
 import { DeleteStudentButton } from "@/components/delete-student-button";
 import { EditStudentDobDialog } from "@/components/edit-student-dob-dialog";
+import { EditStudentNameDialog } from "@/components/edit-student-name-dialog";
 import { StudentAddressesSection } from "@/components/student-addresses-section";
 import { AddStudentAddressDialog } from "@/components/add-student-address-dialog";
 import { AddStudentClassesDialog } from "@/components/add-student-classes-dialog";
@@ -294,10 +295,17 @@ export default async function StudentDetailPage({
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             {formatStudentName(detail)}
           </h1>
-          <DeleteStudentButton
-            studentId={studentId}
-            studentName={formatStudentName(detail)}
-          />
+          <div className="flex flex-wrap items-center gap-3">
+            <EditStudentNameDialog
+              studentId={studentId}
+              firstName={detail["first name"]}
+              lastName={detail["last name"]}
+            />
+            <DeleteStudentButton
+              studentId={studentId}
+              studentName={formatStudentName(detail)}
+            />
+          </div>
         </div>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>

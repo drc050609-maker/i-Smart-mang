@@ -554,6 +554,42 @@ export type Database = {
           },
         ]
       }
+      class_teachers: {
+        Row: {
+          class_id: number
+          created_at: string
+          is_primary: boolean
+          teacher_id: number
+        }
+        Insert: {
+          class_id: number
+          created_at?: string
+          is_primary?: boolean
+          teacher_id: number
+        }
+        Update: {
+          class_id?: number
+          created_at?: string
+          is_primary?: boolean
+          teacher_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_teachers_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_session_records: {
         Row: {
           class_id: number

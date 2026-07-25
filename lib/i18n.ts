@@ -368,9 +368,11 @@ export type TranslationKey =
   | "common.editDateOfBirth"
   | "common.editClass"
   | "common.editTutor"
+  | "common.editStudent"
   | "common.editAddress"
   | "common.addAddress"
   | "common.assignClasses"
+  | "common.createClassForTeacherHelp"
   | "common.firstName"
   | "common.lastName"
   | "common.startingClassSessions"
@@ -493,6 +495,8 @@ export type TranslationKey =
   | "common.searchClassesFull"
   | "common.searchAndSelectClasses"
   | "common.searchAndSelectStudents"
+  | "common.searchAndSelectTeachers"
+  | "common.assignMultipleTeachersHelp"
   | "common.addNewTutorInline"
   | "common.noTutorsAddFirst"
   | "common.noRoomsAvailable"
@@ -1114,9 +1118,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editDateOfBirth": "Edit date of birth",
     "common.editClass": "Edit class",
     "common.editTutor": "Edit teacher",
+    "common.editStudent": "Edit student",
     "common.editAddress": "Edit address",
     "common.addAddress": "Add address",
     "common.assignClasses": "Assign classes",
+    "common.createClassForTeacherHelp":
+      "Create a new class for this teacher and set its duration.",
     "common.firstName": "First name",
     "common.lastName": "Last name",
     "common.startingClassSessions": "Starting class sessions",
@@ -1242,6 +1249,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.searchClassesFull": "Search classes by subject, track, teacher, room, or type",
     "common.searchAndSelectClasses": "Search and select classes",
     "common.searchAndSelectStudents": "Search and select students",
+    "common.searchAndSelectTeachers": "Search and select teachers",
+    "common.assignMultipleTeachersHelp":
+      "You can assign more than one teacher to this class. The first selected teacher is the primary teacher.",
     "common.addNewTutorInline": "Add new teacher",
     "common.noTutorsAddFirst": "No teachers yet. Add one first.",
     "common.noRoomsAvailable": "No rooms available.",
@@ -1894,9 +1904,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editDateOfBirth": "编辑出生日期",
     "common.editClass": "编辑课程",
     "common.editTutor": "编辑老师",
+    "common.editStudent": "编辑学生",
     "common.editAddress": "编辑地址",
     "common.addAddress": "添加地址",
     "common.assignClasses": "分配课程",
+    "common.createClassForTeacherHelp": "为该老师创建新课程并设置时长。",
     "common.firstName": "名",
     "common.lastName": "姓",
     "common.startingClassSessions": "初始课时",
@@ -2022,6 +2034,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.searchClassesFull": "按科目、类别、老师、教室或类型搜索课程",
     "common.searchAndSelectClasses": "搜索并选择课程",
     "common.searchAndSelectStudents": "搜索并选择学生",
+    "common.searchAndSelectTeachers": "搜索并选择老师",
+    "common.assignMultipleTeachersHelp":
+      "可以为同一门课分配多位老师。先选中的老师为主讲老师。",
     "common.addNewTutorInline": "添加新老师",
     "common.noTutorsAddFirst": "暂无老师，请先添加。",
     "common.noRoomsAvailable": "暂无可用教室。",

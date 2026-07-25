@@ -201,6 +201,7 @@ export default async function ClassDetailPage({
     { data: teachers },
     { data: rooms },
     { data: allStudents },
+    { data: classTeacherRows },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -244,6 +245,11 @@ export default async function ClassDetailPage({
       .select('id, "first name", "last name"')
       .eq("is_active", true)
       .order("id"),
+    supabase
+      .from("class_teachers")
+      .select("teacher_id, is_primary")
+      .eq("class_id", classId)
+      .order("is_primary", { ascending: false }),
   ]);
 
   if (classError) {
@@ -276,6 +282,24 @@ export default async function ClassDetailPage({
   const detail = classRow as ClassDetail;
   const teacher = firstOrNull(detail.teachers);
   const room = firstOrNull(detail.rooms);
+  const assignedTeacherIds = (() => {
+    const fromJoin = ((classTeacherRows as { teacher_id: number; is_primary: boolean }[] | null) ?? [])
+      .map((row) => row.teacher_id);
+    if (fromJoin.length > 0) {
+      return fromJoin;
+    }
+    return detail.teacher_id != null ? [detail.teacher_id] : [];
+  })();
+  const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
+  const assignedTeachers = assignedTeacherIds
+    .map((id) => teacherOptions.find((teacherOption) => teacherOption.id === id))
+    .filter((item): item is TeacherOption => item != null);
+  const assignedTeacherNames =
+    assignedTeachers.length > 0
+      ? assignedTeachers.map((item) => formatTeacherName(item)).join(", ")
+      : teacher
+        ? formatTeacherName(teacher)
+        : t("common.notAvailable");
 
   const subjectKey = classSubjectKey(detail.subject);
   let sameSubjectClasses: {
@@ -312,7 +336,6 @@ export default async function ClassDetailPage({
     }
   }
 
-  const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
   const subjectOptions = listKnownClassSubjects([
     ...listPriceSheetSubjects(),
@@ -386,6 +409,7 @@ export default async function ClassDetailPage({
                 id: detail.id,
                 subject: detail.subject,
                 teacher_id: detail.teacher_id,
+                teacher_ids: assignedTeacherIds,
                 room_id: detail.room_id,
                 duration_minutes: detail.duration_minutes,
                 lesson_type: detail.lesson_type as LessonType | null,
@@ -413,7 +437,7 @@ export default async function ClassDetailPage({
                   options={sameSubjectClasses}
                 />
               ) : (
-                formatTeacherName(teacher)
+                assignedTeacherNames
               )}
             </dd>
           </div>
