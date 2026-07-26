@@ -18,6 +18,7 @@ import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 type TeacherEmbed = {
   first_name: string;
   last_name: string | null;
+  is_active?: boolean | null;
 };
 
 type RoomEmbed = {
@@ -88,7 +89,7 @@ export default async function ClassesPage() {
       lesson_type,
       class_track,
       is_active,
-      teachers!classes_teacher_id_fkey ( first_name, last_name ),
+      teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
       rooms ( room_number ),
       class_schedules (
         id,
@@ -122,7 +123,9 @@ export default async function ClassesPage() {
   ]);
   const classRows: ClassSearchRow[] =
     (classes as ClassWithDetails[] | null)?.map((classRow) => {
-      const teacher = firstOrNull(classRow.teachers);
+      const teacherEmbed = firstOrNull(classRow.teachers);
+      const teacher =
+        teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
       const room = firstOrNull(classRow.rooms);
 
       return {

@@ -16,6 +16,7 @@ import { createClient } from "@/utils/supabase/server";
 type TeacherEmbed = {
   first_name: string;
   last_name: string | null;
+  is_active?: boolean | null;
 };
 
 type ClassRow = {
@@ -98,7 +99,7 @@ export default async function PaymentsPage() {
         single_price_cents,
         package_20_price_cents,
         package_50_price_cents,
-        teachers!classes_teacher_id_fkey ( first_name, last_name )
+        teachers!classes_teacher_id_fkey ( first_name, last_name, is_active )
       `,
       )
       .eq("is_active", true)
@@ -131,24 +132,30 @@ export default async function PaymentsPage() {
   ]);
 
   const payableClasses: PayableClassRow[] =
-    (classes as ClassRow[] | null)?.map((classRow) => ({
-      id: classRow.id,
-      subject: classRow.subject,
-      teacher_id: classRow.teacher_id,
-      duration_minutes: classRow.duration_minutes,
-      lesson_type: classRow.lesson_type,
-      class_track: classRow.class_track,
-      teacher: firstOrNull(classRow.teachers),
-      pricing: buildTuitionPricing(
-        classRow.duration_minutes,
-        classRow.lesson_type,
-        {
-          single_price_cents: classRow.single_price_cents,
-          package_20_price_cents: classRow.package_20_price_cents,
-          package_50_price_cents: classRow.package_50_price_cents,
-        },
-      ),
-    })) ?? [];
+    (classes as ClassRow[] | null)?.map((classRow) => {
+      const teacherEmbed = firstOrNull(classRow.teachers);
+      const teacher =
+        teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
+
+      return {
+        id: classRow.id,
+        subject: classRow.subject,
+        teacher_id: teacher ? classRow.teacher_id : null,
+        duration_minutes: classRow.duration_minutes,
+        lesson_type: classRow.lesson_type,
+        class_track: classRow.class_track,
+        teacher,
+        pricing: buildTuitionPricing(
+          classRow.duration_minutes,
+          classRow.lesson_type,
+          {
+            single_price_cents: classRow.single_price_cents,
+            package_20_price_cents: classRow.package_20_price_cents,
+            package_50_price_cents: classRow.package_50_price_cents,
+          },
+        ),
+      };
+    }) ?? [];
 
   const studentOptions: StudentOption[] =
     (students as StudentOption[] | null) ?? [];

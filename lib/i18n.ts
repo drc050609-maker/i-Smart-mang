@@ -61,6 +61,13 @@ export type TranslationKey =
   | "common.email"
   | "common.phone"
   | "common.teacher"
+  | "common.resume"
+  | "common.resumeHelp"
+  | "common.uploadResume"
+  | "common.replaceResume"
+  | "common.viewResume"
+  | "common.removeResume"
+  | "common.noResumeYet"
   | "common.room"
   | "common.subject"
   | "common.track"
@@ -791,6 +798,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.email": "Email",
     "common.phone": "Phone",
     "common.teacher": "Teacher",
+    "common.resume": "Resume",
+    "common.resumeHelp": "Upload a PDF resume for this teacher (max 10 MB).",
+    "common.uploadResume": "Upload resume",
+    "common.replaceResume": "Replace resume",
+    "common.viewResume": "View PDF",
+    "common.removeResume": "Remove resume",
+    "common.noResumeYet": "No resume uploaded yet.",
     "common.room": "Room",
     "common.subject": "Subject",
     "common.track": "Track",
@@ -1580,6 +1594,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.email": "邮箱",
     "common.phone": "电话",
     "common.teacher": "老师",
+    "common.resume": "简历",
+    "common.resumeHelp": "为这位老师上传 PDF 简历（最大 10 MB）。",
+    "common.uploadResume": "上传简历",
+    "common.replaceResume": "更换简历",
+    "common.viewResume": "查看 PDF",
+    "common.removeResume": "删除简历",
+    "common.noResumeYet": "尚未上传简历。",
     "common.room": "教室",
     "common.subject": "科目",
     "common.track": "类别",

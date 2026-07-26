@@ -1,0 +1,4851 @@
+{
+  "location_id": 2,
+  "teachers": [
+    {
+      "key": "williamyu_tuner",
+      "first_name": "William",
+      "last_name": "Yu",
+      "phone": "646-696-7134",
+      "is_active": false,
+      "notes": "SIDE CONTACT — 钢琴调音师傅 / piano tuner (not a teaching assignment)."
+    },
+    {
+      "key": "xushuyu",
+      "first_name": "徐舒妤",
+      "last_name": null,
+      "phone": null,
+      "notes": "Email: 17815858336@139.com",
+      "is_active": true
+    },
+    {
+      "key": "irisyu",
+      "first_name": "Iris",
+      "last_name": "Yu",
+      "phone": null,
+      "notes": "Jazz / Hip Hop (SI sheet; also noted on Chinese Dance roster)",
+      "is_active": true
+    },
+    {
+      "key": "anna",
+      "first_name": "Anna",
+      "last_name": null,
+      "phone": "347-410-4054",
+      "notes": "画画; 可代课 大学生",
+      "is_active": true
+    },
+    {
+      "key": "kiki",
+      "first_name": "Kiki",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "fifi",
+      "first_name": "FiFi",
+      "last_name": null,
+      "phone": "347-732-8784",
+      "notes": "钢琴声乐; Email: fitoremehmetaj15@gmail.com; Available: Mon/Tue/Wed/Sat/Sun",
+      "is_active": true
+    },
+    {
+      "key": "liu",
+      "first_name": "Liu",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "dustin",
+      "first_name": "Dustin",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "evie",
+      "first_name": "Evie",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "ben",
+      "first_name": "Ben",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "reynaldo",
+      "first_name": "Reynaldo",
+      "last_name": "Budhi",
+      "phone": "718-619-7033",
+      "notes": "钢琴吉他 周二到周天。",
+      "is_active": true
+    },
+    {
+      "key": "david",
+      "first_name": "David",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "jialin",
+      "first_name": "JiaLin",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "william",
+      "first_name": "William",
+      "last_name": null,
+      "phone": "917-859-5557",
+      "notes": "小提琴; Available: Thu",
+      "is_active": true
+    },
+    {
+      "key": "angela",
+      "first_name": "Angela",
+      "last_name": null,
+      "phone": null,
+      "notes": null,
+      "is_active": true
+    },
+    {
+      "key": "xu",
+      "first_name": "徐老师",
+      "last_name": null,
+      "phone": "929-427-9921",
+      "notes": "吉他; Available: Mon/Wed/Thu/Sat",
+      "is_active": true
+    },
+    {
+      "key": "richard",
+      "first_name": "Richard",
+      "last_name": null,
+      "phone": "917-985-6529",
+      "notes": "架子鼓; Available: Wed",
+      "is_active": true
+    }
+  ],
+  "students": [
+    {
+      "key": "cynthia chen",
+      "first_name": "Cynthia",
+      "last_name": "Chen",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Cynthia Chen"
+    },
+    {
+      "key": "chloe zhao",
+      "first_name": "Chloe",
+      "last_name": "Zhao",
+      "phone_number": "347-471-6266",
+      "dob": "2020-05-20",
+      "raw_name": "Chloe Zhao"
+    },
+    {
+      "key": "valerie wu",
+      "first_name": "Valerie",
+      "last_name": "Wu",
+      "phone_number": "415-823-8399",
+      "dob": "2021-07-28",
+      "raw_name": "Valerie Wu"
+    },
+    {
+      "key": "eliana pan",
+      "first_name": "Eliana",
+      "last_name": "Pan",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Eliana Pan"
+    },
+    {
+      "key": "mackenzie forquignon",
+      "first_name": "Mackenzie",
+      "last_name": "Forquignon",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Mackenzie Forquignon"
+    },
+    {
+      "key": "anthena wu",
+      "first_name": "Anthena",
+      "last_name": "Wu",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Anthena Wu"
+    },
+    {
+      "key": "flora lee",
+      "first_name": "Flora",
+      "last_name": "Lee",
+      "phone_number": "917-818-7180",
+      "dob": "2019-06-20",
+      "raw_name": "Flora Lee"
+    },
+    {
+      "key": "gianna leung",
+      "first_name": "Gianna",
+      "last_name": "Leung",
+      "phone_number": null,
+      "dob": "2020-06-05",
+      "raw_name": "Gianna Leung"
+    },
+    {
+      "key": "chloe li",
+      "first_name": "Chloe",
+      "last_name": "Li",
+      "phone_number": "646-460-6577",
+      "dob": "2020-04-13",
+      "raw_name": "Chloe Li"
+    },
+    {
+      "key": "jacquenlynn huay",
+      "first_name": "Jacquenlynn",
+      "last_name": "Huay",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Jacquenlynn Huay"
+    },
+    {
+      "key": "chloe tang",
+      "first_name": "Chloe",
+      "last_name": "Tang",
+      "phone_number": "917-327-5785",
+      "dob": "2019-09-28",
+      "raw_name": "Chloe Tang"
+    },
+    {
+      "key": "irene li",
+      "first_name": "Irene",
+      "last_name": "Li",
+      "phone_number": "732-829-2550",
+      "dob": "2020-07-10",
+      "raw_name": "Irene Li"
+    },
+    {
+      "key": "mina liu",
+      "first_name": "Mina",
+      "last_name": "Liu",
+      "phone_number": "917-916-3666",
+      "dob": "2020-12-14",
+      "raw_name": "Mina Liu"
+    },
+    {
+      "key": "abbie lan",
+      "first_name": "Abbie",
+      "last_name": "Lan",
+      "phone_number": "718-666-9678",
+      "dob": "2020-02-22",
+      "raw_name": "Abbie Lan"
+    },
+    {
+      "key": "victoria wu",
+      "first_name": "Victoria",
+      "last_name": "Wu",
+      "phone_number": "929-427-4778",
+      "dob": "2021-03-08",
+      "raw_name": "Victoria Wu"
+    },
+    {
+      "key": "cecilia wu",
+      "first_name": "Cecilia",
+      "last_name": "Wu",
+      "phone_number": "929-427-4778",
+      "dob": "2019-12-14",
+      "raw_name": "Cecilia Wu"
+    },
+    {
+      "key": "mia liang",
+      "first_name": "Mia",
+      "last_name": "Liang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Mia Liang"
+    },
+    {
+      "key": "emily bai",
+      "first_name": "Emily",
+      "last_name": "Bai",
+      "phone_number": "929-491-8880",
+      "dob": "2020-11-18",
+      "raw_name": "Emily Bai"
+    },
+    {
+      "key": "hannah ye",
+      "first_name": "Hannah",
+      "last_name": "Ye",
+      "phone_number": "917-624-3716",
+      "dob": "2012-05-15",
+      "raw_name": "Hannah Ye"
+    },
+    {
+      "key": "cindy bai",
+      "first_name": "Cindy",
+      "last_name": "Bai",
+      "phone_number": "929-491-8880",
+      "dob": "2014-10-03",
+      "raw_name": "Cindy Bai"
+    },
+    {
+      "key": "rena teng",
+      "first_name": "Rena",
+      "last_name": "Teng",
+      "phone_number": "646-338-7260",
+      "dob": "2017-06-02",
+      "raw_name": "Rena Teng"
+    },
+    {
+      "key": "tiya teng",
+      "first_name": "Tiya",
+      "last_name": "Teng",
+      "phone_number": "646-338-7260",
+      "dob": "2015-12-03",
+      "raw_name": "Tiya Teng"
+    },
+    {
+      "key": "chloe mak",
+      "first_name": "Chloe",
+      "last_name": "Mak",
+      "phone_number": "646-724-5568",
+      "dob": "2025-09-10",
+      "raw_name": "Chloe Mak"
+    },
+    {
+      "key": "grace chen",
+      "first_name": "Grace",
+      "last_name": "Chen",
+      "phone_number": "347-326-0249",
+      "dob": "2014-12-28",
+      "raw_name": "Grace Chen"
+    },
+    {
+      "key": "grace kuang",
+      "first_name": "Grace",
+      "last_name": "Kuang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Grace Kuang"
+    },
+    {
+      "key": "sophia yang",
+      "first_name": "Sophia",
+      "last_name": "Yang",
+      "phone_number": "929-366-5100",
+      "dob": "1978-12-24",
+      "raw_name": "Sophia Yang"
+    },
+    {
+      "key": "jolene li",
+      "first_name": "Jolene",
+      "last_name": "Li",
+      "phone_number": "346-510-6867",
+      "dob": "2016-12-03",
+      "raw_name": "Jolene Li"
+    },
+    {
+      "key": "kaylee",
+      "first_name": "Kaylee",
+      "last_name": null,
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Kaylee"
+    },
+    {
+      "key": "anzil",
+      "first_name": "Anzil",
+      "last_name": null,
+      "phone_number": "646-203-9680",
+      "dob": "2020-07-23",
+      "raw_name": "Anzil"
+    },
+    {
+      "key": "annie ye",
+      "first_name": "Annie",
+      "last_name": "Ye",
+      "phone_number": "646-744-9163",
+      "dob": "2020-06-12",
+      "raw_name": "Annie Ye"
+    },
+    {
+      "key": "alina lin",
+      "first_name": "Alina",
+      "last_name": "Lin",
+      "phone_number": "347-337-5891",
+      "dob": "2021-07-12",
+      "raw_name": "Alina Lin"
+    },
+    {
+      "key": "ariella he",
+      "first_name": "Ariella",
+      "last_name": "He",
+      "phone_number": "917-239-7068",
+      "dob": "2022-05-02",
+      "raw_name": "Ariella He"
+    },
+    {
+      "key": "terra zhou",
+      "first_name": "Terra",
+      "last_name": "Zhou",
+      "phone_number": "646-247-3901",
+      "dob": "2018-04-04",
+      "raw_name": "Terra Zhou"
+    },
+    {
+      "key": "ophelia zhou",
+      "first_name": "Ophelia",
+      "last_name": "Zhou",
+      "phone_number": "646-247-3901",
+      "dob": "2021-07-28",
+      "raw_name": "Ophelia Zhou"
+    },
+    {
+      "key": "kalika li",
+      "first_name": "Kalika",
+      "last_name": "Li",
+      "phone_number": "718-501-1004",
+      "dob": "2015-06-18",
+      "raw_name": "Kalika Li"
+    },
+    {
+      "key": "agnes li",
+      "first_name": "Agnes",
+      "last_name": "Li",
+      "phone_number": "347-419-3746",
+      "dob": "2019-01-17",
+      "raw_name": "Agnes Li"
+    },
+    {
+      "key": "belle lin",
+      "first_name": "Belle",
+      "last_name": "Lin",
+      "phone_number": "929-327-4380",
+      "dob": "2017-10-07",
+      "raw_name": "Belle Lin"
+    },
+    {
+      "key": "ava chen",
+      "first_name": "Ava",
+      "last_name": "Chen",
+      "phone_number": "347-326-0249",
+      "dob": "2018-01-19",
+      "raw_name": "Ava Chen"
+    },
+    {
+      "key": "fiona zheng",
+      "first_name": "Fiona",
+      "last_name": "Zheng",
+      "phone_number": "917-459-0381",
+      "dob": "2017-09-14",
+      "raw_name": "Fiona Zheng"
+    },
+    {
+      "key": "esther zhu",
+      "first_name": "Esther",
+      "last_name": "Zhu",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Esther Zhu"
+    },
+    {
+      "key": "angelica",
+      "first_name": "Angelica",
+      "last_name": null,
+      "phone_number": "267-528-6995",
+      "dob": "2021-06-01",
+      "raw_name": "Angelica"
+    },
+    {
+      "key": "harper cheng",
+      "first_name": "Harper",
+      "last_name": "Cheng",
+      "phone_number": "716-430-4856",
+      "dob": "2021-09-11",
+      "raw_name": "Harper Cheng"
+    },
+    {
+      "key": "carina liu",
+      "first_name": "Carina",
+      "last_name": "Liu",
+      "phone_number": "917-324-2290",
+      "dob": "2021-08-14",
+      "raw_name": "Carina Liu"
+    },
+    {
+      "key": "irene huang",
+      "first_name": "Irene",
+      "last_name": "Huang",
+      "phone_number": "917-306-3069",
+      "dob": "2022-12-20",
+      "raw_name": "Irene Huang"
+    },
+    {
+      "key": "evanne chen",
+      "first_name": "Evanne",
+      "last_name": "Chen",
+      "phone_number": "917-960-6125",
+      "dob": "2022-07-18",
+      "raw_name": "Evanne Chen"
+    },
+    {
+      "key": "lueva zhou",
+      "first_name": "Lueva",
+      "last_name": "Zhou",
+      "phone_number": "347-955-7264",
+      "dob": "2022-08-25",
+      "raw_name": "Lueva Zhou"
+    },
+    {
+      "key": "joey ye",
+      "first_name": "Joey",
+      "last_name": "Ye",
+      "phone_number": "646-209-9537",
+      "dob": "2021-06-16",
+      "raw_name": "Joey Ye"
+    },
+    {
+      "key": "yona zhu",
+      "first_name": "Yona",
+      "last_name": "Zhu",
+      "phone_number": "646-897-0833",
+      "dob": "2022-07-12",
+      "raw_name": "Yona Zhu"
+    },
+    {
+      "key": "evelyn jiang",
+      "first_name": "Evelyn",
+      "last_name": "Jiang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Evelyn Jiang"
+    },
+    {
+      "key": "chloe lin",
+      "first_name": "Chloe",
+      "last_name": "Lin",
+      "phone_number": "646-468-1246",
+      "dob": "2021-02-20",
+      "raw_name": "Chloe Lin"
+    },
+    {
+      "key": "melody huang",
+      "first_name": "Melody",
+      "last_name": "Huang",
+      "phone_number": "917-592-9092",
+      "dob": "2019-08-12",
+      "raw_name": "Melody Huang"
+    },
+    {
+      "key": "joanna lin",
+      "first_name": "Joanna",
+      "last_name": "Lin",
+      "phone_number": "347-206-8388",
+      "dob": "2018-11-01",
+      "raw_name": "Joanna Lin"
+    },
+    {
+      "key": "alice huang",
+      "first_name": "Alice",
+      "last_name": "Huang",
+      "phone_number": "917-625-8865",
+      "dob": "2020-11-18",
+      "raw_name": "Alice Huang"
+    },
+    {
+      "key": "yori zhu",
+      "first_name": "Yori",
+      "last_name": "Zhu",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Yori Zhu"
+    },
+    {
+      "key": "rachel ian",
+      "first_name": "Rachel",
+      "last_name": "Ian",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Rachel Ian"
+    },
+    {
+      "key": "stephanie liang",
+      "first_name": "Stephanie",
+      "last_name": "Liang",
+      "phone_number": "646-719-4565",
+      "dob": "2016-03-18",
+      "raw_name": "Stephanie Liang"
+    },
+    {
+      "key": "miti liang",
+      "first_name": "Miti",
+      "last_name": "Liang",
+      "phone_number": "646-719-4565",
+      "dob": "2017-05-21",
+      "raw_name": "Miti Liang"
+    },
+    {
+      "key": "crystal man",
+      "first_name": "Crystal",
+      "last_name": "Man",
+      "phone_number": "917-435-3047",
+      "dob": "2017-09-10",
+      "raw_name": "Crystal Man"
+    },
+    {
+      "key": "alina liu",
+      "first_name": "Alina",
+      "last_name": "Liu",
+      "phone_number": "646-549-9592",
+      "dob": "2018-02-23",
+      "raw_name": "Alina Liu"
+    },
+    {
+      "key": "austina pan",
+      "first_name": "Austina",
+      "last_name": "Pan",
+      "phone_number": "929-702-8079",
+      "dob": "2019-03-27",
+      "raw_name": "Austina Pan"
+    },
+    {
+      "key": "sophia lin",
+      "first_name": "Sophia",
+      "last_name": "Lin",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Sophia Lin"
+    },
+    {
+      "key": "dianca ouyang",
+      "first_name": "Dianca",
+      "last_name": "Ouyang",
+      "phone_number": "347-247-4954",
+      "dob": "2021-12-23",
+      "raw_name": "Dianca Ouyang"
+    },
+    {
+      "key": "sophia xin xie",
+      "first_name": "Sophia",
+      "last_name": "Xin Xie",
+      "phone_number": "917-995-6328",
+      "dob": "2016-10-24",
+      "raw_name": "Sophia Xin Xie"
+    },
+    {
+      "key": "clara ren",
+      "first_name": "Clara",
+      "last_name": "Ren",
+      "phone_number": "917-292-6183",
+      "dob": "2020-02-10",
+      "raw_name": "Clara Ren"
+    },
+    {
+      "key": "johnny jiang",
+      "first_name": "Johnny",
+      "last_name": "Jiang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Johnny Jiang"
+    },
+    {
+      "key": "ling yang",
+      "first_name": "Ling",
+      "last_name": "Yang",
+      "phone_number": "347-348-9803",
+      "dob": "2019-11-06",
+      "raw_name": "Ling Yang"
+    },
+    {
+      "key": "kingsley wang",
+      "first_name": "Kingsley",
+      "last_name": "Wang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Kingsley Wang"
+    },
+    {
+      "key": "alverie chen",
+      "first_name": "Alverie",
+      "last_name": "Chen",
+      "phone_number": "917-213-3896",
+      "dob": "2019-01-07",
+      "raw_name": "Alverie Chen"
+    },
+    {
+      "key": "elaine jiang",
+      "first_name": "Elaine",
+      "last_name": "Jiang",
+      "phone_number": "917-379-5888",
+      "dob": "2016-10-27",
+      "raw_name": "Elaine Jiang"
+    },
+    {
+      "key": "wendy lu",
+      "first_name": "Wendy",
+      "last_name": "Lu",
+      "phone_number": "646-207-8153",
+      "dob": "2018-06-08",
+      "raw_name": "Wendy Lu"
+    },
+    {
+      "key": "maggie lu",
+      "first_name": "Maggie",
+      "last_name": "Lu",
+      "phone_number": "646-207-8153",
+      "dob": "2016-04-28",
+      "raw_name": "Maggie Lu"
+    },
+    {
+      "key": "oscar lin",
+      "first_name": "Oscar",
+      "last_name": "Lin",
+      "phone_number": "917-595-6915",
+      "dob": "2018-05-02",
+      "raw_name": "Oscar Lin"
+    },
+    {
+      "key": "olivia chen",
+      "first_name": "Olivia",
+      "last_name": "Chen",
+      "phone_number": "917-595-6915",
+      "dob": "2020-10-01",
+      "raw_name": "Olivia Chen"
+    },
+    {
+      "key": "angela lin",
+      "first_name": "Angela",
+      "last_name": "Lin",
+      "phone_number": "917-595-6915",
+      "dob": "2013-11-04",
+      "raw_name": "Angela Lin"
+    },
+    {
+      "key": "ashley chen",
+      "first_name": "Ashley",
+      "last_name": "Chen",
+      "phone_number": "917-595-6915",
+      "dob": "2019-11-04",
+      "raw_name": "Ashley Chen"
+    },
+    {
+      "key": "thor mikaylou",
+      "first_name": "Thor",
+      "last_name": "Mikaylou",
+      "phone_number": "347-330-9131",
+      "dob": "2020-11-21",
+      "raw_name": "Thor Mikaylou"
+    },
+    {
+      "key": "mia chen",
+      "first_name": "Mia",
+      "last_name": "Chen",
+      "phone_number": "347-681-5638",
+      "dob": "2018-09-04",
+      "raw_name": "Mia Chen"
+    },
+    {
+      "key": "ashley jiang",
+      "first_name": "Ashley",
+      "last_name": "Jiang",
+      "phone_number": "917-868-4194",
+      "dob": "2013-07-10",
+      "raw_name": "Ashley Jiang"
+    },
+    {
+      "key": "melanie huang",
+      "first_name": "Melanie",
+      "last_name": "Huang",
+      "phone_number": "646-750-0146",
+      "dob": "2013-10-28",
+      "raw_name": "Melanie Huang"
+    },
+    {
+      "key": "isabella zhang",
+      "first_name": "Isabella",
+      "last_name": "Zhang",
+      "phone_number": "917-916-3343",
+      "dob": "2013-09-20",
+      "raw_name": "Isabella Zhang"
+    },
+    {
+      "key": "iris huang",
+      "first_name": "Iris",
+      "last_name": "Huang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Iris Huang"
+    },
+    {
+      "key": "owen gao",
+      "first_name": "Owen",
+      "last_name": "Gao",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Owen Gao"
+    },
+    {
+      "key": "marni zeng",
+      "first_name": "Marni",
+      "last_name": "Zeng",
+      "phone_number": "646-826-9939",
+      "dob": "2019-06-05",
+      "raw_name": "Marni Zeng"
+    },
+    {
+      "key": "alvin chen",
+      "first_name": "Alvin",
+      "last_name": "Chen",
+      "phone_number": "718-608-4228",
+      "dob": "2019-03-03",
+      "raw_name": "Alvin Chen"
+    },
+    {
+      "key": "kenzo ns",
+      "first_name": "Kenzo",
+      "last_name": "Ns",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Kenzo Ns"
+    },
+    {
+      "key": "nathan yang",
+      "first_name": "Nathan",
+      "last_name": "Yang",
+      "phone_number": "646-620-8499",
+      "dob": "2011-09-06",
+      "raw_name": "Nathan Yang"
+    },
+    {
+      "key": "elena yang",
+      "first_name": "Elena",
+      "last_name": "Yang",
+      "phone_number": "646-620-8499",
+      "dob": "2013-11-01",
+      "raw_name": "Elena Yang"
+    },
+    {
+      "key": "jenny weng",
+      "first_name": "Jenny",
+      "last_name": "Weng",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Jenny Weng"
+    },
+    {
+      "key": "zoey chen",
+      "first_name": "Zoey",
+      "last_name": "Chen",
+      "phone_number": "718-612-1567",
+      "dob": "2020-06-22",
+      "raw_name": "Zoey Chen"
+    },
+    {
+      "key": "crystal zheng",
+      "first_name": "Crystal",
+      "last_name": "Zheng",
+      "phone_number": null,
+      "dob": "2015-10-25",
+      "raw_name": "Crystal Zheng"
+    },
+    {
+      "key": "kaylee calderon",
+      "first_name": "Kaylee",
+      "last_name": "Calderon",
+      "phone_number": "929-507-8210",
+      "dob": "2019-12-20",
+      "raw_name": "Kaylee Calderon"
+    },
+    {
+      "key": "kelly ng",
+      "first_name": "Kelly",
+      "last_name": "Ng",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Kelly Ng"
+    },
+    {
+      "key": "irvin lau",
+      "first_name": "Irvin",
+      "last_name": "Lau",
+      "phone_number": "917-655-3286",
+      "dob": "2018-09-12",
+      "raw_name": "Irvin Lau"
+    },
+    {
+      "key": "keith fok",
+      "first_name": "Keith",
+      "last_name": "Fok",
+      "phone_number": "929-327-5639",
+      "dob": "2018-09-20",
+      "raw_name": "Keith Fok"
+    },
+    {
+      "key": "stormi lin",
+      "first_name": "Stormi",
+      "last_name": "Lin",
+      "phone_number": "646-204-7260",
+      "dob": "2020-12-09",
+      "raw_name": "Stormi Lin"
+    },
+    {
+      "key": "yan yan",
+      "first_name": "Yan",
+      "last_name": "Yan",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Yan Yan"
+    },
+    {
+      "key": "yanfeng lin",
+      "first_name": "YanFeng",
+      "last_name": "Lin",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "YanFeng Lin"
+    },
+    {
+      "key": "justin huang",
+      "first_name": "Justin",
+      "last_name": "Huang",
+      "phone_number": "347-686-9376",
+      "dob": "2017-06-28",
+      "raw_name": "Justin Huang"
+    },
+    {
+      "key": "stanley wang",
+      "first_name": "Stanley",
+      "last_name": "Wang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Stanley Wang"
+    },
+    {
+      "key": "lucas shi",
+      "first_name": "Lucas",
+      "last_name": "Shi",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Lucas Shi"
+    },
+    {
+      "key": "joseph gao",
+      "first_name": "Joseph",
+      "last_name": "Gao",
+      "phone_number": "347-681-6633",
+      "dob": "2008-09-13",
+      "raw_name": "Joseph Gao"
+    },
+    {
+      "key": "hengyi zhang",
+      "first_name": "Hengyi",
+      "last_name": "Zhang",
+      "phone_number": "646-409-5192",
+      "dob": "2011-10-31",
+      "raw_name": "Hengyi Zhang"
+    },
+    {
+      "key": "irene cheng",
+      "first_name": "Irene",
+      "last_name": "Cheng",
+      "phone_number": "646-413-8372",
+      "dob": "2015-01-18",
+      "raw_name": "Irene Cheng"
+    },
+    {
+      "key": "benjamin chen",
+      "first_name": "Benjamin",
+      "last_name": "Chen",
+      "phone_number": "718-679-8566",
+      "dob": "2019-01-17",
+      "raw_name": "Benjamin Chen"
+    },
+    {
+      "key": "lawrence zheng",
+      "first_name": "Lawrence",
+      "last_name": "Zheng",
+      "phone_number": "917-402-1511",
+      "dob": "2015-08-06",
+      "raw_name": "Lawrence Zheng"
+    },
+    {
+      "key": "justin deng",
+      "first_name": "Justin",
+      "last_name": "Deng",
+      "phone_number": "718-730-2870",
+      "dob": "2022-01-21",
+      "raw_name": "Justin Deng"
+    },
+    {
+      "key": "julian he",
+      "first_name": "Julian",
+      "last_name": "He",
+      "phone_number": "347-712-8767",
+      "dob": "2013-06-28",
+      "raw_name": "Julian He"
+    },
+    {
+      "key": "alice wang",
+      "first_name": "Alice",
+      "last_name": "Wang",
+      "phone_number": "347-364-8788",
+      "dob": "2019-08-10",
+      "raw_name": "Alice Wang"
+    },
+    {
+      "key": "christina li",
+      "first_name": "Christina",
+      "last_name": "Li",
+      "phone_number": "917-293-5155",
+      "dob": "2015-07-02",
+      "raw_name": "Christina Li"
+    },
+    {
+      "key": "roberto de la rosa lugo",
+      "first_name": "Roberto",
+      "last_name": "De La Rosa Lugo",
+      "phone_number": "718-916-0579",
+      "dob": "2018-09-09",
+      "raw_name": "Roberto De La Rosa Lugo"
+    },
+    {
+      "key": "ivan lian",
+      "first_name": "Ivan",
+      "last_name": "Lian",
+      "phone_number": "646-321-4345",
+      "dob": "2018-10-01",
+      "raw_name": "Ivan Lian"
+    },
+    {
+      "key": "noah man",
+      "first_name": "Noah",
+      "last_name": "Man",
+      "phone_number": "646-577-7788",
+      "dob": "2019-04-02",
+      "raw_name": "Noah Man"
+    },
+    {
+      "key": "alpha tan",
+      "first_name": "Alpha",
+      "last_name": "Tan",
+      "phone_number": "917-690-1079",
+      "dob": "2018-12-22",
+      "raw_name": "Alpha Tan"
+    },
+    {
+      "key": "lawrence li",
+      "first_name": "Lawrence",
+      "last_name": "Li",
+      "phone_number": null,
+      "dob": "2017-06-26",
+      "raw_name": "Lawrence Li"
+    },
+    {
+      "key": "isla zhang",
+      "first_name": "Isla",
+      "last_name": "Zhang",
+      "phone_number": "917-957-0701",
+      "dob": "2020-06-12",
+      "raw_name": "Isla Zhang"
+    },
+    {
+      "key": "zhilin zhao",
+      "first_name": "Zhilin",
+      "last_name": "Zhao",
+      "phone_number": "917-318-9477",
+      "dob": "2015-12-17",
+      "raw_name": "Zhilin Zhao"
+    },
+    {
+      "key": "selena zheng",
+      "first_name": "Selena",
+      "last_name": "Zheng",
+      "phone_number": "917-477-9098",
+      "dob": "2013-09-21",
+      "raw_name": "Selena Zheng"
+    },
+    {
+      "key": "rachel yang",
+      "first_name": "Rachel",
+      "last_name": "Yang",
+      "phone_number": "917-513-8996",
+      "dob": "2015-10-09",
+      "raw_name": "Rachel Yang"
+    },
+    {
+      "key": "jenny wang",
+      "first_name": "Jenny",
+      "last_name": "Wang",
+      "phone_number": "646-243-9398",
+      "dob": "2016-05-27",
+      "raw_name": "Jenny Wang"
+    },
+    {
+      "key": "steven you",
+      "first_name": "Steven",
+      "last_name": "You",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Steven You"
+    },
+    {
+      "key": "alex dong",
+      "first_name": "Alex",
+      "last_name": "Dong",
+      "phone_number": "646-427-0031",
+      "dob": null,
+      "raw_name": "Alex Dong"
+    },
+    {
+      "key": "carina ren",
+      "first_name": "Carina",
+      "last_name": "Ren",
+      "phone_number": "646-270-1434",
+      "dob": "2013-11-14",
+      "raw_name": "Carina Ren"
+    },
+    {
+      "key": "vienna xin",
+      "first_name": "Vienna",
+      "last_name": "Xin",
+      "phone_number": "917-349-7728",
+      "dob": "2010-05-22",
+      "raw_name": "Vienna Xin"
+    },
+    {
+      "key": "zi jun huang",
+      "first_name": "Zi",
+      "last_name": "Jun Huang",
+      "phone_number": "347-486-9376",
+      "dob": "2015-03-17",
+      "raw_name": "Zi Jun Huang"
+    },
+    {
+      "key": "layla zhao",
+      "first_name": "Layla",
+      "last_name": "Zhao",
+      "phone_number": "917-582-1666",
+      "dob": "2020-02-10",
+      "raw_name": "Layla Zhao"
+    },
+    {
+      "key": "aiden jian",
+      "first_name": "Aiden",
+      "last_name": "Jian",
+      "phone_number": "929-888-1253",
+      "dob": "2021-01-19",
+      "raw_name": "Aiden Jian"
+    },
+    {
+      "key": "hilary wang",
+      "first_name": "Hilary",
+      "last_name": "Wang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Hilary Wang"
+    },
+    {
+      "key": "kimberly li",
+      "first_name": "Kimberly",
+      "last_name": "Li",
+      "phone_number": "917-400-0677",
+      "dob": "2017-06-15",
+      "raw_name": "Kimberly Li"
+    },
+    {
+      "key": "william zhou",
+      "first_name": "William",
+      "last_name": "Zhou",
+      "phone_number": "917-789-1819",
+      "dob": "2014-10-25",
+      "raw_name": "William Zhou"
+    },
+    {
+      "key": "harrison yang",
+      "first_name": "Harrison",
+      "last_name": "Yang",
+      "phone_number": "706-449-1148",
+      "dob": "2017-02-18",
+      "raw_name": "Harrison Yang"
+    },
+    {
+      "key": "aiden lee",
+      "first_name": "Aiden",
+      "last_name": "Lee",
+      "phone_number": "646-217-2205",
+      "dob": "2012-10-14",
+      "raw_name": "Aiden Lee"
+    },
+    {
+      "key": "anna chen",
+      "first_name": "Anna",
+      "last_name": "Chen",
+      "phone_number": "646-431-7913",
+      "dob": "2009-09-20",
+      "raw_name": "Anna Chen"
+    },
+    {
+      "key": "una wu",
+      "first_name": "Una",
+      "last_name": "Wu",
+      "phone_number": "347-216-3888",
+      "dob": "2009-11-25",
+      "raw_name": "Una Wu"
+    },
+    {
+      "key": "aiden zhong",
+      "first_name": "Aiden",
+      "last_name": "Zhong",
+      "phone_number": "917-488-5666",
+      "dob": "2015-01-01",
+      "raw_name": "Aiden Zhong"
+    },
+    {
+      "key": "archie chan",
+      "first_name": "Archie",
+      "last_name": "Chan",
+      "phone_number": "917-587-0209",
+      "dob": "2021-02-25",
+      "raw_name": "Archie Chan"
+    },
+    {
+      "key": "hannah xu",
+      "first_name": "Hannah",
+      "last_name": "Xu",
+      "phone_number": "917-254-2117",
+      "dob": "2012-09-29",
+      "raw_name": "Hannah Xu"
+    },
+    {
+      "key": "alivia guo",
+      "first_name": "Alivia",
+      "last_name": "Guo",
+      "phone_number": "929-792-8180",
+      "dob": "2014-10-22",
+      "raw_name": "Alivia Guo"
+    },
+    {
+      "key": "rebecca wu",
+      "first_name": "Rebecca",
+      "last_name": "Wu",
+      "phone_number": "917-213-1760",
+      "dob": "2020-12-10",
+      "raw_name": "Rebecca Wu"
+    },
+    {
+      "key": "lucas lin",
+      "first_name": "Lucas",
+      "last_name": "Lin",
+      "phone_number": "646-492-9866",
+      "dob": "2011-05-02",
+      "raw_name": "Lucas Lin"
+    },
+    {
+      "key": "katherine yu",
+      "first_name": "Katherine",
+      "last_name": "Yu",
+      "phone_number": "917-415-3732",
+      "dob": "2013-10-16",
+      "raw_name": "Katherine Yu"
+    },
+    {
+      "key": "james yu",
+      "first_name": "James",
+      "last_name": "Yu",
+      "phone_number": "917-415-3732",
+      "dob": "2016-07-09",
+      "raw_name": "James Yu"
+    },
+    {
+      "key": "callie feng",
+      "first_name": "Callie",
+      "last_name": "Feng",
+      "phone_number": "347-335-6765",
+      "dob": "2009-10-02",
+      "raw_name": "Callie Feng"
+    },
+    {
+      "key": "ethan wei",
+      "first_name": "Ethan",
+      "last_name": "Wei",
+      "phone_number": "917-385-8293",
+      "dob": "2019-10-04",
+      "raw_name": "Ethan Wei"
+    },
+    {
+      "key": "catherine zhu",
+      "first_name": "Catherine",
+      "last_name": "Zhu",
+      "phone_number": "917-815-2816",
+      "dob": "2011-09-09",
+      "raw_name": "Catherine Zhu"
+    },
+    {
+      "key": "elton deng",
+      "first_name": "Elton",
+      "last_name": "Deng",
+      "phone_number": "917-815-2816",
+      "dob": "2016-07-29",
+      "raw_name": "Elton Deng"
+    },
+    {
+      "key": "elwyn wang",
+      "first_name": "Elwyn",
+      "last_name": "Wang",
+      "phone_number": "347-421-8219",
+      "dob": "2019-09-29",
+      "raw_name": "Elwyn Wang"
+    },
+    {
+      "key": "amy chen",
+      "first_name": "Amy",
+      "last_name": "Chen",
+      "phone_number": "646-886-9966",
+      "dob": "2020-09-26",
+      "raw_name": "Amy Chen"
+    },
+    {
+      "key": "rebacca dong",
+      "first_name": "Rebacca",
+      "last_name": "Dong",
+      "phone_number": "646-321-1163",
+      "dob": "2019-05-01",
+      "raw_name": "Rebacca Dong"
+    },
+    {
+      "key": "erica lin",
+      "first_name": "Erica",
+      "last_name": "Lin",
+      "phone_number": "917-993-4399",
+      "dob": "2019-08-11",
+      "raw_name": "Erica Lin"
+    },
+    {
+      "key": "dawson wu",
+      "first_name": "Dawson",
+      "last_name": "Wu",
+      "phone_number": "646-371-3986",
+      "dob": "2015-03-20",
+      "raw_name": "Dawson Wu"
+    },
+    {
+      "key": "eugenia huang",
+      "first_name": "Eugenia",
+      "last_name": "Huang",
+      "phone_number": "646-280-7558",
+      "dob": "2014-10-28",
+      "raw_name": "Eugenia Huang"
+    },
+    {
+      "key": "yi fan huang",
+      "first_name": "Yi",
+      "last_name": "Fan Huang",
+      "phone_number": "718-200-2365",
+      "dob": "2009-12-31",
+      "raw_name": "Yi Fan Huang"
+    },
+    {
+      "key": "jayden zheng",
+      "first_name": "Jayden",
+      "last_name": "Zheng",
+      "phone_number": "917-868-9308",
+      "dob": "2017-12-26",
+      "raw_name": "Jayden Zheng"
+    },
+    {
+      "key": "anthony wu",
+      "first_name": "Anthony",
+      "last_name": "Wu",
+      "phone_number": "347-217-7777",
+      "dob": "2018-01-03",
+      "raw_name": "Anthony Wu"
+    },
+    {
+      "key": "jeffery xie wu",
+      "first_name": "Jeffery",
+      "last_name": "Xie Wu",
+      "phone_number": "917-938-0020",
+      "dob": "2008-11-07",
+      "raw_name": "Jeffery Xie Wu"
+    },
+    {
+      "key": "ansel dong",
+      "first_name": "Ansel",
+      "last_name": "Dong",
+      "phone_number": "718-737-5894",
+      "dob": "2018-03-26",
+      "raw_name": "Ansel Dong"
+    },
+    {
+      "key": "kevin li",
+      "first_name": "Kevin",
+      "last_name": "Li",
+      "phone_number": "917-402-8335",
+      "dob": "2016-07-29",
+      "raw_name": "Kevin Li"
+    },
+    {
+      "key": "po ping than",
+      "first_name": "Po",
+      "last_name": "Ping Than",
+      "phone_number": "646-369-2775",
+      "dob": null,
+      "raw_name": "Po Ping Than"
+    },
+    {
+      "key": "ting mei lin",
+      "first_name": "Ting",
+      "last_name": "Mei Lin",
+      "phone_number": "718-922-1623",
+      "dob": null,
+      "raw_name": "Ting Mei Lin"
+    },
+    {
+      "key": "jayden li",
+      "first_name": "Jayden",
+      "last_name": "Li",
+      "phone_number": "917-224-6331",
+      "dob": "2013-09-03",
+      "raw_name": "Jayden Li"
+    },
+    {
+      "key": "belle luo",
+      "first_name": "Belle",
+      "last_name": "Luo",
+      "phone_number": "718-536-7622",
+      "dob": "2015-04-02",
+      "raw_name": "Belle Luo"
+    },
+    {
+      "key": "queena jian",
+      "first_name": "Queena",
+      "last_name": "Jian",
+      "phone_number": "347-249-2801",
+      "dob": "2019-08-27",
+      "raw_name": "Queena Jian"
+    },
+    {
+      "key": "aiden chen",
+      "first_name": "Aiden",
+      "last_name": "Chen",
+      "phone_number": "646-322-5393",
+      "dob": null,
+      "raw_name": "Aiden Chen"
+    },
+    {
+      "key": "david zheng",
+      "first_name": "David",
+      "last_name": "Zheng",
+      "phone_number": "347-247-4956",
+      "dob": "2018-05-02",
+      "raw_name": "David Zheng"
+    },
+    {
+      "key": "aiden ruan",
+      "first_name": "Aiden",
+      "last_name": "Ruan",
+      "phone_number": "646-707-6740",
+      "dob": "2015-09-04",
+      "raw_name": "Aiden Ruan"
+    },
+    {
+      "key": "stephany zheng",
+      "first_name": "Stephany",
+      "last_name": "Zheng",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Stephany Zheng"
+    },
+    {
+      "key": "lucas man",
+      "first_name": "Lucas",
+      "last_name": "Man",
+      "phone_number": "646-577-7788",
+      "dob": "2021-01-25",
+      "raw_name": "Lucas Man"
+    },
+    {
+      "key": "erick chen",
+      "first_name": "Erick",
+      "last_name": "Chen",
+      "phone_number": "929-245-6478",
+      "dob": "2019-02-01",
+      "raw_name": "Erick Chen"
+    },
+    {
+      "key": "anjaylia li",
+      "first_name": "Anjaylia",
+      "last_name": "Li",
+      "phone_number": "917-238-6232",
+      "dob": "2015-03-14",
+      "raw_name": "Anjaylia Li"
+    },
+    {
+      "key": "doris wang",
+      "first_name": "Doris",
+      "last_name": "Wang",
+      "phone_number": "646-309-1299",
+      "dob": "1989-09-11",
+      "raw_name": "Doris Wang"
+    },
+    {
+      "key": "bryan liu",
+      "first_name": "Bryan",
+      "last_name": "Liu",
+      "phone_number": null,
+      "dob": "2022-09-15",
+      "raw_name": "Bryan Liu"
+    },
+    {
+      "key": "karen liao",
+      "first_name": "Karen",
+      "last_name": "Liao",
+      "phone_number": "347-755-9356",
+      "dob": "2011-03-19",
+      "raw_name": "Karen Liao"
+    },
+    {
+      "key": "nicole wu",
+      "first_name": "Nicole",
+      "last_name": "Wu",
+      "phone_number": "646-392-2112",
+      "dob": "2010-07-20",
+      "raw_name": "Nicole Wu"
+    },
+    {
+      "key": "enoch huang",
+      "first_name": "Enoch",
+      "last_name": "Huang",
+      "phone_number": null,
+      "dob": "2020-07-29",
+      "raw_name": "Enoch Huang"
+    },
+    {
+      "key": "alexandra ng",
+      "first_name": "Alexandra",
+      "last_name": "Ng",
+      "phone_number": "646-520-6649",
+      "dob": "2020-07-16",
+      "raw_name": "Alexandra Ng"
+    },
+    {
+      "key": "joseph li",
+      "first_name": "Joseph",
+      "last_name": "Li",
+      "phone_number": "347-286-9202",
+      "dob": "2015-01-10",
+      "raw_name": "Joseph Li"
+    },
+    {
+      "key": "phebe li",
+      "first_name": "Phebe",
+      "last_name": "Li",
+      "phone_number": "347-286-9202",
+      "dob": "2013-11-11",
+      "raw_name": "Phebe Li"
+    },
+    {
+      "key": "hazel zhen",
+      "first_name": "Hazel",
+      "last_name": "Zhen",
+      "phone_number": "646-688-9133",
+      "dob": "2016-08-16",
+      "raw_name": "Hazel Zhen"
+    },
+    {
+      "key": "ruirui zhao",
+      "first_name": "Ruirui",
+      "last_name": "Zhao",
+      "phone_number": "347-322-4033",
+      "dob": "2008-12-19",
+      "raw_name": "Ruirui Zhao"
+    },
+    {
+      "key": "austin huang",
+      "first_name": "Austin",
+      "last_name": "Huang",
+      "phone_number": "646-287-5055",
+      "dob": "2019-08-10",
+      "raw_name": "Austin Huang"
+    },
+    {
+      "key": "arya chen",
+      "first_name": "Arya",
+      "last_name": "Chen",
+      "phone_number": "626-823-7130",
+      "dob": "2021-10-21",
+      "raw_name": "Arya Chen"
+    },
+    {
+      "key": "lucas liu",
+      "first_name": "Lucas",
+      "last_name": "Liu",
+      "phone_number": "917-216-7769",
+      "dob": "2011-05-02",
+      "raw_name": "Lucas Liu"
+    },
+    {
+      "key": "alice chen",
+      "first_name": "Alice",
+      "last_name": "Chen",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Alice Chen"
+    },
+    {
+      "key": "zi yang",
+      "first_name": "Zi",
+      "last_name": "Yang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Zi Yang"
+    },
+    {
+      "key": "shirley yang",
+      "first_name": "Shirley",
+      "last_name": "Yang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Shirley Yang"
+    },
+    {
+      "key": "matthew lei",
+      "first_name": "Matthew",
+      "last_name": "Lei",
+      "phone_number": "718-313-2318",
+      "dob": "2020-01-04",
+      "raw_name": "Matthew Lei"
+    },
+    {
+      "key": "eric xia",
+      "first_name": "Eric",
+      "last_name": "Xia",
+      "phone_number": "646-593-3851",
+      "dob": "2019-06-06",
+      "raw_name": "Eric Xia"
+    },
+    {
+      "key": "timothy chen",
+      "first_name": "Timothy",
+      "last_name": "Chen",
+      "phone_number": "917-517-5949",
+      "dob": "2018-11-16",
+      "raw_name": "Timothy Chen"
+    },
+    {
+      "key": "ryan yeung",
+      "first_name": "Ryan",
+      "last_name": "Yeung",
+      "phone_number": "917-215-6004",
+      "dob": "2015-02-16",
+      "raw_name": "Ryan Yeung"
+    },
+    {
+      "key": "eason yeung",
+      "first_name": "Eason",
+      "last_name": "Yeung",
+      "phone_number": "732-804-0969",
+      "dob": "2018-03-05",
+      "raw_name": "Eason Yeung"
+    },
+    {
+      "key": "jenny lin",
+      "first_name": "Jenny",
+      "last_name": "Lin",
+      "phone_number": "917-833-3758",
+      "dob": "2015-10-15",
+      "raw_name": "Jenny Lin"
+    },
+    {
+      "key": "doris liu",
+      "first_name": "Doris",
+      "last_name": "Liu",
+      "phone_number": "347-337-5891",
+      "dob": "2014-06-14",
+      "raw_name": "Doris Liu"
+    },
+    {
+      "key": "magellan you",
+      "first_name": "Magellan",
+      "last_name": "You",
+      "phone_number": "917-435-3047",
+      "dob": "2016-01-23",
+      "raw_name": "Magellan You"
+    },
+    {
+      "key": "katly you",
+      "first_name": "Katly",
+      "last_name": "You",
+      "phone_number": "917-310-8421",
+      "dob": "2016-01-19",
+      "raw_name": "Katly You"
+    },
+    {
+      "key": "shelydon li",
+      "first_name": "Shelydon",
+      "last_name": "Li",
+      "phone_number": "917-238-6232",
+      "dob": "2017-02-18",
+      "raw_name": "Shelydon Li"
+    },
+    {
+      "key": "brayden lee",
+      "first_name": "Brayden",
+      "last_name": "Lee",
+      "phone_number": "646-217-2205",
+      "dob": "2016-11-05",
+      "raw_name": "Brayden Lee"
+    },
+    {
+      "key": "winnie wu",
+      "first_name": "Winnie",
+      "last_name": "Wu",
+      "phone_number": "646-577-7086",
+      "dob": "2010-07-22",
+      "raw_name": "Winnie Wu"
+    },
+    {
+      "key": "vivi chan",
+      "first_name": "Vivi",
+      "last_name": "Chan",
+      "phone_number": "646-667-6916",
+      "dob": "2014-10-09",
+      "raw_name": "Vivi Chan"
+    },
+    {
+      "key": "jing xuan chen",
+      "first_name": "Jing",
+      "last_name": "Xuan Chen",
+      "phone_number": "917-238-5257",
+      "dob": "2015-09-01",
+      "raw_name": "Jing Xuan Chen"
+    },
+    {
+      "key": "ryan zhao",
+      "first_name": "Ryan",
+      "last_name": "Zhao",
+      "phone_number": "917-325-2095",
+      "dob": "2018-11-16",
+      "raw_name": "Ryan Zhao"
+    },
+    {
+      "key": "jeff liu",
+      "first_name": "Jeff",
+      "last_name": "Liu",
+      "phone_number": "917-698-8831",
+      "dob": "2010-12-03",
+      "raw_name": "Jeff Liu"
+    },
+    {
+      "key": "ian lau",
+      "first_name": "Ian",
+      "last_name": "Lau",
+      "phone_number": "917-655-3286",
+      "dob": "2017-05-05",
+      "raw_name": "Ian Lau"
+    },
+    {
+      "key": "alfred ma",
+      "first_name": "Alfred",
+      "last_name": "Ma",
+      "phone_number": "917-945-8680",
+      "dob": "2016-04-18",
+      "raw_name": "Alfred Ma"
+    },
+    {
+      "key": "tina zhen",
+      "first_name": "Tina",
+      "last_name": "Zhen",
+      "phone_number": "917-617-7876",
+      "dob": "2009-03-08",
+      "raw_name": "Tina Zhen"
+    },
+    {
+      "key": "lovina li",
+      "first_name": "Lovina",
+      "last_name": "Li",
+      "phone_number": "917-287-7743",
+      "dob": "2011-02-14",
+      "raw_name": "Lovina Li"
+    },
+    {
+      "key": "angie ren",
+      "first_name": "Angie",
+      "last_name": "Ren",
+      "phone_number": "646-595-9676",
+      "dob": "2014-01-09",
+      "raw_name": "Angie Ren"
+    },
+    {
+      "key": "joanna jiang",
+      "first_name": "Joanna",
+      "last_name": "Jiang",
+      "phone_number": "646-684-6256",
+      "dob": "2014-08-28",
+      "raw_name": "Joanna Jiang"
+    },
+    {
+      "key": "rayson chen",
+      "first_name": "Rayson",
+      "last_name": "Chen",
+      "phone_number": "929-320-8947",
+      "dob": "2018-02-17",
+      "raw_name": "Rayson Chen"
+    },
+    {
+      "key": "johnny lin",
+      "first_name": "Johnny",
+      "last_name": "Lin",
+      "phone_number": "917-603-9768",
+      "dob": "2010-10-04",
+      "raw_name": "Johnny Lin"
+    },
+    {
+      "key": "haylie liang",
+      "first_name": "Haylie",
+      "last_name": "Liang",
+      "phone_number": "646-894-4488",
+      "dob": "2011-01-07",
+      "raw_name": "Haylie Liang"
+    },
+    {
+      "key": "perlie zhao",
+      "first_name": "Perlie",
+      "last_name": "Zhao",
+      "phone_number": "347-213-3774",
+      "dob": "2015-06-03",
+      "raw_name": "Perlie Zhao"
+    },
+    {
+      "key": "leon li",
+      "first_name": "Leon",
+      "last_name": "Li",
+      "phone_number": "646-709-6836",
+      "dob": "2021-08-04",
+      "raw_name": "Leon Li"
+    },
+    {
+      "key": "tristin zhao",
+      "first_name": "Tristin",
+      "last_name": "Zhao",
+      "phone_number": "646-713-0635",
+      "dob": "2018-08-26",
+      "raw_name": "Tristin Zhao"
+    },
+    {
+      "key": "jolene zhu",
+      "first_name": "Jolene",
+      "last_name": "Zhu",
+      "phone_number": "917-251-2779",
+      "dob": "2016-01-13",
+      "raw_name": "Jolene Zhu"
+    },
+    {
+      "key": "euphemia chen",
+      "first_name": "Euphemia",
+      "last_name": "Chen",
+      "phone_number": "207-689-8517",
+      "dob": "2013-01-06",
+      "raw_name": "Euphemia Chen"
+    },
+    {
+      "key": "yan yan ren",
+      "first_name": "Yan",
+      "last_name": "Yan Ren",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Yan Yan Ren"
+    },
+    {
+      "key": "irena you",
+      "first_name": "Irena",
+      "last_name": "You",
+      "phone_number": "917-310-8421",
+      "dob": "2016-01-19",
+      "raw_name": "Irena You"
+    },
+    {
+      "key": "alice zhang",
+      "first_name": "Alice",
+      "last_name": "Zhang",
+      "phone_number": "718-688-9476",
+      "dob": "2015-06-07",
+      "raw_name": "Alice Zhang"
+    },
+    {
+      "key": "caroline jin",
+      "first_name": "Caroline",
+      "last_name": "Jin",
+      "phone_number": "917-665-2207",
+      "dob": "2012-11-10",
+      "raw_name": "Caroline  Jin"
+    },
+    {
+      "key": "tanya zhang",
+      "first_name": "Tanya",
+      "last_name": "Zhang",
+      "phone_number": "646-226-0080",
+      "dob": "2018-05-20",
+      "raw_name": "Tanya Zhang"
+    },
+    {
+      "key": "kelly zeng",
+      "first_name": "Kelly",
+      "last_name": "Zeng",
+      "phone_number": "917-589-6564",
+      "dob": "2018-07-07",
+      "raw_name": "Kelly Zeng"
+    },
+    {
+      "key": "hazel du",
+      "first_name": "Hazel",
+      "last_name": "Du",
+      "phone_number": "646-881-0706",
+      "dob": "2016-01-01",
+      "raw_name": "Hazel Du"
+    },
+    {
+      "key": "zoe",
+      "first_name": "Zoe",
+      "last_name": null,
+      "phone_number": "646-409-7534",
+      "dob": null,
+      "raw_name": "Zoe"
+    },
+    {
+      "key": "claine yu",
+      "first_name": "Claine",
+      "last_name": "Yu",
+      "phone_number": "650-695-9371",
+      "dob": null,
+      "raw_name": "Claine Yu"
+    },
+    {
+      "key": "chen mei xie",
+      "first_name": "Chen",
+      "last_name": "Mei Xie",
+      "phone_number": "718-913-6860",
+      "dob": "1977-06-06",
+      "raw_name": "Chen Mei Xie"
+    },
+    {
+      "key": "li hong",
+      "first_name": "Li",
+      "last_name": "Hong",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Li Hong"
+    },
+    {
+      "key": "ai ling",
+      "first_name": "Ai",
+      "last_name": "Ling",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Ai Ling"
+    },
+    {
+      "key": "carol",
+      "first_name": "Carol",
+      "last_name": null,
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Carol"
+    },
+    {
+      "key": "chloe",
+      "first_name": "Chloe",
+      "last_name": null,
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Chloe"
+    },
+    {
+      "key": "amy lin",
+      "first_name": "Amy",
+      "last_name": "Lin",
+      "phone_number": "917-743-2473",
+      "dob": "1974-02-05",
+      "raw_name": "Amy Lin"
+    },
+    {
+      "key": "tracy chen",
+      "first_name": "Tracy",
+      "last_name": "Chen",
+      "phone_number": "650-666-5810",
+      "dob": "1983-04-05",
+      "raw_name": "Tracy Chen"
+    },
+    {
+      "key": "lucy lin",
+      "first_name": "Lucy",
+      "last_name": "Lin",
+      "phone_number": "347-891-9808",
+      "dob": "1975-07-04",
+      "raw_name": "Lucy Lin"
+    },
+    {
+      "key": "kelly",
+      "first_name": "Kelly",
+      "last_name": null,
+      "phone_number": "787-404-6802",
+      "dob": "1980-09-03",
+      "raw_name": "Kelly"
+    },
+    {
+      "key": "enya feng",
+      "first_name": "Enya",
+      "last_name": "Feng",
+      "phone_number": "919-221-8113",
+      "dob": null,
+      "raw_name": "Enya Feng"
+    },
+    {
+      "key": "xu liang",
+      "first_name": "Xu",
+      "last_name": "Liang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Xu Liang"
+    },
+    {
+      "key": "cheney cai",
+      "first_name": "Cheney",
+      "last_name": "Cai",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Cheney Cai"
+    },
+    {
+      "key": "ahuchi angel huang",
+      "first_name": "AhuChi",
+      "last_name": "Angel Huang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "AhuChi Angel Huang"
+    },
+    {
+      "key": "bryan wang",
+      "first_name": "Bryan",
+      "last_name": "Wang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Bryan Wang"
+    },
+    {
+      "key": "alvin feng",
+      "first_name": "Alvin",
+      "last_name": "Feng",
+      "phone_number": "917-864-8880",
+      "dob": "2015-01-03",
+      "raw_name": "Alvin Feng"
+    },
+    {
+      "key": "bella ye",
+      "first_name": "Bella",
+      "last_name": "Ye",
+      "phone_number": "929-302-6806",
+      "dob": "2014-10-25",
+      "raw_name": "Bella Ye"
+    },
+    {
+      "key": "iris chen",
+      "first_name": "Iris",
+      "last_name": "Chen",
+      "phone_number": "917-545-2466",
+      "dob": "2012-04-07",
+      "raw_name": "Iris Chen"
+    },
+    {
+      "key": "joanna zheng",
+      "first_name": "Joanna",
+      "last_name": "Zheng",
+      "phone_number": "646-710-0661",
+      "dob": "2010-08-02",
+      "raw_name": "Joanna Zheng"
+    },
+    {
+      "key": "owen zheng",
+      "first_name": "Owen",
+      "last_name": "Zheng",
+      "phone_number": "917-436-2788",
+      "dob": "2014-09-23",
+      "raw_name": "Owen Zheng"
+    },
+    {
+      "key": "jocelyn chen",
+      "first_name": "Jocelyn",
+      "last_name": "Chen",
+      "phone_number": "646-284-4012",
+      "dob": "2011-04-14",
+      "raw_name": "Jocelyn Chen"
+    },
+    {
+      "key": "janice chen",
+      "first_name": "Janice",
+      "last_name": "Chen",
+      "phone_number": "917-459-9878",
+      "dob": "2012-05-07",
+      "raw_name": "Janice Chen"
+    },
+    {
+      "key": "fiona liu",
+      "first_name": "Fiona",
+      "last_name": "Liu",
+      "phone_number": "917-916-3666",
+      "dob": "2011-05-21",
+      "raw_name": "Fiona Liu"
+    },
+    {
+      "key": "khloe gao",
+      "first_name": "Khloe",
+      "last_name": "Gao",
+      "phone_number": "312-375-3237",
+      "dob": "2015-03-19",
+      "raw_name": "Khloe Gao"
+    },
+    {
+      "key": "paxon xie",
+      "first_name": "Paxon",
+      "last_name": "Xie",
+      "phone_number": "646-321-9190",
+      "dob": "2018-02-13",
+      "raw_name": "Paxon Xie"
+    },
+    {
+      "key": "nicole chen",
+      "first_name": "Nicole",
+      "last_name": "Chen",
+      "phone_number": "917-292-8156",
+      "dob": "2010-05-07",
+      "raw_name": "Nicole Chen"
+    },
+    {
+      "key": "howard liang",
+      "first_name": "Howard",
+      "last_name": "Liang",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Howard Liang"
+    },
+    {
+      "key": "jaden chong",
+      "first_name": "Jaden",
+      "last_name": "Chong",
+      "phone_number": "917-557-0733",
+      "dob": null,
+      "raw_name": "Jaden Chong"
+    },
+    {
+      "key": "rain zhuo",
+      "first_name": "Rain",
+      "last_name": "Zhuo",
+      "phone_number": "347-951-7933",
+      "dob": "2016-12-18",
+      "raw_name": "Rain Zhuo"
+    },
+    {
+      "key": "ryan lian",
+      "first_name": "Ryan",
+      "last_name": "Lian",
+      "phone_number": "646-321-4245",
+      "dob": "2015-06-18",
+      "raw_name": "Ryan Lian"
+    },
+    {
+      "key": "nolan chen",
+      "first_name": "Nolan",
+      "last_name": "Chen",
+      "phone_number": "646-708-6003",
+      "dob": "2017-06-01",
+      "raw_name": "Nolan Chen"
+    },
+    {
+      "key": "carol zhou",
+      "first_name": "Carol",
+      "last_name": "Zhou",
+      "phone_number": "917-991-5288",
+      "dob": null,
+      "raw_name": "Carol Zhou"
+    },
+    {
+      "key": "raymond chen",
+      "first_name": "Raymond",
+      "last_name": "Chen",
+      "phone_number": "917-283-0812",
+      "dob": "2017-08-12",
+      "raw_name": "Raymond Chen"
+    },
+    {
+      "key": "jason zhou",
+      "first_name": "Jason",
+      "last_name": "Zhou",
+      "phone_number": "929-694-5882",
+      "dob": "2014-05-05",
+      "raw_name": "Jason Zhou"
+    },
+    {
+      "key": "qing ying chen",
+      "first_name": "Qing",
+      "last_name": "Ying Chen",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Qing Ying Chen"
+    },
+    {
+      "key": "kingsley",
+      "first_name": "Kingsley",
+      "last_name": null,
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "Kingsley"
+    },
+    {
+      "key": "summer dong",
+      "first_name": "Summer",
+      "last_name": "Dong",
+      "phone_number": "347-592-3528",
+      "dob": "2014-12-28",
+      "raw_name": "Summer Dong"
+    },
+    {
+      "key": "allen yang",
+      "first_name": "Allen",
+      "last_name": "Yang",
+      "phone_number": "917-436-2789",
+      "dob": "2017-08-31",
+      "raw_name": "Allen Yang"
+    },
+    {
+      "key": "aiden pan",
+      "first_name": "Aiden",
+      "last_name": "Pan",
+      "phone_number": "646-436-0506",
+      "dob": "2017-06-29",
+      "raw_name": "Aiden Pan"
+    },
+    {
+      "key": "ashley lin",
+      "first_name": "Ashley",
+      "last_name": "Lin",
+      "phone_number": "917-216-7769",
+      "dob": "2013-05-17",
+      "raw_name": "Ashley Lin"
+    },
+    {
+      "key": "ivor chen",
+      "first_name": "Ivor",
+      "last_name": "Chen",
+      "phone_number": "917-545-2466",
+      "dob": "2015-04-08",
+      "raw_name": "Ivor Chen"
+    },
+    {
+      "key": "anson dong",
+      "first_name": "Anson",
+      "last_name": "Dong",
+      "phone_number": "347-727-8998",
+      "dob": "2013-04-29",
+      "raw_name": "Anson Dong"
+    },
+    {
+      "key": "benny tang",
+      "first_name": "Benny",
+      "last_name": "Tang",
+      "phone_number": "347-681-7993",
+      "dob": "2010-05-06",
+      "raw_name": "Benny Tang"
+    },
+    {
+      "key": "patrick tang",
+      "first_name": "Patrick",
+      "last_name": "Tang",
+      "phone_number": "347-681-7993",
+      "dob": "2013-03-09",
+      "raw_name": "Patrick Tang"
+    },
+    {
+      "key": "brendan chen",
+      "first_name": "Brendan",
+      "last_name": "Chen",
+      "phone_number": "917-635-9402",
+      "dob": "2020-03-03",
+      "raw_name": "Brendan Chen"
+    },
+    {
+      "key": "william wu",
+      "first_name": "William",
+      "last_name": "Wu",
+      "phone_number": null,
+      "dob": null,
+      "raw_name": "William Wu"
+    },
+    {
+      "key": "matthew lin",
+      "first_name": "Matthew",
+      "last_name": "Lin",
+      "phone_number": "917-808-6391",
+      "dob": "2016-04-07",
+      "raw_name": "Matthew Lin"
+    }
+  ],
+  "classes": [
+    {
+      "key": "chinese dance::xushuyu",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "subject": "Chinese Dance",
+      "teacher_keys": [
+        "xushuyu"
+      ],
+      "lesson_type": "group",
+      "duration_minutes": 60,
+      "class_track": "dance",
+      "room_hint": null
+    },
+    {
+      "key": "jazz::irisyu",
+      "sheet": "爵士舞 Jazz &Hip",
+      "subject": "Jazz",
+      "teacher_keys": [
+        "irisyu"
+      ],
+      "lesson_type": "group",
+      "duration_minutes": 60,
+      "class_track": "dance",
+      "room_hint": null
+    },
+    {
+      "key": "art::anna",
+      "sheet": "Art",
+      "subject": "Art",
+      "teacher_keys": [
+        "anna"
+      ],
+      "lesson_type": "group",
+      "duration_minutes": 60,
+      "class_track": "other",
+      "room_hint": "Art room"
+    },
+    {
+      "key": "piano::kiki",
+      "sheet": "Kiki- Piano",
+      "subject": "Piano",
+      "teacher_keys": [
+        "kiki"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::fifi",
+      "sheet": "FiFi",
+      "subject": "Piano",
+      "teacher_keys": [
+        "fifi"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::liu",
+      "sheet": "Liu",
+      "subject": "Piano",
+      "teacher_keys": [
+        "liu"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::dustin",
+      "sheet": "Dustin",
+      "subject": "Piano",
+      "teacher_keys": [
+        "dustin"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::evie",
+      "sheet": "Evie",
+      "subject": "Piano",
+      "teacher_keys": [
+        "evie"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::ben",
+      "sheet": "Ben",
+      "subject": "Piano",
+      "teacher_keys": [
+        "ben"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::reynaldo",
+      "sheet": "Reynaldo",
+      "subject": "Piano",
+      "teacher_keys": [
+        "reynaldo"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "piano::david",
+      "sheet": "David",
+      "subject": "Piano",
+      "teacher_keys": [
+        "david"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "violin::jialin",
+      "sheet": "Violin - JiaLin +William",
+      "subject": "Violin",
+      "teacher_keys": [
+        "jialin",
+        "william"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "zumba::angela",
+      "sheet": "Angela - Zumba",
+      "subject": "Zumba",
+      "teacher_keys": [
+        "angela"
+      ],
+      "lesson_type": "group",
+      "duration_minutes": 60,
+      "class_track": "dance",
+      "room_hint": null
+    },
+    {
+      "key": "guitar::xu",
+      "sheet": "Xu - Guitar",
+      "subject": "Guitar",
+      "teacher_keys": [
+        "xu"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    },
+    {
+      "key": "drums::richard",
+      "sheet": "Richard - Drums",
+      "subject": "Drums",
+      "teacher_keys": [
+        "richard"
+      ],
+      "lesson_type": "private",
+      "duration_minutes": 45,
+      "class_track": "instrumental",
+      "room_hint": null
+    }
+  ],
+  "enrollments": [
+    {
+      "student_key": "cynthia chen",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-01-18",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 9:30-10:30"
+    },
+    {
+      "student_key": "chloe zhao",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-06-15",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "valerie wu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-06-08",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "eliana pan",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-04-19",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "mackenzie forquignon",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-03-29",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "anthena wu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-11-16",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "flora lee",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-03-16",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "gianna leung",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-12-21",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "chloe li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2024-07-20",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 90 min"
+    },
+    {
+      "student_key": "jacquenlynn huay",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2026-03-08",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "chloe tang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 26,
+      "signup_date": "2025-09-06",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "chloe li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2024-08-25",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "irene li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-07-06",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "mina liu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-10-04",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "abbie lan",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2026-03-01",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "victoria wu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 47,
+      "signup_date": "2025-04-20",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "cecilia wu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 47,
+      "signup_date": "2025-04-20",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "mia liang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-08-30",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "emily bai",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2024-07-27",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "hannah ye",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2024-09-14",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "cindy bai",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2024-07-27",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "rena teng",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2024-12-07",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "tiya teng",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2024-12-07",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "chloe mak",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-02-09",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "grace chen",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-10-11",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "grace kuang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 10,
+      "signup_date": "2026-03-07",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "sophia yang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-11-01",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "jolene li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-05-13",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "kaylee",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-06-20",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "anzil",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 21,
+      "signup_date": "2026-01-17",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "annie ye",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-01-10",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "alina lin",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-06-14",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "ariella he",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 10,
+      "signup_date": "2026-03-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "terra zhou",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2026-06-30",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 12:00 - 2:30, 11:00 - 12:30"
+    },
+    {
+      "student_key": "ophelia zhou",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2026-06-30",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 1:00-2:30, 11:00-12:30"
+    },
+    {
+      "student_key": "kalika li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-01-11",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "agnes li",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 0,
+      "signup_date": "2025-03-08",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 9:30-11:00"
+    },
+    {
+      "student_key": "belle lin",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-01-18",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "ava chen",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-06-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "fiona zheng",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-03-21",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "esther zhu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-04-11",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 11:00 - 12:00"
+    },
+    {
+      "student_key": "angelica",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-05-02",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "harper cheng",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-12-13",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "carina liu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 1,
+      "signup_date": "2026-05-23",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "irene huang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 2,
+      "signup_date": "2026-03-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 12:00 - 1:00"
+    },
+    {
+      "student_key": "evanne chen",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-01-17",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "lueva zhou",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 13,
+      "signup_date": "2026-03-07",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "joey ye",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-03-07",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "yona zhu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-02-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "evelyn jiang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-05-09",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "chloe lin",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2026-04-29",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 1:00 - 2:30"
+    },
+    {
+      "student_key": "melody huang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-09-20",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "joanna lin",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 2,
+      "signup_date": "2025-10-25",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "alice huang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-01-10",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "yori zhu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 0,
+      "signup_date": "2026-07-18",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "rachel ian",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-04-18",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": "time: 4:00 - 5:30"
+    },
+    {
+      "student_key": "stephanie liang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 45,
+      "signup_date": "2025-12-27",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "miti liang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2025-06-14",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "crystal man",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 0,
+      "signup_date": "2024-09-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "alina liu",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2025-07-26",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "austina pan",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 25,
+      "signup_date": "2025-11-01",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "sophia lin",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 50,
+      "signup_date": "2026-03-28",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "dianca ouyang",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-11-08",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "sophia xin xie",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-04-05",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "clara ren",
+      "class_key": "chinese dance::xushuyu",
+      "lessons": 20,
+      "signup_date": "2025-06-29",
+      "sheet": "中国舞&妤妤 Chinese Dance",
+      "notes": null
+    },
+    {
+      "student_key": "johnny jiang",
+      "class_key": "jazz::irisyu",
+      "lessons": 21,
+      "signup_date": "2026-05-31",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "ling yang",
+      "class_key": "jazz::irisyu",
+      "lessons": 10,
+      "signup_date": "2025-06-28",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "kingsley wang",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2025-09-13",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "alverie chen",
+      "class_key": "jazz::irisyu",
+      "lessons": 50,
+      "signup_date": "2025-01-18",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "elaine jiang",
+      "class_key": "jazz::irisyu",
+      "lessons": 21,
+      "signup_date": "2026-03-21",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "wendy lu",
+      "class_key": "jazz::irisyu",
+      "lessons": 27,
+      "signup_date": "2025-10-11",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "maggie lu",
+      "class_key": "jazz::irisyu",
+      "lessons": 25,
+      "signup_date": "2025-10-11",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "oscar lin",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-07-07",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "olivia chen",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-07-07",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": "time: 1:00 - 2:30, 11:00 - 12:30"
+    },
+    {
+      "student_key": "angela lin",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-07-07",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": "time: 1:00 - 2:30, 11:00 - 12:30"
+    },
+    {
+      "student_key": "ashley chen",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-07-07",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": "time: 1:00 - 2:30, 11:00 - 12:30"
+    },
+    {
+      "student_key": "thor mikaylou",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-01-04",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "mia chen",
+      "class_key": "jazz::irisyu",
+      "lessons": 10,
+      "signup_date": "2026-02-14",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "ashley jiang",
+      "class_key": "jazz::irisyu",
+      "lessons": 15,
+      "signup_date": "2023-10-16",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "melanie huang",
+      "class_key": "jazz::irisyu",
+      "lessons": 25,
+      "signup_date": "2020-03-19",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "grace chen",
+      "class_key": "jazz::irisyu",
+      "lessons": 39,
+      "signup_date": "2024-09-21",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "isabella zhang",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2024-04-06",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "iris huang",
+      "class_key": "jazz::irisyu",
+      "lessons": 25,
+      "signup_date": "2026-03-15",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "owen gao",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2026-01-24",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "marni zeng",
+      "class_key": "jazz::irisyu",
+      "lessons": 20,
+      "signup_date": "2025-07-12",
+      "sheet": "爵士舞 Jazz &Hip",
+      "notes": null
+    },
+    {
+      "student_key": "alvin chen",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-05-23",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "clara ren",
+      "class_key": "art::anna",
+      "lessons": 10,
+      "signup_date": "2026-06-13",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "kenzo ns",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-06-14",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "nathan yang",
+      "class_key": "art::anna",
+      "lessons": 25,
+      "signup_date": "2026-06-07",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "elena yang",
+      "class_key": "art::anna",
+      "lessons": 25,
+      "signup_date": "2026-06-07",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "jenny weng",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2025-11-30",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "zoey chen",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2025-09-20",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "crystal zheng",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-02-14",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "kaylee calderon",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2024-06-29",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "kelly ng",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-03-07",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "irvin lau",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-05-23",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "keith fok",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-04-04",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "stormi lin",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-05-14",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "yan yan",
+      "class_key": "art::anna",
+      "lessons": 10,
+      "signup_date": "2026-05-09",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "yanfeng lin",
+      "class_key": "art::anna",
+      "lessons": 5,
+      "signup_date": "2026-03-05",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "fiona zheng",
+      "class_key": "art::anna",
+      "lessons": 50,
+      "signup_date": "2026-03-21",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "justin huang",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-03-15",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "stanley wang",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2026-03-14",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "lucas shi",
+      "class_key": "art::anna",
+      "lessons": 10,
+      "signup_date": "2026-03-21",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "joseph gao",
+      "class_key": "art::anna",
+      "lessons": 50,
+      "signup_date": "2023-07-29",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "isabella zhang",
+      "class_key": "art::anna",
+      "lessons": 30,
+      "signup_date": "2023-10-28",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "hengyi zhang",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2023-10-14",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "irene cheng",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2024-08-31",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "benjamin chen",
+      "class_key": "art::anna",
+      "lessons": 50,
+      "signup_date": "2024-07-13",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "melody huang",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2025-06-07",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "lawrence zheng",
+      "class_key": "art::anna",
+      "lessons": 20,
+      "signup_date": "2025-10-11",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "justin deng",
+      "class_key": "art::anna",
+      "lessons": 21,
+      "signup_date": "2025-09-13",
+      "sheet": "Art",
+      "notes": null
+    },
+    {
+      "student_key": "julian he",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2026-04-04",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "alice wang",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2024-10-09",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "christina li",
+      "class_key": "piano::kiki",
+      "lessons": 107,
+      "signup_date": "2023-09-11",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "roberto de la rosa lugo",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-07-14",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "mia chen",
+      "class_key": "piano::kiki",
+      "lessons": 25,
+      "signup_date": "2026-05-21",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "ivan lian",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-05-29",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "noah man",
+      "class_key": "piano::kiki",
+      "lessons": 34,
+      "signup_date": "2025-05-29",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "alpha tan",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2023-09-16",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "lawrence li",
+      "class_key": "piano::kiki",
+      "lessons": 10,
+      "signup_date": "2025-05-22",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "isla zhang",
+      "class_key": "piano::kiki",
+      "lessons": 67,
+      "signup_date": "2026-02-26",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "zhilin zhao",
+      "class_key": "piano::kiki",
+      "lessons": 50,
+      "signup_date": "2025-11-30",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "selena zheng",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-09-07",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "rachel yang",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-11-30",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "jenny wang",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-03-01",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "steven you",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-11-04",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "alex dong",
+      "class_key": "piano::kiki",
+      "lessons": 10,
+      "signup_date": "2025-05-24",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "tiya teng",
+      "class_key": "piano::kiki",
+      "lessons": 39,
+      "signup_date": "2024-11-02",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "carina ren",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2023-11-11",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "vienna xin",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2024-07-13",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "zi jun huang",
+      "class_key": "piano::kiki",
+      "lessons": 1,
+      "signup_date": "2026-03-15",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "layla zhao",
+      "class_key": "piano::kiki",
+      "lessons": 25,
+      "signup_date": "2025-09-20",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "aiden jian",
+      "class_key": "piano::kiki",
+      "lessons": 34,
+      "signup_date": "2025-08-31",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "hilary wang",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2026-02-14",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "alverie chen",
+      "class_key": "piano::kiki",
+      "lessons": 73,
+      "signup_date": "2023-11-11",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "kimberly li",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2025-10-11",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "william zhou",
+      "class_key": "piano::kiki",
+      "lessons": 50,
+      "signup_date": "2024-09-07",
+      "sheet": "Kiki- Piano",
+      "notes": "sheet course: Piano, Sight Reading Aurai (?)"
+    },
+    {
+      "student_key": "harrison yang",
+      "class_key": "piano::kiki",
+      "lessons": 50,
+      "signup_date": "2024-01-27",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "aiden lee",
+      "class_key": "piano::kiki",
+      "lessons": 53,
+      "signup_date": "2025-06-21",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "anna chen",
+      "class_key": "piano::kiki",
+      "lessons": 25,
+      "signup_date": "2025-10-23",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "una wu",
+      "class_key": "piano::kiki",
+      "lessons": 50,
+      "signup_date": "2024-06-12",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "aiden zhong",
+      "class_key": "piano::kiki",
+      "lessons": 50,
+      "signup_date": "2023-11-11",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "archie chan",
+      "class_key": "piano::kiki",
+      "lessons": 69,
+      "signup_date": "2026-01-19",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "hannah xu",
+      "class_key": "piano::kiki",
+      "lessons": 20,
+      "signup_date": "2023-09-30",
+      "sheet": "Kiki- Piano",
+      "notes": null
+    },
+    {
+      "student_key": "alivia guo",
+      "class_key": "piano::fifi",
+      "lessons": 22,
+      "signup_date": "2026-04-26",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "rebecca wu",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2025-04-26",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "mina liu",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2025-01-18",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "lucas lin",
+      "class_key": "piano::fifi",
+      "lessons": 61,
+      "signup_date": null,
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "katherine yu",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2024-08-04",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "james yu",
+      "class_key": "piano::fifi",
+      "lessons": 0,
+      "signup_date": "2024-08-04",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "callie feng",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2024-10-26",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "ling yang",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2025-12-14",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "ethan wei",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2025-12-21",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "catherine zhu",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2025-12-13",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "elton deng",
+      "class_key": "piano::fifi",
+      "lessons": 20,
+      "signup_date": "2024-08-25",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "elwyn wang",
+      "class_key": "piano::fifi",
+      "lessons": 64,
+      "signup_date": "2024-11-02",
+      "sheet": "FiFi",
+      "notes": null
+    },
+    {
+      "student_key": "amy chen",
+      "class_key": "piano::liu",
+      "lessons": 20,
+      "signup_date": "2026-07-18",
+      "sheet": "Liu",
+      "notes": "time: 12:00 - 12:45"
+    },
+    {
+      "student_key": "rebacca dong",
+      "class_key": "piano::liu",
+      "lessons": 41,
+      "signup_date": "2025-01-26",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "erica lin",
+      "class_key": "piano::liu",
+      "lessons": 67,
+      "signup_date": "2025-11-29",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "dawson wu",
+      "class_key": "piano::liu",
+      "lessons": 20,
+      "signup_date": "2020-06-20",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "eugenia huang",
+      "class_key": "piano::liu",
+      "lessons": 25,
+      "signup_date": "2023-10-21",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "yi fan huang",
+      "class_key": "piano::liu",
+      "lessons": 20,
+      "signup_date": "2024-04-13",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "harper cheng",
+      "class_key": "piano::liu",
+      "lessons": 50,
+      "signup_date": "2026-06-27",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "alvin chen",
+      "class_key": "piano::liu",
+      "lessons": 20,
+      "signup_date": "2026-05-23",
+      "sheet": "Liu",
+      "notes": null
+    },
+    {
+      "student_key": "jayden zheng",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2025-09-07",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "anthony wu",
+      "class_key": "piano::dustin",
+      "lessons": 50,
+      "signup_date": "2026-01-09",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "jeffery xie wu",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2024-10-02",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "ansel dong",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2024-01-11",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "kevin li",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2025-06-11",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "po ping than",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2024-05-06",
+      "sheet": "Dustin",
+      "notes": "time: 45min"
+    },
+    {
+      "student_key": "ting mei lin",
+      "class_key": "piano::dustin",
+      "lessons": 20,
+      "signup_date": "2024-08-28",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "jayden li",
+      "class_key": "piano::dustin",
+      "lessons": 31,
+      "signup_date": "2024-10-04",
+      "sheet": "Dustin",
+      "notes": null
+    },
+    {
+      "student_key": "belle luo",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-07-18",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "harper cheng",
+      "class_key": "piano::evie",
+      "lessons": 80,
+      "signup_date": "2026-06-17",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "queena jian",
+      "class_key": "piano::evie",
+      "lessons": 34,
+      "signup_date": "2026-05-16",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "aiden chen",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-01-18",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "david zheng",
+      "class_key": "piano::evie",
+      "lessons": 21,
+      "signup_date": "2025-10-25",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "aiden ruan",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-04-25",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "stephany zheng",
+      "class_key": "piano::evie",
+      "lessons": 32,
+      "signup_date": "2025-05-09",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "lucas man",
+      "class_key": "piano::evie",
+      "lessons": 33,
+      "signup_date": "2026-02-13",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "erick chen",
+      "class_key": "piano::evie",
+      "lessons": 50,
+      "signup_date": "2026-02-28",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "anjaylia li",
+      "class_key": "piano::evie",
+      "lessons": 25,
+      "signup_date": "2025-05-31",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "doris wang",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2020-04-20",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "bryan liu",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-06-19",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "karen liao",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-06-05",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "nicole wu",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2025-12-19",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "tiya teng",
+      "class_key": "piano::evie",
+      "lessons": 25,
+      "signup_date": "2026-01-31",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "enoch huang",
+      "class_key": "piano::evie",
+      "lessons": 20,
+      "signup_date": "2026-07-23",
+      "sheet": "Evie",
+      "notes": null
+    },
+    {
+      "student_key": "alexandra ng",
+      "class_key": "piano::ben",
+      "lessons": 21,
+      "signup_date": "2026-03-14",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "joseph li",
+      "class_key": "piano::ben",
+      "lessons": 26,
+      "signup_date": "2026-05-02",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "phebe li",
+      "class_key": "piano::ben",
+      "lessons": 26,
+      "signup_date": "2026-05-02",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "hazel zhen",
+      "class_key": "piano::ben",
+      "lessons": 20,
+      "signup_date": "2025-10-11",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "ruirui zhao",
+      "class_key": "piano::ben",
+      "lessons": 20,
+      "signup_date": "2024-03-01",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "austin huang",
+      "class_key": "piano::ben",
+      "lessons": 20,
+      "signup_date": "2024-10-05",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "melody huang",
+      "class_key": "piano::ben",
+      "lessons": 20,
+      "signup_date": "2025-10-25",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "arya chen",
+      "class_key": "piano::ben",
+      "lessons": 12,
+      "signup_date": null,
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "lucas liu",
+      "class_key": "piano::ben",
+      "lessons": 50,
+      "signup_date": "2024-07-06",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "alice chen",
+      "class_key": "piano::ben",
+      "lessons": 65,
+      "signup_date": "2026-03-28",
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "zi yang",
+      "class_key": "piano::ben",
+      "lessons": 31,
+      "signup_date": null,
+      "sheet": "Ben",
+      "notes": null
+    },
+    {
+      "student_key": "shirley yang",
+      "class_key": "piano::reynaldo",
+      "lessons": 10,
+      "signup_date": "2026-06-06",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "matthew lei",
+      "class_key": "piano::reynaldo",
+      "lessons": 22,
+      "signup_date": "2026-03-28",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "eric xia",
+      "class_key": "piano::reynaldo",
+      "lessons": 20,
+      "signup_date": "2025-04-23",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "timothy chen",
+      "class_key": "piano::reynaldo",
+      "lessons": 20,
+      "signup_date": "2025-04-19",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "ryan yeung",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2023-12-30",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "eason yeung",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2023-12-30",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "jenny lin",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2024-12-14",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "doris liu",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2025-06-14",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "magellan you",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2023-12-23",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "katly you",
+      "class_key": "piano::reynaldo",
+      "lessons": 25,
+      "signup_date": "2025-01-11",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "shelydon li",
+      "class_key": "piano::reynaldo",
+      "lessons": 25,
+      "signup_date": "2025-05-31",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "brayden lee",
+      "class_key": "piano::reynaldo",
+      "lessons": 58,
+      "signup_date": "2023-12-30",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "winnie wu",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2024-08-25",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "vivi chan",
+      "class_key": "piano::reynaldo",
+      "lessons": 50,
+      "signup_date": "2023-07-16",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "jing xuan chen",
+      "class_key": "piano::reynaldo",
+      "lessons": 68,
+      "signup_date": "2026-01-24",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "ryan zhao",
+      "class_key": "piano::reynaldo",
+      "lessons": 25,
+      "signup_date": "2025-09-20",
+      "sheet": "Reynaldo",
+      "notes": null
+    },
+    {
+      "student_key": "jeff liu",
+      "class_key": "piano::david",
+      "lessons": 50,
+      "signup_date": "2025-03-08",
+      "sheet": "David",
+      "notes": null
+    },
+    {
+      "student_key": "ian lau",
+      "class_key": "piano::david",
+      "lessons": 20,
+      "signup_date": "2026-03-17",
+      "sheet": "David",
+      "notes": null
+    },
+    {
+      "student_key": "alfred ma",
+      "class_key": "violin::jialin",
+      "lessons": 40,
+      "signup_date": "2025-04-24",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "tina zhen",
+      "class_key": "violin::jialin",
+      "lessons": 90,
+      "signup_date": "2025-03-19",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "lovina li",
+      "class_key": "violin::jialin",
+      "lessons": 40,
+      "signup_date": "2024-09-26",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "angie ren",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2025-11-30",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "joanna jiang",
+      "class_key": "violin::jialin",
+      "lessons": 40,
+      "signup_date": "2025-01-20",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "rayson chen",
+      "class_key": "violin::jialin",
+      "lessons": 40,
+      "signup_date": "2024-05-30",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "johnny lin",
+      "class_key": "violin::jialin",
+      "lessons": 60,
+      "signup_date": "2024-04-14",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "haylie liang",
+      "class_key": "violin::jialin",
+      "lessons": 50,
+      "signup_date": "2024-08-25",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "perlie zhao",
+      "class_key": "violin::jialin",
+      "lessons": 40,
+      "signup_date": "2025-01-23",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "leon li",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2025-12-07",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "tristin zhao",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2026-04-19",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "katherine yu",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2026-05-31",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "jolene zhu",
+      "class_key": "violin::jialin",
+      "lessons": 51,
+      "signup_date": "2024-10-23",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "euphemia chen",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2025-01-04",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "rena teng",
+      "class_key": "violin::jialin",
+      "lessons": 34,
+      "signup_date": "2024-11-02",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "yan yan ren",
+      "class_key": "violin::jialin",
+      "lessons": 10,
+      "signup_date": "2025-12-07",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "austina pan",
+      "class_key": "violin::jialin",
+      "lessons": 50,
+      "signup_date": "2026-01-10",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "irena you",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2025-01-11",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "alice zhang",
+      "class_key": "violin::jialin",
+      "lessons": 0,
+      "signup_date": "2023-12-02",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "caroline jin",
+      "class_key": "violin::jialin",
+      "lessons": 0,
+      "signup_date": "2025-10-25",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "tanya zhang",
+      "class_key": "violin::jialin",
+      "lessons": 33,
+      "signup_date": "2024-06-23",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "kelly zeng",
+      "class_key": "violin::jialin",
+      "lessons": 0,
+      "signup_date": "2025-03-31",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "nicole wu",
+      "class_key": "violin::jialin",
+      "lessons": 20,
+      "signup_date": "2025-12-19",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "hazel du",
+      "class_key": "violin::jialin",
+      "lessons": 0,
+      "signup_date": "2025-05-17",
+      "sheet": "Violin - JiaLin +William",
+      "notes": null
+    },
+    {
+      "student_key": "zoe",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": "2026-05-28",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "claine yu",
+      "class_key": "zumba::angela",
+      "lessons": 48,
+      "signup_date": "2026-03-12",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "chen mei xie",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": "2026-02-12",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "li hong",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": "2025-10-27",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "ai ling",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": "2026-04-30",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "carol",
+      "class_key": "zumba::angela",
+      "lessons": 10,
+      "signup_date": "2025-07-25",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "chloe",
+      "class_key": "zumba::angela",
+      "lessons": 10,
+      "signup_date": "2025-07-25",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "amy lin",
+      "class_key": "zumba::angela",
+      "lessons": 96,
+      "signup_date": "2025-03-13",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "tracy chen",
+      "class_key": "zumba::angela",
+      "lessons": 48,
+      "signup_date": "2025-04-10",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "lucy lin",
+      "class_key": "zumba::angela",
+      "lessons": 12,
+      "signup_date": "2025-02-23",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "kelly",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": "2025-02-27",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "sophia yang",
+      "class_key": "zumba::angela",
+      "lessons": 72,
+      "signup_date": "2025-03-06",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "enya feng",
+      "class_key": "zumba::angela",
+      "lessons": 26,
+      "signup_date": "2025-10-12",
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "xu liang",
+      "class_key": "zumba::angela",
+      "lessons": 24,
+      "signup_date": null,
+      "sheet": "Angela - Zumba",
+      "notes": null
+    },
+    {
+      "student_key": "cheney cai",
+      "class_key": "guitar::xu",
+      "lessons": 0,
+      "signup_date": "2026-07-05",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "ahuchi angel huang",
+      "class_key": "guitar::xu",
+      "lessons": 10,
+      "signup_date": "2026-07-18",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "bryan wang",
+      "class_key": "guitar::xu",
+      "lessons": 50,
+      "signup_date": "2026-03-14",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "alvin feng",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-11-09",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "bella ye",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-07-15",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "iris chen",
+      "class_key": "guitar::xu",
+      "lessons": 32,
+      "signup_date": "2024-10-26",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "joanna zheng",
+      "class_key": "guitar::xu",
+      "lessons": 63,
+      "signup_date": "2024-09-26",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "owen zheng",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2024-03-30",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "jocelyn chen",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2024-07-25",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "janice chen",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2024-11-16",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "fiona liu",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-01-18",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "khloe gao",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-07-24",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "paxon xie",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-09-27",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "nicole chen",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2025-11-22",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "chloe zhao",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2026-03-07",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "howard liang",
+      "class_key": "guitar::xu",
+      "lessons": 0,
+      "signup_date": "2026-01-04",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "jaden chong",
+      "class_key": "guitar::xu",
+      "lessons": 20,
+      "signup_date": "2026-07-25",
+      "sheet": "Xu - Guitar",
+      "notes": null
+    },
+    {
+      "student_key": "rain zhuo",
+      "class_key": "drums::richard",
+      "lessons": 174,
+      "signup_date": "2024-05-04",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "ryan lian",
+      "class_key": "drums::richard",
+      "lessons": 40,
+      "signup_date": "2025-06-12",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "nolan chen",
+      "class_key": "drums::richard",
+      "lessons": 40,
+      "signup_date": "2025-03-08",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "carol zhou",
+      "class_key": "drums::richard",
+      "lessons": 20,
+      "signup_date": "2026-01-30",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "raymond chen",
+      "class_key": "drums::richard",
+      "lessons": 65,
+      "signup_date": "2026-01-30",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "jason zhou",
+      "class_key": "drums::richard",
+      "lessons": 63,
+      "signup_date": "2024-09-07",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "qing ying chen",
+      "class_key": "drums::richard",
+      "lessons": 10,
+      "signup_date": "2026-06-14",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "kingsley",
+      "class_key": "drums::richard",
+      "lessons": 20,
+      "signup_date": "2026-07-19",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "summer dong",
+      "class_key": "drums::richard",
+      "lessons": 40,
+      "signup_date": "2025-10-26",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "allen yang",
+      "class_key": "drums::richard",
+      "lessons": 10,
+      "signup_date": "2026-06-06",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "aiden pan",
+      "class_key": "drums::richard",
+      "lessons": 20,
+      "signup_date": "2026-04-19",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "ashley lin",
+      "class_key": "drums::richard",
+      "lessons": 57,
+      "signup_date": "2025-06-21",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "lucas lin",
+      "class_key": "drums::richard",
+      "lessons": 57,
+      "signup_date": "2025-06-21",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "ivor chen",
+      "class_key": "drums::richard",
+      "lessons": 64,
+      "signup_date": "2024-10-26",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "kalika li",
+      "class_key": "drums::richard",
+      "lessons": 41,
+      "signup_date": "2025-11-30",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "anson dong",
+      "class_key": "drums::richard",
+      "lessons": 73,
+      "signup_date": "2023-10-30",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "benny tang",
+      "class_key": "drums::richard",
+      "lessons": 50,
+      "signup_date": "2023-09-10",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "patrick tang",
+      "class_key": "drums::richard",
+      "lessons": 50,
+      "signup_date": "2023-09-10",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "brendan chen",
+      "class_key": "drums::richard",
+      "lessons": 20,
+      "signup_date": "2026-02-22",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "william wu",
+      "class_key": "drums::richard",
+      "lessons": 10,
+      "signup_date": "2026-02-08",
+      "sheet": "Richard - Drums",
+      "notes": null
+    },
+    {
+      "student_key": "matthew lin",
+      "class_key": "drums::richard",
+      "lessons": 20,
+      "signup_date": "2026-07-09",
+      "sheet": "Richard - Drums",
+      "notes": null
+    }
+  ],
+  "skipped_sheets": [],
+  "stats": {
+    "teachers": 17,
+    "active_teachers": 16,
+    "side_contacts": 1,
+    "students": 270,
+    "classes": 15,
+    "enrollments": 294,
+    "enrollments_with_credits": 284,
+    "total_credits": 8568
+  }
+}

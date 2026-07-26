@@ -1654,7 +1654,10 @@ export type Database = {
           is_active: boolean
           last_name: string | null
           location_id: number | null
+          notes: string | null
           phone_number: string | null
+          resume_file_name: string | null
+          resume_path: string | null
         }
         Insert: {
           dob?: string | null
@@ -1663,7 +1666,10 @@ export type Database = {
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
+          notes?: string | null
           phone_number?: string | null
+          resume_file_name?: string | null
+          resume_path?: string | null
         }
         Update: {
           dob?: string | null
@@ -1672,7 +1678,10 @@ export type Database = {
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
+          notes?: string | null
           phone_number?: string | null
+          resume_file_name?: string | null
+          resume_path?: string | null
         }
         Relationships: [
           {

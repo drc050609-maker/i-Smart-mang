@@ -7,6 +7,7 @@ import { EditTeacherClassesDialog } from "@/components/edit-teacher-classes-dial
 import { EditEnrollmentGradeDialog } from "@/components/edit-enrollment-grade-dialog";
 import type { RoomOption } from "@/components/add-class-dialog";
 import { TeacherPaycheckSection } from "@/components/teacher-paycheck-section";
+import { TeacherResumeSection } from "@/components/teacher-resume-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import {
@@ -26,6 +27,8 @@ import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 import { compareStudentNames, formatStudentName } from "@/lib/person-name";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
+import { TEACHER_RESUME_BUCKET } from "@/lib/teacher-resume";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 
 import type { Database } from "@/types/database.types";
@@ -109,7 +112,9 @@ export default async function TutorDetailPage({
 
   const { data: teacher, error: teacherError } = await supabase
     .from("teachers")
-    .select("id, first_name, last_name, dob, phone_number, is_active, location_id")
+    .select(
+      "id, first_name, last_name, dob, phone_number, is_active, location_id, resume_path, resume_file_name",
+    )
     .eq("id", teacherId)
     .maybeSingle();
 
@@ -119,6 +124,21 @@ export default async function TutorDetailPage({
 
   if (!teacher) {
     notFound();
+  }
+
+  let resumeUrl: string | null = null;
+  if (teacher.resume_path) {
+    try {
+      const service = createSupabaseServiceClient();
+      const { data: signed, error: signedError } = await service.storage
+        .from(TEACHER_RESUME_BUCKET)
+        .createSignedUrl(teacher.resume_path, 60 * 60);
+      if (!signedError && signed?.signedUrl) {
+        resumeUrl = signed.signedUrl;
+      }
+    } catch (error) {
+      console.error("Could not create resume signed URL:", error);
+    }
   }
 
   const locationId = teacher.location_id;
@@ -324,6 +344,12 @@ export default async function TutorDetailPage({
           </div>
         </dl>
       </div>
+
+      <TeacherResumeSection
+        teacherId={teacherId}
+        resumeFileName={teacher.resume_file_name}
+        resumeUrl={resumeUrl}
+      />
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">
