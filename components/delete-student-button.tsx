@@ -1,7 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useActionState, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useLanguage } from "@/components/language-provider";
@@ -15,17 +14,9 @@ export function DeleteStudentButton({
   studentName: string;
 }) {
   const { t } = useLanguage();
-  const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(deleteStudent, {});
-
-  useEffect(() => {
-    if (state.success) {
-      setOpen(false);
-      router.push("/students");
-    }
-  }, [state.success, router]);
 
   return (
     <>

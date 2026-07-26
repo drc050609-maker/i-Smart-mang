@@ -414,6 +414,110 @@ export function getInstancePosition(
   );
 }
 
+export type ScheduleEventColumnLayout = {
+  columnIndex: number;
+  columnCount: number;
+};
+
+/**
+ * Pack overlapping day events into side-by-side columns (Google Calendar style).
+ */
+export function layoutDayEventColumns(
+  instances: Array<
+    Pick<
+      ScheduleEventInstance,
+      "instanceKey" | "display_start_time" | "display_end_time"
+    >
+  >,
+): Map<string, ScheduleEventColumnLayout> {
+  const result = new Map<string, ScheduleEventColumnLayout>();
+  if (instances.length === 0) {
+    return result;
+  }
+
+  type Timed = {
+    key: string;
+    start: number;
+    end: number;
+  };
+
+  const timed: Timed[] = instances
+    .map((instance) => ({
+      key: instance.instanceKey,
+      start: timeToMinutes(instance.display_start_time),
+      end: Math.max(
+        timeToMinutes(instance.display_end_time),
+        timeToMinutes(instance.display_start_time) + 1,
+      ),
+    }))
+    .sort((a, b) => {
+      if (a.start !== b.start) return a.start - b.start;
+      if (a.end !== b.end) return b.end - a.end;
+      return a.key.localeCompare(b.key);
+    });
+
+  const clusters: Timed[][] = [];
+  let currentCluster: Timed[] = [];
+  let clusterEnd = -1;
+
+  for (const item of timed) {
+    if (currentCluster.length === 0 || item.start < clusterEnd) {
+      currentCluster.push(item);
+      clusterEnd = Math.max(clusterEnd, item.end);
+    } else {
+      clusters.push(currentCluster);
+      currentCluster = [item];
+      clusterEnd = item.end;
+    }
+  }
+
+  if (currentCluster.length > 0) {
+    clusters.push(currentCluster);
+  }
+
+  for (const cluster of clusters) {
+    const columnEnds: number[] = [];
+    const columnByKey = new Map<string, number>();
+
+    for (const item of cluster) {
+      let column = 0;
+      while (column < columnEnds.length && columnEnds[column]! > item.start) {
+        column += 1;
+      }
+
+      if (column === columnEnds.length) {
+        columnEnds.push(item.end);
+      } else {
+        columnEnds[column] = item.end;
+      }
+
+      columnByKey.set(item.key, column);
+    }
+
+    const columnCount = Math.max(1, columnEnds.length);
+    for (const item of cluster) {
+      result.set(item.key, {
+        columnIndex: columnByKey.get(item.key) ?? 0,
+        columnCount,
+      });
+    }
+  }
+
+  return result;
+}
+
+export function getEventColumnStyle(layout: ScheduleEventColumnLayout) {
+  const gapPx = 2;
+  const edgePx = 4;
+  const widthPercent = 100 / layout.columnCount;
+  const leftPercent = widthPercent * layout.columnIndex;
+
+  return {
+    left: `calc(${leftPercent}% + ${edgePx / 2}px)`,
+    width: `calc(${widthPercent}% - ${edgePx}px - ${gapPx}px)`,
+  };
+}
+
 export function buildScheduleEvents(
   scheduleRows: Array<
     ClassScheduleFields & {
@@ -428,7 +532,7 @@ export function buildScheduleEvents(
         is_active: boolean;
         class_track: string | null;
         lesson_type?: string | null;
-        teachers: { first_name: string; last_name: string | null } | null;
+        teachers: { first_name: string; last_name: string | null; is_active?: boolean | null } | null;
         rooms: { room_number: string } | null;
       } | null;
     }
@@ -471,9 +575,10 @@ export function buildScheduleEvents(
         schedule_start_time: scheduleRow.schedule_start_time!,
         schedule_end_time: scheduleRow.schedule_end_time!,
         teacher_id: classRow.teacher_id,
-        teacher_name: classRow.teachers
-          ? formatTeacherName(classRow.teachers)
-          : null,
+        teacher_name:
+          classRow.teachers && classRow.teachers.is_active !== false
+            ? formatTeacherName(classRow.teachers)
+            : null,
         room_number: classRow.rooms?.room_number ?? null,
         is_active: classRow.is_active,
         class_track: classRow.class_track,

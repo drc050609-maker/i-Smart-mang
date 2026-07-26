@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useLanguage } from "@/components/language-provider";
@@ -9,13 +10,16 @@ import { removeClassStudent } from "@/app/(dashboard)/classes/actions";
 export function RemoveClassStudentButton({
   classId,
   enrollmentId,
-  studentName,
+  studentId,
+  label,
 }: {
   classId: number;
   enrollmentId: number;
-  studentName: string;
+  studentId?: number;
+  label: string;
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(removeClassStudent, {});
@@ -23,8 +27,9 @@ export function RemoveClassStudentButton({
   useEffect(() => {
     if (state.success) {
       setOpen(false);
+      router.refresh();
     }
-  }, [state.success]);
+  }, [state.success, router]);
 
   return (
     <>
@@ -39,6 +44,9 @@ export function RemoveClassStudentButton({
       <form ref={formRef} action={formAction} className="hidden">
         <input type="hidden" name="classId" value={classId} />
         <input type="hidden" name="enrollmentId" value={enrollmentId} />
+        {studentId ? (
+          <input type="hidden" name="studentId" value={studentId} />
+        ) : null}
       </form>
 
       <ConfirmDialog
@@ -46,7 +54,7 @@ export function RemoveClassStudentButton({
         onClose={() => setOpen(false)}
         onConfirm={() => formRef.current?.requestSubmit()}
         title={t("common.areYouSure")}
-        description={t("common.removeFromClass") + ` — ${studentName}`}
+        description={`${t("common.removeFromClass")} — ${label}`}
         confirmLabel={t("common.remove")}
         pending={pending}
       />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -29,6 +30,7 @@ export function AddStudentClassesDialog({
   classes: ClassOption[];
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [availableClasses, setAvailableClasses] = useState(classes);
@@ -65,8 +67,9 @@ export function AddStudentClassesDialog({
       setSelectedClasses([]);
       setError(null);
       setOpen(false);
+      router.refresh();
     }
-  }, [state.error, state.success]);
+  }, [state.error, state.success, router]);
 
   return (
     <>

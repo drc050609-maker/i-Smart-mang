@@ -30,6 +30,7 @@ import {
 } from "@/components/schedule-reschedule-dialog";
 import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { useLanguage } from "@/components/language-provider";
+import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   addDays,
@@ -44,15 +45,18 @@ import {
   formatScheduleEventStudentLabel,
   formatWeekRange,
   formatDayTitle,
+  getEventColumnStyle,
   getInstancePosition,
   getTeacherEventColors,
   getWeekDays,
   HOUR_HEIGHT_PX,
+  layoutDayEventColumns,
   minutesToTimeString,
   snapMinutes,
   startOfWeek,
   timeToMinutes,
   type ScheduleEvent,
+  type ScheduleEventColumnLayout,
   type ScheduleEventInstance,
   type ScheduleException,
   type ScheduleStudent,
@@ -87,12 +91,14 @@ type DragState = {
 function ScheduleEventBlock({
   instance,
   startHour,
+  layout,
   dimmed,
   isDragging,
   onPointerDown,
 }: {
   instance: ScheduleEventInstance;
   startHour: number;
+  layout: ScheduleEventColumnLayout;
   dimmed?: boolean;
   isDragging: boolean;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
@@ -101,6 +107,7 @@ function ScheduleEventBlock({
   const colors = getTeacherEventColors(instance.teacher_id);
   const { top, height } = getInstancePosition(instance, startHour);
   const displayHeight = Math.max(height, COMPACT_MIN_HEIGHT);
+  const columnStyle = getEventColumnStyle(layout);
   const subjectLabel = formatClassSubject(instance.subject, language);
   const unassignedLabel =
     instance.lesson_type === "group"
@@ -110,19 +117,21 @@ function ScheduleEventBlock({
     instance.students,
     unassignedLabel,
   );
-  const showSubjectSecondary =
-    displayHeight >= 36 && studentLabel !== subjectLabel;
+  const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
+  const showSecondary = displayHeight >= 36;
+  const showSubjectTertiary =
+    displayHeight >= 52 && studentLabel !== subjectLabel;
   const tooltip =
     studentLabel === subjectLabel
-      ? subjectLabel
-      : `${studentLabel} · ${subjectLabel}`;
+      ? `${subjectLabel} · ${timeLabel}`
+      : `${studentLabel} · ${timeLabel} · ${subjectLabel}`;
 
   return (
     <div
-      style={{ top, height: displayHeight }}
+      style={{ top, height: displayHeight, ...columnStyle }}
       onPointerDown={onPointerDown}
       className={classNames(
-        "absolute inset-x-1 z-10 cursor-grab overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left shadow-sm transition active:cursor-grabbing",
+        "absolute z-10 cursor-grab overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left shadow-sm transition active:cursor-grabbing",
         colors.bg,
         colors.border,
         colors.text,
@@ -135,7 +144,12 @@ function ScheduleEventBlock({
       <p className="truncate text-[11px] font-semibold leading-tight">
         {studentLabel}
       </p>
-      {showSubjectSecondary ? (
+      {showSecondary ? (
+        <p className="truncate text-[10px] leading-tight opacity-80">
+          {timeLabel}
+        </p>
+      ) : null}
+      {showSubjectTertiary ? (
         <p className="truncate text-[10px] leading-tight opacity-70">
           {subjectLabel}
         </p>
@@ -241,14 +255,19 @@ export function ScheduleCalendar({
     [events, exceptions, weekDays, selectedTeacherIds],
   );
 
-  const hourRangeEvents = useMemo(
-    () =>
-      weekInstances.map((instance) => ({
-        schedule_start_time: instance.display_start_time,
-        schedule_end_time: instance.display_end_time,
-      })),
-    [weekInstances],
-  );
+  const hourRangeEvents = useMemo(() => {
+    const instancesForRange =
+      viewMode === "day"
+        ? weekInstances.filter(
+            (instance) => instance.displayDayIndex === focusDate.getDay(),
+          )
+        : weekInstances;
+
+    return instancesForRange.map((instance) => ({
+      schedule_start_time: instance.display_start_time,
+      schedule_end_time: instance.display_end_time,
+    }));
+  }, [weekInstances, viewMode, focusDate]);
 
   const { startHour, endHour } = useMemo(
     () =>
@@ -434,6 +453,31 @@ export function ScheduleCalendar({
     setSelectedInstance(null);
   }
 
+  function goToDate(value: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return;
+    }
+
+    const [year, month, day] = value.split("-").map(Number);
+    const next = new Date(year!, month! - 1, day!);
+    if (Number.isNaN(next.getTime())) {
+      return;
+    }
+
+    next.setHours(0, 0, 0, 0);
+    setFocusDate(next);
+    setViewMode("day");
+    setSelectedInstance(null);
+  }
+
+  function openDayView(date: Date) {
+    const next = new Date(date);
+    next.setHours(0, 0, 0, 0);
+    setFocusDate(next);
+    setViewMode("day");
+    setSelectedInstance(null);
+  }
+
   function toggleTeacher(teacherId: number) {
     setSelectedTeacherIds((current) =>
       current.includes(teacherId)
@@ -590,6 +634,15 @@ export function ScheduleCalendar({
                 ? formatDayTitle(focusDate, language)
                 : formatWeekRange(weekStart, language)}
             </h2>
+            <label className="inline-flex items-center gap-2">
+              <span className="sr-only">{t("common.pickDate")}</span>
+              <input
+                type="date"
+                value={formatDateYMD(focusDate)}
+                onChange={(event) => goToDate(event.target.value)}
+                className="rounded-md bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-xs inset-ring inset-ring-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/10 dark:text-white dark:inset-ring-white/10 dark:focus:outline-indigo-500"
+              />
+            </label>
             <div className="ml-1 inline-flex rounded-md shadow-xs inset-ring inset-ring-gray-300 dark:inset-ring-white/10">
               <button
                 type="button"
@@ -720,19 +773,44 @@ export function ScheduleCalendar({
                     key={day.toISOString()}
                     className="border-r border-gray-200 px-2 py-3 text-center last:border-r-0 dark:border-white/10"
                   >
-                    <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                      {header.weekday}
-                    </p>
-                    <p
-                      className={classNames(
-                        header.isToday
-                          ? "bg-indigo-600 text-white"
-                          : "text-gray-900 dark:text-white",
-                        "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                      )}
-                    >
-                      {header.day}
-                    </p>
+                    {viewMode === "week" ? (
+                      <button
+                        type="button"
+                        onClick={() => openDayView(day)}
+                        className="mx-auto block rounded-md px-1 py-0.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10 dark:focus-visible:outline-indigo-500"
+                        aria-label={formatDayTitle(day, language)}
+                      >
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {header.weekday}
+                        </p>
+                        <p
+                          className={classNames(
+                            header.isToday
+                              ? "bg-indigo-600 text-white"
+                              : "text-gray-900 dark:text-white",
+                            "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                          )}
+                        >
+                          {header.day}
+                        </p>
+                      </button>
+                    ) : (
+                      <>
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {header.weekday}
+                        </p>
+                        <p
+                          className={classNames(
+                            header.isToday
+                              ? "bg-indigo-600 text-white"
+                              : "text-gray-900 dark:text-white",
+                            "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                          )}
+                        >
+                          {header.day}
+                        </p>
+                      </>
+                    )}
                   </div>
                 );
               })}
@@ -768,6 +846,13 @@ export function ScheduleCalendar({
                   const allDayInstances = allWeekInstances.filter(
                     (instance) => instance.displayDayIndex === dayIndex,
                   );
+                  const dayLayouts = layoutDayEventColumns(
+                    highlightStudentFilter ? allDayInstances : dayInstances,
+                  );
+                  const defaultLayout: ScheduleEventColumnLayout = {
+                    columnIndex: 0,
+                    columnCount: 1,
+                  };
 
                   return (
                     <div
@@ -799,6 +884,10 @@ export function ScheduleCalendar({
                                 key={`dim-${instance.instanceKey}`}
                                 instance={instance}
                                 startHour={startHour}
+                                layout={
+                                  dayLayouts.get(instance.instanceKey) ??
+                                  defaultLayout
+                                }
                                 dimmed
                                 isDragging={false}
                                 onPointerDown={() => {}}
@@ -811,6 +900,9 @@ export function ScheduleCalendar({
                           key={instance.instanceKey}
                           instance={instance}
                           startHour={startHour}
+                          layout={
+                            dayLayouts.get(instance.instanceKey) ?? defaultLayout
+                          }
                           isDragging={
                             dragState?.instance.instanceKey === instance.instanceKey
                           }

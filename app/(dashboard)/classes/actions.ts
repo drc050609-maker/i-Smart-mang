@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { redirect, RedirectType } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
@@ -29,9 +29,15 @@ function revalidateClass(classId: number) {
   revalidatePath("/tutors", "layout");
 }
 
-function revalidateClassStudents(classId: number) {
+function revalidateClassStudents(classId: number, studentIds: number[] = []) {
   revalidateClass(classId);
+  revalidatePath("/students");
   revalidatePath("/students", "layout");
+  for (const studentId of studentIds) {
+    if (Number.isInteger(studentId) && studentId > 0) {
+      revalidatePath(`/students/${studentId}`);
+    }
+  }
 }
 
 function getServiceClient() {
@@ -844,7 +850,7 @@ export async function addClassStudents(
     }
   }
 
-  revalidateClassStudents(classId);
+  revalidateClassStudents(classId, newStudentIds);
   return { success: true };
 }
 
@@ -854,6 +860,11 @@ export async function removeClassStudent(
 ): Promise<ActionState> {
   const classId = Number(formData.get("classId"));
   const enrollmentId = Number(formData.get("enrollmentId"));
+  const studentIdValue = formData.get("studentId");
+  const studentIdFromForm =
+    studentIdValue == null || studentIdValue.toString().trim() === ""
+      ? null
+      : Number(studentIdValue);
 
   if (!Number.isInteger(classId) || classId <= 0) {
     return { error: "Invalid class." };
@@ -863,10 +874,38 @@ export async function removeClassStudent(
     return { error: "Invalid enrollment." };
   }
 
+  if (
+    studentIdFromForm !== null &&
+    (!Number.isInteger(studentIdFromForm) || studentIdFromForm <= 0)
+  ) {
+    return { error: "Invalid student." };
+  }
+
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
   }
+
+  const { data: enrollment, error: enrollmentLookupError } =
+    await client.supabase
+      .from("enrollments")
+      .select('"student id"')
+      .eq("id", enrollmentId)
+      .eq("class id", classId)
+      .maybeSingle();
+
+  if (enrollmentLookupError) {
+    return { error: enrollmentLookupError.message };
+  }
+
+  if (!enrollment) {
+    return { error: "Enrollment not found." };
+  }
+
+  const studentId =
+    typeof enrollment["student id"] === "number"
+      ? enrollment["student id"]
+      : studentIdFromForm;
 
   const { error: enrollmentError } = await client.supabase
     .from("enrollments")
@@ -887,7 +926,10 @@ export async function removeClassStudent(
     return { error: syncError };
   }
 
-  revalidateClassStudents(classId);
+  revalidateClassStudents(
+    classId,
+    typeof studentId === "number" && studentId > 0 ? [studentId] : [],
+  );
   return { success: true };
 }
 
@@ -927,9 +969,8 @@ export async function deleteClass(
   revalidatePath("/classes");
   revalidatePath("/tutors", "layout");
   revalidatePath("/students", "layout");
-  redirect("/classes");
+  redirect("/classes", RedirectType.replace);
 }
-
 export async function updateClassActive(
   formData: FormData,
 ): Promise<ActionState> {

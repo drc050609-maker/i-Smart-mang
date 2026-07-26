@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect, RedirectType } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
@@ -549,7 +550,8 @@ export async function deleteStudent(
   }
 
   revalidatePath("/students");
-  return { success: true };
+  revalidatePath("/classes", "layout");
+  redirect("/students", RedirectType.replace);
 }
 
 export async function updateStudentActive(

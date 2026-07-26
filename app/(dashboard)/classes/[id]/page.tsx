@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { DeleteClassButton } from "@/components/delete-class-button";
@@ -50,6 +50,7 @@ type Student = Database["public"]["Tables"]["students"]["Row"];
 type TeacherEmbed = {
   first_name: string;
   last_name: string | null;
+  is_active?: boolean | null;
 };
 
 type RoomEmbed = {
@@ -216,7 +217,7 @@ export default async function ClassDetailPage({
       class_track,
       is_active,
       location_id,
-      teachers!classes_teacher_id_fkey ( first_name, last_name ),
+      teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
       rooms ( room_number, class_size ),
       class_schedules (
         id,
@@ -247,7 +248,7 @@ export default async function ClassDetailPage({
       .order("id"),
     supabase
       .from("class_teachers")
-      .select("teacher_id, is_primary")
+      .select("teacher_id, is_primary, teachers ( id, is_active )")
       .eq("class_id", classId)
       .order("is_primary", { ascending: false }),
   ]);
@@ -257,7 +258,7 @@ export default async function ClassDetailPage({
   }
 
   if (!classRow) {
-    notFound();
+    redirect("/classes");
   }
 
   const { data: enrollments, error: enrollmentError } = await supabase
@@ -280,15 +281,32 @@ export default async function ClassDetailPage({
     .eq("class_id", classId);
 
   const detail = classRow as ClassDetail;
-  const teacher = firstOrNull(detail.teachers);
+  const teacherEmbed = firstOrNull(detail.teachers);
+  const teacher =
+    teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
   const room = firstOrNull(detail.rooms);
   const assignedTeacherIds = (() => {
-    const fromJoin = ((classTeacherRows as { teacher_id: number; is_primary: boolean }[] | null) ?? [])
+    const fromJoin = (
+      (classTeacherRows as
+        | {
+            teacher_id: number;
+            is_primary: boolean;
+            teachers:
+              | { id: number; is_active: boolean }
+              | { id: number; is_active: boolean }[]
+              | null;
+          }[]
+        | null) ?? []
+    )
+      .filter((row) => {
+        const linked = firstOrNull(row.teachers);
+        return linked?.is_active !== false;
+      })
       .map((row) => row.teacher_id);
     if (fromJoin.length > 0) {
       return fromJoin;
     }
-    return detail.teacher_id != null ? [detail.teacher_id] : [];
+    return detail.teacher_id != null && teacher ? [detail.teacher_id] : [];
   })();
   const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
   const assignedTeachers = assignedTeacherIds
@@ -299,7 +317,7 @@ export default async function ClassDetailPage({
       ? assignedTeachers.map((item) => formatTeacherName(item)).join(", ")
       : teacher
         ? formatTeacherName(teacher)
-        : t("common.notAvailable");
+        : t("common.noTeacherAssigned");
 
   const subjectKey = classSubjectKey(detail.subject);
   let sameSubjectClasses: {
@@ -315,7 +333,7 @@ export default async function ClassDetailPage({
       id,
       subject,
       is_active,
-      teachers!classes_teacher_id_fkey ( first_name, last_name )
+      teachers!classes_teacher_id_fkey ( first_name, last_name, is_active )
     `,
       )
       .eq("location_id", detail.location_id)
@@ -323,10 +341,18 @@ export default async function ClassDetailPage({
 
     sameSubjectClasses = ((campusClasses as SiblingClassRow[] | null) ?? [])
       .filter((row) => classSubjectKey(row.subject) === subjectKey)
-      .map((row) => ({
-        id: row.id,
-        teacher: firstOrNull(row.teachers),
-      }));
+      .map((row) => {
+        const siblingTeacher = firstOrNull(row.teachers);
+        return {
+          id: row.id,
+          teacher:
+            siblingTeacher && siblingTeacher.is_active !== false
+              ? siblingTeacher
+              : null,
+        };
+      })
+      // Prefer classes that still have an active teacher when switching.
+      .filter((row) => row.teacher != null || row.id === classId);
 
     if (!sameSubjectClasses.some((row) => row.id === classId)) {
       sameSubjectClasses.push({
@@ -676,7 +702,8 @@ export default async function ClassDetailPage({
                               <RemoveClassStudentButton
                                 classId={classId}
                                 enrollmentId={enrollment.id}
-                                studentName={formatStudentName(student)}
+                                studentId={student.id}
+                                label={formatStudentName(student)}
                               />
                             </div>
                           </td>

@@ -115,7 +115,7 @@ export default async function SchedulePage() {
           class_track,
           lesson_type,
           location_id,
-          teachers!classes_teacher_id_fkey ( first_name, last_name ),
+          teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
           rooms ( room_number )
         )
       `,

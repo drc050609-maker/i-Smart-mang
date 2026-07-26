@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { DeleteStudentButton } from "@/components/delete-student-button";
@@ -13,6 +13,7 @@ import type { ClassOption } from "@/components/class-multi-combobox";
 import type { StudentOption } from "@/components/student-combobox";
 import { StudentClassCreditsSection } from "@/components/student-class-credits-section";
 import { StudentAttendanceHistorySection } from "@/components/student-attendance-history-section";
+import { RemoveClassStudentButton } from "@/components/remove-class-student-button";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -129,7 +130,7 @@ export default async function StudentDetailPage({
   }
 
   if (!student) {
-    notFound();
+    redirect("/students");
   }
 
   const [
@@ -478,15 +479,25 @@ export default async function StudentDetailPage({
                             </div>
                           </td>
                           <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
-                            <span
-                              className={
-                                enrollment.is_active
-                                  ? "text-green-700 dark:text-green-400"
-                                  : "text-gray-500 dark:text-gray-400"
-                              }
-                            >
-                              {enrollment.is_active ? t("common.active") : t("common.inactive")}
-                            </span>
+                            <div className="flex flex-col items-end gap-2">
+                              <span
+                                className={
+                                  enrollment.is_active
+                                    ? "text-green-700 dark:text-green-400"
+                                    : "text-gray-500 dark:text-gray-400"
+                                }
+                              >
+                                {enrollment.is_active
+                                  ? t("common.active")
+                                  : t("common.inactive")}
+                              </span>
+                              <RemoveClassStudentButton
+                                classId={classRow.id}
+                                enrollmentId={enrollment.id}
+                                studentId={studentId}
+                                label={subjectWithGrade}
+                              />
+                            </div>
                           </td>
                         </tr>
                       );
