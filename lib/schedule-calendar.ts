@@ -518,6 +518,29 @@ export function getEventColumnStyle(layout: ScheduleEventColumnLayout) {
   };
 }
 
+/** Minimum width (px) for one side-by-side event column so student names stay readable. */
+export const MIN_EVENT_COLUMN_WIDTH_PX = 120;
+
+/** Floor width for a day column even with a single event. */
+export const MIN_DAY_COLUMN_WIDTH_PX = 160;
+
+export function maxLayoutColumnCount(
+  layouts: Map<string, ScheduleEventColumnLayout>,
+) {
+  let max = 1;
+  for (const layout of layouts.values()) {
+    max = Math.max(max, layout.columnCount);
+  }
+  return max;
+}
+
+export function dayColumnWidthPx(maxConcurrentColumns: number) {
+  return Math.max(
+    MIN_DAY_COLUMN_WIDTH_PX,
+    maxConcurrentColumns * MIN_EVENT_COLUMN_WIDTH_PX,
+  );
+}
+
 export function buildScheduleEvents(
   scheduleRows: Array<
     ClassScheduleFields & {

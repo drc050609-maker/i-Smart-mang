@@ -207,6 +207,90 @@ export async function rescheduleFromCalendar(
   return { success: true };
 }
 
+export async function deleteFromCalendar(
+  _prevState: ScheduleActionState,
+  formData: FormData,
+): Promise<ScheduleActionState> {
+  const scheduleId = Number(formData.get("scheduleId"));
+  const classId = Number(formData.get("classId"));
+  const scope = formData.get("scope")?.toString();
+  const occurrenceDate = parseDate(formData.get("occurrenceDate"));
+  const startTime = parseScheduleTime(formData.get("startTime"));
+  const endTime = parseScheduleTime(formData.get("endTime"));
+
+  if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+    return { error: "Invalid schedule." };
+  }
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: scheduleRow, error: scheduleError } = await client.supabase
+    .from("class_schedules")
+    .select("id, class_id, is_recurring")
+    .eq("id", scheduleId)
+    .eq("class_id", classId)
+    .maybeSingle();
+
+  if (scheduleError) {
+    return { error: scheduleError.message };
+  }
+
+  if (!scheduleRow) {
+    return { error: "Schedule not found." };
+  }
+
+  if (!scheduleRow.is_recurring || scope === "series") {
+    const { error: deleteError } = await client.supabase
+      .from("class_schedules")
+      .delete()
+      .eq("id", scheduleId)
+      .eq("class_id", classId);
+
+    if (deleteError) {
+      return { error: deleteError.message };
+    }
+
+    revalidateSchedule(classId);
+    return { success: true };
+  }
+
+  if (scope !== "occurrence") {
+    return { error: "Select whether to delete this occurrence or all." };
+  }
+
+  if (!occurrenceDate || !startTime || !endTime) {
+    return { error: "Missing occurrence details." };
+  }
+
+  const { error: upsertError } = await client.supabase
+    .from("class_schedule_exceptions")
+    .upsert(
+      {
+        schedule_id: scheduleId,
+        original_date: occurrenceDate,
+        override_date: occurrenceDate,
+        schedule_start_time: startTime,
+        schedule_end_time: endTime,
+        is_cancelled: true,
+      },
+      { onConflict: "schedule_id,original_date" },
+    );
+
+  if (upsertError) {
+    return { error: upsertError.message };
+  }
+
+  revalidateSchedule(classId);
+  return { success: true };
+}
+
 function timeToMinutes(time: string) {
   const [hoursStr, minutesStr] = time.slice(0, 5).split(":");
   return Number(hoursStr) * 60 + Number(minutesStr);
