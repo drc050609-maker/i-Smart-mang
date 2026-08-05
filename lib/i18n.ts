@@ -273,6 +273,8 @@ export type TranslationKey =
   | "common.nextDay"
   | "common.weekView"
   | "common.dayView"
+  | "common.teacherDayList"
+  | "common.teacherDayListHelp"
   | "common.hideTeacherFilters"
   | "common.showTeacherFilters"
   | "common.clearFilter"
@@ -1044,6 +1046,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.nextDay": "Next day",
     "common.weekView": "Week",
     "common.dayView": "Day",
+    "common.teacherDayList": "Teacher day list",
+    "common.teacherDayListHelp":
+      "Pick a teacher and date to see every class and student that day.",
     "common.hideTeacherFilters": "Hide teachers",
     "common.showTeacherFilters": "Show teachers",
     "common.clearFilter": "Clear filter",
@@ -1857,6 +1862,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.nextDay": "下一天",
     "common.weekView": "周",
     "common.dayView": "日",
+    "common.teacherDayList": "老师当日课表",
+    "common.teacherDayListHelp":
+      "选择老师和日期，查看当天所有课程与学生。",
     "common.hideTeacherFilters": "隐藏老师筛选",
     "common.showTeacherFilters": "显示老师筛选",
     "common.clearFilter": "清除筛选",

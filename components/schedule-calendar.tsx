@@ -31,6 +31,7 @@ import {
   type PendingReschedule,
 } from "@/components/schedule-reschedule-dialog";
 import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
+import { ScheduleTeacherDayDialog } from "@/components/schedule-teacher-day-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
@@ -232,6 +233,8 @@ export function ScheduleCalendar({
   students,
   selectedTeacherIds: selectedTeacherIdsProp,
   onSelectedTeacherIdsChange,
+  onScheduleMutated,
+  scheduleRevision = 0,
   useServerTeacherCounts = false,
 }: {
   events: ScheduleEvent[];
@@ -240,6 +243,8 @@ export function ScheduleCalendar({
   students: ScheduleStudent[];
   selectedTeacherIds?: number[];
   onSelectedTeacherIdsChange?: (teacherIds: number[]) => void;
+  onScheduleMutated?: () => void;
+  scheduleRevision?: number;
   useServerTeacherCounts?: boolean;
 }) {
   const { language, t } = useLanguage();
@@ -294,14 +299,25 @@ export function ScheduleCalendar({
   const [draggingKey, setDraggingKey] = useState<string | null>(null);
   const [pendingReschedule, setPendingReschedule] =
     useState<PendingReschedule | null>(null);
+  const [teacherDayListOpen, setTeacherDayListOpen] = useState(false);
 
   const closeRescheduleDialog = useCallback(() => {
     setPendingReschedule(null);
   }, []);
 
+  const handleRescheduleSuccess = useCallback(() => {
+    setPendingReschedule(null);
+    onScheduleMutated?.();
+  }, [onScheduleMutated]);
+
   const closeClassDetail = useCallback(() => {
     setSelectedInstance(null);
   }, []);
+
+  const handleClassDetailDeleted = useCallback(() => {
+    setSelectedInstance(null);
+    onScheduleMutated?.();
+  }, [onScheduleMutated]);
 
   const teacherColorById = useMemo(
     () =>
@@ -901,6 +917,13 @@ export function ScheduleCalendar({
                 {t("common.weekView")}
               </button>
             </div>
+            <button
+              type="button"
+              onClick={() => setTeacherDayListOpen(true)}
+              className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+            >
+              {t("common.teacherDayList")}
+            </button>
           </div>
 
           <div className="relative w-full max-w-sm">
@@ -1178,7 +1201,7 @@ export function ScheduleCalendar({
           key={`${pendingReschedule.instance.instanceKey}:${pendingReschedule.newDate}:${pendingReschedule.newStartTime}`}
           pending={pendingReschedule}
           onClose={closeRescheduleDialog}
-          onSuccess={closeRescheduleDialog}
+          onSuccess={handleRescheduleSuccess}
         />
       ) : null}
 
@@ -1187,6 +1210,19 @@ export function ScheduleCalendar({
         instance={selectedInstance}
         students={students}
         onClose={closeClassDetail}
+        onDeleted={handleClassDetailDeleted}
+      />
+
+      <ScheduleTeacherDayDialog
+        open={teacherDayListOpen}
+        onClose={() => setTeacherDayListOpen(false)}
+        teachers={teachers}
+        students={students}
+        events={events}
+        exceptions={exceptions}
+        initialTeacherId={selectedTeacherIds[0] ?? teachers[0]?.id ?? null}
+        initialDate={focusDate}
+        scheduleRevision={scheduleRevision}
       />
     </div>
   );

@@ -32,15 +32,17 @@ export function ScheduleCalendarLoader({
     useState(initialTeacherIds);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [scheduleRevision, setScheduleRevision] = useState(0);
   const requestIdRef = useRef(0);
+  const selectedTeacherIdsRef = useRef(selectedTeacherIds);
+  selectedTeacherIdsRef.current = selectedTeacherIds;
 
-  const handleSelectedTeacherIdsChange = useCallback((nextIds: number[]) => {
-    setSelectedTeacherIds(nextIds);
+  const loadEventsForTeachers = useCallback((teacherIds: number[]) => {
     const requestId = ++requestIdRef.current;
     setError(null);
     setLoading(true);
 
-    void fetchScheduleCalendarEventsAction(nextIds)
+    void fetchScheduleCalendarEventsAction(teacherIds)
       .then((result) => {
         if (requestId !== requestIdRef.current) {
           return;
@@ -60,6 +62,19 @@ export function ScheduleCalendarLoader({
         }
       });
   }, []);
+
+  const handleSelectedTeacherIdsChange = useCallback(
+    (nextIds: number[]) => {
+      setSelectedTeacherIds(nextIds);
+      loadEventsForTeachers(nextIds);
+    },
+    [loadEventsForTeachers],
+  );
+
+  const handleScheduleMutated = useCallback(() => {
+    setScheduleRevision((current) => current + 1);
+    loadEventsForTeachers(selectedTeacherIdsRef.current);
+  }, [loadEventsForTeachers]);
 
   return (
     <div className="relative">
@@ -86,6 +101,8 @@ export function ScheduleCalendarLoader({
           students={students}
           selectedTeacherIds={selectedTeacherIds}
           onSelectedTeacherIdsChange={handleSelectedTeacherIdsChange}
+          onScheduleMutated={handleScheduleMutated}
+          scheduleRevision={scheduleRevision}
           useServerTeacherCounts
         />
       </div>

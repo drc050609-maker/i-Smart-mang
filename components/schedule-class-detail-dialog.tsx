@@ -30,10 +30,12 @@ export function ScheduleClassDetailDialog({
   instance,
   students,
   onClose,
+  onDeleted,
 }: {
   instance: ScheduleEventInstance | null;
   students: ScheduleStudent[];
   onClose: () => void;
+  onDeleted?: () => void;
 }) {
   const { t, language } = useLanguage();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -50,9 +52,13 @@ export function ScheduleClassDetailDialog({
 
   useEffect(() => {
     if (deleteState.success) {
-      onClose();
+      if (onDeleted) {
+        onDeleted();
+      } else {
+        onClose();
+      }
     }
-  }, [deleteState.success, onClose]);
+  }, [deleteState.success, onClose, onDeleted]);
 
   if (!instance) {
     return null;
