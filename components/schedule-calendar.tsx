@@ -28,12 +28,12 @@ import {
   ScheduleRescheduleDialog,
   type PendingReschedule,
 } from "@/components/schedule-reschedule-dialog";
-import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   addDays,
+  buildTeacherEventColorLookup,
   buildWeekEventInstances,
   computeHourRange,
   countEventsByTeacher,
@@ -57,6 +57,7 @@ import {
   snapMinutes,
   startOfWeek,
   timeToMinutes,
+  type EventColorSet,
   type ScheduleEvent,
   type ScheduleEventColumnLayout,
   type ScheduleEventInstance,
@@ -98,6 +99,7 @@ function ScheduleEventBlock({
   dimmed,
   isDragging,
   showFullName = false,
+  colorByTeacherId,
   onPointerDown,
 }: {
   instance: ScheduleEventInstance;
@@ -106,10 +108,11 @@ function ScheduleEventBlock({
   dimmed?: boolean;
   isDragging: boolean;
   showFullName?: boolean;
+  colorByTeacherId?: Map<number, EventColorSet>;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   const { language, t } = useLanguage();
-  const colors = getTeacherEventColors(instance.teacher_id);
+  const colors = getTeacherEventColors(instance.teacher_id, colorByTeacherId);
   const { top, height } = getInstancePosition(instance, startHour);
   const displayHeight = Math.max(height, COMPACT_MIN_HEIGHT);
   const columnStyle = getEventColumnStyle(layout);
@@ -207,8 +210,6 @@ export function ScheduleCalendar({
     null,
   );
   const [studentQuery, setStudentQuery] = useState("");
-  const [selectedInstance, setSelectedInstance] =
-    useState<ScheduleEventInstance | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [dragPreview, setDragPreview] = useState<{
     dayIndex: number;
@@ -223,9 +224,14 @@ export function ScheduleCalendar({
     setPendingReschedule(null);
   }, []);
 
-  const closeClassDetail = useCallback(() => {
-    setSelectedInstance(null);
-  }, []);
+  const teacherColorById = useMemo(
+    () =>
+      buildTeacherEventColorLookup([
+        ...teachers.map((teacher) => teacher.id),
+        ...events.map((event) => event.teacher_id),
+      ]),
+    [teachers, events],
+  );
 
   const weekStart = useMemo(() => startOfWeek(focusDate), [focusDate]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
@@ -464,8 +470,6 @@ export function ScheduleCalendar({
 
       if (dragMovedRef.current) {
         resolveDrop(dragState.dayIndex, dragState.topPx, dragState.instance);
-      } else {
-        setSelectedInstance(dragState.instance);
       }
 
       setDragState(null);
@@ -495,19 +499,16 @@ export function ScheduleCalendar({
     setFocusDate((current) =>
       addDays(current, viewMode === "day" ? -1 : -7),
     );
-    setSelectedInstance(null);
   }
 
   function goToNext() {
     setFocusDate((current) => addDays(current, viewMode === "day" ? 1 : 7));
-    setSelectedInstance(null);
   }
 
   function goToToday() {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     setFocusDate(now);
-    setSelectedInstance(null);
   }
 
   function goToDate(value: string) {
@@ -524,7 +525,6 @@ export function ScheduleCalendar({
     next.setHours(0, 0, 0, 0);
     setFocusDate(next);
     setViewMode("day");
-    setSelectedInstance(null);
   }
 
   function openDayView(date: Date) {
@@ -532,7 +532,6 @@ export function ScheduleCalendar({
     next.setHours(0, 0, 0, 0);
     setFocusDate(next);
     setViewMode("day");
-    setSelectedInstance(null);
   }
 
   function toggleTeacher(teacherId: number) {
@@ -623,7 +622,7 @@ export function ScheduleCalendar({
 
           {teachersWithCounts.map((teacher) => {
             const isSelected = selectedTeacherIds.includes(teacher.id);
-            const colors = getTeacherEventColors(teacher.id);
+            const colors = getTeacherEventColors(teacher.id, teacherColorById);
 
             return (
               <button
@@ -978,6 +977,7 @@ export function ScheduleCalendar({
                                 dimmed
                                 isDragging={false}
                                 showFullName={viewMode === "day"}
+                                colorByTeacherId={teacherColorById}
                                 onPointerDown={() => {}}
                               />
                             ))
@@ -995,6 +995,7 @@ export function ScheduleCalendar({
                             dragState?.instance.instanceKey === instance.instanceKey
                           }
                           showFullName={viewMode === "day"}
+                          colorByTeacherId={teacherColorById}
                           onPointerDown={(event) =>
                             handleEventPointerDown(instance, event)
                           }
@@ -1021,7 +1022,7 @@ export function ScheduleCalendar({
 
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
           {teachersWithCounts.map((teacher) => {
-            const colors = getTeacherEventColors(teacher.id);
+            const colors = getTeacherEventColors(teacher.id, teacherColorById);
             return (
               <span key={teacher.id} className="inline-flex items-center gap-1.5">
                 <span className={classNames("size-2.5 rounded-full", colors.dot)} />
@@ -1051,13 +1052,6 @@ export function ScheduleCalendar({
           onSuccess={closeRescheduleDialog}
         />
       ) : null}
-
-      <ScheduleClassDetailDialog
-        key={selectedInstance?.instanceKey ?? "closed"}
-        instance={selectedInstance}
-        students={students}
-        onClose={closeClassDetail}
-      />
     </div>
   );
 }
