@@ -140,45 +140,48 @@ export function buildWeekEventInstances(
       exception,
     ]),
   );
-  const weekDateSet = new Set(weekDays.map(formatDateYMD));
+  const eventByScheduleId = new Map(
+    events.map((event) => [event.scheduleId, event]),
+  );
+  const weekDates = weekDays.map(formatDateYMD);
+  const weekDateSet = new Set(weekDates);
   const instances: ScheduleEventInstance[] = [];
   const movedExceptionKeys = new Set<string>();
 
   for (const event of events) {
     if (event.is_recurring) {
-      for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
-        if (event.schedule_day_of_week !== dayIndex) {
-          continue;
-        }
-
-        const occurrenceDate = formatDateYMD(weekDays[dayIndex]!);
-        const exception = exceptionByKey.get(
-          `${event.scheduleId}:${occurrenceDate}`,
-        );
-
-        if (exception?.is_cancelled) {
-          continue;
-        }
-
-        if (exception && exception.override_date !== occurrenceDate) {
-          movedExceptionKeys.add(
-            `${event.scheduleId}:${exception.original_date}:${exception.override_date}`,
-          );
-          continue;
-        }
-
-        instances.push(
-          makeScheduleEventInstance(
-            event,
-            occurrenceDate,
-            occurrenceDate,
-            dayIndex,
-            exception?.schedule_start_time ?? event.schedule_start_time,
-            exception?.schedule_end_time ?? event.schedule_end_time,
-            Boolean(exception),
-          ),
-        );
+      const dayIndex = event.schedule_day_of_week;
+      if (dayIndex == null || dayIndex < 0 || dayIndex > 6) {
+        continue;
       }
+
+      const occurrenceDate = weekDates[dayIndex]!;
+      const exception = exceptionByKey.get(
+        `${event.scheduleId}:${occurrenceDate}`,
+      );
+
+      if (exception?.is_cancelled) {
+        continue;
+      }
+
+      if (exception && exception.override_date !== occurrenceDate) {
+        movedExceptionKeys.add(
+          `${event.scheduleId}:${exception.original_date}:${exception.override_date}`,
+        );
+        continue;
+      }
+
+      instances.push(
+        makeScheduleEventInstance(
+          event,
+          occurrenceDate,
+          occurrenceDate,
+          dayIndex,
+          exception?.schedule_start_time ?? event.schedule_start_time,
+          exception?.schedule_end_time ?? event.schedule_end_time,
+          Boolean(exception),
+        ),
+      );
     } else if (event.schedule_date && weekDateSet.has(event.schedule_date)) {
       const dayIndex = ymdToDayIndex(weekDays, event.schedule_date);
       if (dayIndex >= 0) {
@@ -215,9 +218,7 @@ export function buildWeekEventInstances(
       continue;
     }
 
-    const event = events.find(
-      (candidate) => candidate.scheduleId === exception.schedule_id,
-    );
+    const event = eventByScheduleId.get(exception.schedule_id);
     if (!event) {
       continue;
     }
@@ -241,6 +242,20 @@ export function buildWeekEventInstances(
   }
 
   return instances;
+}
+
+/** Bucket week instances into 7 day arrays (index = Sunday–Saturday). */
+export function groupInstancesByDay(
+  instances: ScheduleEventInstance[],
+): ScheduleEventInstance[][] {
+  const byDay: ScheduleEventInstance[][] = Array.from({ length: 7 }, () => []);
+  for (const instance of instances) {
+    const day = byDay[instance.displayDayIndex];
+    if (day) {
+      day.push(instance);
+    }
+  }
+  return byDay;
 }
 
 export function startOfWeek(date: Date) {

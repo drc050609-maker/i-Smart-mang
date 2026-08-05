@@ -64,9 +64,116 @@ type EnrollmentRow = {
   students: EnrollmentStudentEmbed | EnrollmentStudentEmbed[] | null;
 };
 
+type ScheduleQueryClient = ReturnType<typeof createClient>;
+
+const PAGE_SIZE = 1000;
+const IN_FILTER_CHUNK = 200;
+
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+async function fetchAllRows<T>(
+  fetchPage: (
+    from: number,
+    to: number,
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<{ data: T[]; error: string | null }> {
+  const rows: T[] = [];
+
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await fetchPage(from, to);
+    if (error) {
+      return { data: rows, error: error.message };
+    }
+
+    const page = data ?? [];
+    rows.push(...page);
+    if (page.length < PAGE_SIZE) {
+      break;
+    }
+  }
+
+  return { data: rows, error: null };
+}
+
+async function fetchExceptionsForScheduleIds(
+  supabase: ScheduleQueryClient,
+  scheduleIds: number[],
+): Promise<{ data: ScheduleException[]; error: string | null }> {
+  if (scheduleIds.length === 0) {
+    return { data: [], error: null };
+  }
+
+  const rows: ScheduleException[] = [];
+
+  for (let index = 0; index < scheduleIds.length; index += IN_FILTER_CHUNK) {
+    const chunk = scheduleIds.slice(index, index + IN_FILTER_CHUNK);
+    const { data, error } = await supabase
+      .from("class_schedule_exceptions")
+      .select(
+        `
+        id,
+        schedule_id,
+        original_date,
+        override_date,
+        schedule_start_time,
+        schedule_end_time,
+        is_cancelled
+      `,
+      )
+      .in("schedule_id", chunk);
+
+    if (error) {
+      return { data: rows, error: error.message };
+    }
+
+    rows.push(...((data as ScheduleException[] | null) ?? []));
+  }
+
+  return { data: rows, error: null };
+}
+
+async function fetchEnrollmentsForClassIds(
+  supabase: ScheduleQueryClient,
+  locationId: number,
+  classIds: number[],
+): Promise<{ data: EnrollmentRow[]; error: string | null }> {
+  if (classIds.length === 0) {
+    return { data: [], error: null };
+  }
+
+  const rows: EnrollmentRow[] = [];
+
+  for (let index = 0; index < classIds.length; index += IN_FILTER_CHUNK) {
+    const chunk = classIds.slice(index, index + IN_FILTER_CHUNK);
+    const { data, error } = await fetchAllRows<EnrollmentRow>((from, to) =>
+      supabase
+        .from("enrollments")
+        .select(
+          `
+          "class id",
+          "student id",
+          students ( id, "first name", "last name" ),
+          classes!inner ( location_id )
+        `,
+        )
+        .eq("classes.location_id", locationId)
+        .in("class id", chunk)
+        .not("student id", "is", null)
+        .range(from, to),
+    );
+
+    if (error) {
+      return { data: rows, error };
+    }
+
+    rows.push(...data);
+  }
+
+  return { data: rows, error: null };
 }
 
 export default async function SchedulePage() {
@@ -89,89 +196,92 @@ export default async function SchedulePage() {
 
   const [
     { data: scheduleRows, error: schedulesError },
-    { data: exceptions, error: exceptionsError },
     { data: teachers, error: teachersError },
     { data: students, error: studentsError },
+  ] = await Promise.all([
+    fetchAllRows<ScheduleRow>((from, to) =>
+      supabase
+        .from("class_schedules")
+        .select(
+          `
+          id,
+          class_id,
+          student_id,
+          is_recurring,
+          schedule_day_of_week,
+          schedule_date,
+          schedule_start_time,
+          schedule_end_time,
+          students ( id, "first name", "last name" ),
+          classes!inner (
+            id,
+            subject,
+            teacher_id,
+            is_active,
+            class_track,
+            lesson_type,
+            location_id,
+            teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
+            rooms ( room_number )
+          )
+        `,
+        )
+        .eq("classes.location_id", locationId)
+        .order("schedule_start_time")
+        .range(from, to),
+    ),
+    fetchAllRows<{
+      id: number;
+      first_name: string;
+      last_name: string | null;
+    }>((from, to) =>
+      supabase
+        .from("teachers")
+        .select("id, first_name, last_name")
+        .eq("is_active", true)
+        .eq("location_id", locationId)
+        .order("first_name")
+        .range(from, to),
+    ),
+    fetchAllRows<ScheduleStudent>((from, to) =>
+      supabase
+        .from("students")
+        .select('id, "first name", "last name"')
+        .eq("is_active", true)
+        .eq("location_id", locationId)
+        .order("first name")
+        .range(from, to),
+    ),
+  ]);
+
+  const scheduleIds = scheduleRows.map((row) => row.id);
+  const classIdsNeedingRoster = [
+    ...new Set(
+      scheduleRows
+        .filter((row) => row.student_id == null)
+        .map((row) => row.class_id),
+    ),
+  ];
+
+  const [
+    { data: exceptionRows, error: exceptionsError },
     { data: enrollments, error: enrollmentsError },
   ] = await Promise.all([
-    supabase
-      .from("class_schedules")
-      .select(
-        `
-        id,
-        class_id,
-        student_id,
-        is_recurring,
-        schedule_day_of_week,
-        schedule_date,
-        schedule_start_time,
-        schedule_end_time,
-        students ( id, "first name", "last name" ),
-        classes!inner (
-          id,
-          subject,
-          teacher_id,
-          is_active,
-          class_track,
-          lesson_type,
-          location_id,
-          teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
-          rooms ( room_number )
-        )
-      `,
-      )
-      .eq("classes.location_id", locationId)
-      .order("schedule_start_time"),
-    supabase
-      .from("class_schedule_exceptions")
-      .select(
-        `
-        id,
-        schedule_id,
-        original_date,
-        override_date,
-        schedule_start_time,
-        schedule_end_time,
-        is_cancelled
-      `,
-      ),
-    supabase
-      .from("teachers")
-      .select("id, first_name, last_name")
-      .eq("is_active", true)
-      .eq("location_id", locationId)
-      .order("first_name"),
-    supabase
-      .from("students")
-      .select('id, "first name", "last name"')
-      .eq("is_active", true)
-      .eq("location_id", locationId)
-      .order("first name"),
-    supabase
-      .from("enrollments")
-      .select(
-        `
-        "class id",
-        "student id",
-        students ( id, "first name", "last name" ),
-        classes!inner ( location_id )
-      `,
-      )
-      .eq("classes.location_id", locationId)
-      .not("student id", "is", null),
+    fetchExceptionsForScheduleIds(supabase, scheduleIds),
+    fetchEnrollmentsForClassIds(supabase, locationId, classIdsNeedingRoster),
   ]);
 
   const error =
-    schedulesError?.message ??
-    exceptionsError?.message ??
-    teachersError?.message ??
-    studentsError?.message ??
-    enrollmentsError?.message ??
+    schedulesError ??
+    exceptionsError ??
+    teachersError ??
+    studentsError ??
+    enrollmentsError ??
     null;
 
   const enrollmentsByClass = new Map<number, ScheduleStudent[]>();
 
-  for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
+  for (const enrollment of enrollments) {
     const classId = enrollment["class id"];
     const student = firstOrNull(enrollment.students);
 
@@ -193,7 +303,7 @@ export default async function SchedulePage() {
   }
 
   const scheduleEvents = buildScheduleEvents(
-    ((scheduleRows as ScheduleRow[] | null) ?? []).map((scheduleRow) => {
+    scheduleRows.map((scheduleRow) => {
       const classRow = firstOrNull(scheduleRow.classes);
       const scheduleStudent = firstOrNull(scheduleRow.students);
 
@@ -231,18 +341,14 @@ export default async function SchedulePage() {
     formatTeacherName,
   );
 
-  const exceptionRows: ScheduleException[] =
-    (exceptions as ScheduleException[] | null) ?? [];
-
   const teacherOptions: ScheduleTeacher[] = sortTeachers(
-    ((teachers as ScheduleTeacher[] | null) ?? []).map((teacher) => ({
+    teachers.map((teacher) => ({
       ...teacher,
       class_count: 0,
     })),
   );
 
-  const studentOptions: ScheduleStudent[] =
-    (students as ScheduleStudent[] | null) ?? [];
+  const studentOptions: ScheduleStudent[] = students;
 
   return (
     <div>
