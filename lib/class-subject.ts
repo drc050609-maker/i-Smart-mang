@@ -22,7 +22,9 @@ export const CLASS_SUBJECT_TRANSLATIONS: Record<string, string> = {
   "Sing & Play": "边弹边唱",
   "Model / Catwalk": "模特走秀",
   Art: "画画",
+  "1-to-1 Art": "一对一画画",
   "Jazz Dance": "爵士舞",
+  Jazz: "爵士舞",
   "Chinese Dance": "中国舞",
   Band: "乐队",
   "Special Education": "一对一特教",
@@ -44,6 +46,7 @@ export const CLASS_SUBJECT_TRANSLATIONS: Record<string, string> = {
 
 /** Longer phrases first so partial matches stay correct. */
 const CLASS_SUBJECT_KEYWORD_REPLACEMENTS: [RegExp, string][] = [
+  [/1[\s-]*to[\s-]*1\s*art/gi, "一对一画画"],
   [/special\s*education/gi, "一对一特教"],
   [/smart\s*piano/gi, "智能钢琴"],
   [/acoustic\s*piano/gi, "原声钢琴"],

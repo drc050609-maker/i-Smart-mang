@@ -1725,6 +1725,14 @@ export type Database = {
           student_id: number
         }[]
       }
+      clear_class_pricing: {
+        Args: { p_class_id: number; p_reason?: string }
+        Returns: undefined
+      }
+      clear_class_pricing_field: {
+        Args: { p_class_id: number; p_field: string; p_reason?: string }
+        Returns: undefined
+      }
       correct_money_source: {
         Args: {
           p_corrected_amount_cents: number

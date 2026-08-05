@@ -17,6 +17,7 @@ export type MoneyActionState = {
 function revalidateMoneyPaths() {
   const now = new Date();
   revalidatePath("/payments");
+  revalidatePath("/payments/purchases");
   revalidatePath("/purchases");
   revalidatePath("/statements");
   revalidatePath("/tuitions");

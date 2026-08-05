@@ -41,20 +41,26 @@ type PaymentRow = {
   effective_amount_cents: number | null;
   session_count: number;
   status: import("@/lib/payment-status").PaymentStatus;
-  students: {
-    id: number;
-    "first name": string;
-    "last name": string | null;
-  } | {
-    id: number;
-    "first name": string;
-    "last name": string | null;
-  }[] | null;
-  classes: {
-    subject: string;
-  } | {
-    subject: string;
-  }[] | null;
+  students:
+    | {
+        id: number;
+        "first name": string;
+        "last name": string | null;
+      }
+    | {
+        id: number;
+        "first name": string;
+        "last name": string | null;
+      }[]
+    | null;
+  classes:
+    | {
+        subject: string;
+      }
+    | {
+        subject: string;
+      }[]
+    | null;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -73,7 +79,7 @@ export default async function PaymentsPage() {
     return (
       <p className="text-sm text-red-600 dark:text-red-400">
         {t("common.error.loadFailed", {
-          entity: t("nav.payments"),
+          entity: t("payments.tabPayments"),
           message: "Campus location could not be resolved.",
         })}
       </p>
@@ -185,28 +191,22 @@ export default async function PaymentsPage() {
 
   const error = classesError ?? studentsError ?? paymentsError;
 
-  return (
-    <div>
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          {t("nav.payments")}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.paymentsSubtitle")}
-        </p>
-      </div>
+  if (error) {
+    return (
+      <p className="text-sm text-red-600 dark:text-red-400">
+        {t("common.error.loadFailed", {
+          entity: t("payments.tabPayments"),
+          message: error.message,
+        })}
+      </p>
+    );
+  }
 
-      {error ? (
-        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
-          {t("common.error.loadFailed", { entity: t("nav.payments"), message: error.message })}
-        </p>
-      ) : (
-        <ClassPaymentsSection
-          classes={payableClasses}
-          students={studentOptions}
-          recentPayments={recentPayments}
-        />
-      )}
-    </div>
+  return (
+    <ClassPaymentsSection
+      classes={payableClasses}
+      students={studentOptions}
+      recentPayments={recentPayments}
+    />
   );
 }
