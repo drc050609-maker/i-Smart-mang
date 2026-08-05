@@ -736,6 +736,78 @@ export const TEACHER_EVENT_COLORS: EventColorSet[] = [
     text: "text-sky-900 dark:text-sky-100",
     dot: "bg-sky-500",
   },
+  {
+    bg: "bg-pink-100 dark:bg-pink-950/80",
+    border: "border-pink-400 dark:border-pink-500",
+    text: "text-pink-900 dark:text-pink-100",
+    dot: "bg-pink-500",
+  },
+  {
+    bg: "bg-yellow-100 dark:bg-yellow-950/80",
+    border: "border-yellow-400 dark:border-yellow-500",
+    text: "text-yellow-900 dark:text-yellow-100",
+    dot: "bg-yellow-500",
+  },
+  {
+    bg: "bg-red-100 dark:bg-red-950/80",
+    border: "border-red-400 dark:border-red-500",
+    text: "text-red-900 dark:text-red-100",
+    dot: "bg-red-500",
+  },
+  {
+    bg: "bg-green-100 dark:bg-green-950/80",
+    border: "border-green-400 dark:border-green-500",
+    text: "text-green-900 dark:text-green-100",
+    dot: "bg-green-500",
+  },
+  {
+    bg: "bg-purple-100 dark:bg-purple-950/80",
+    border: "border-purple-400 dark:border-purple-500",
+    text: "text-purple-900 dark:text-purple-100",
+    dot: "bg-purple-500",
+  },
+  {
+    bg: "bg-stone-200 dark:bg-stone-800/80",
+    border: "border-stone-400 dark:border-stone-500",
+    text: "text-stone-900 dark:text-stone-100",
+    dot: "bg-stone-500",
+  },
+  {
+    bg: "bg-blue-200 dark:bg-blue-900/70",
+    border: "border-blue-600 dark:border-blue-400",
+    text: "text-blue-950 dark:text-blue-50",
+    dot: "bg-blue-700",
+  },
+  {
+    bg: "bg-rose-200 dark:bg-rose-900/70",
+    border: "border-rose-600 dark:border-rose-400",
+    text: "text-rose-950 dark:text-rose-50",
+    dot: "bg-rose-700",
+  },
+  {
+    bg: "bg-emerald-200 dark:bg-emerald-900/70",
+    border: "border-emerald-600 dark:border-emerald-400",
+    text: "text-emerald-950 dark:text-emerald-50",
+    dot: "bg-emerald-700",
+  },
+  {
+    bg: "bg-violet-200 dark:bg-violet-900/70",
+    border: "border-violet-600 dark:border-violet-400",
+    text: "text-violet-950 dark:text-violet-50",
+    dot: "bg-violet-700",
+  },
+  {
+    bg: "bg-orange-200 dark:bg-orange-900/70",
+    border: "border-orange-600 dark:border-orange-400",
+    text: "text-orange-950 dark:text-orange-50",
+    dot: "bg-orange-700",
+  },
+  {
+    bg: "bg-cyan-200 dark:bg-cyan-900/70",
+    border: "border-cyan-600 dark:border-cyan-400",
+    text: "text-cyan-950 dark:text-cyan-50",
+    dot: "bg-cyan-700",
+  },
 ];
 
 export const UNASSIGNED_TEACHER_COLORS: EventColorSet = {

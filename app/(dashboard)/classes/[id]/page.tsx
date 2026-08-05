@@ -197,17 +197,12 @@ export default async function ClassDetailPage({
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
-  const [
-    { data: classRow, error: classError },
-    { data: teachers },
-    { data: rooms },
-    { data: allStudents },
-    { data: classTeacherRows },
-  ] = await Promise.all([
-    supabase
-      .from("classes")
-      .select(
-        `
+  const [{ data: classRow, error: classError }, { data: classTeacherRows }] =
+    await Promise.all([
+      supabase
+        .from("classes")
+        .select(
+          `
       id,
       subject,
       duration_minutes,
@@ -229,29 +224,15 @@ export default async function ClassDetailPage({
         student_id
       )
     `,
-      )
-      .eq("id", classId)
-      .maybeSingle(),
-    supabase
-      .from("teachers")
-      .select("id, first_name, last_name")
-      .eq("is_active", true)
-      .order("first_name"),
-    supabase
-      .from("rooms")
-      .select("id, room_number, class_size")
-      .order("room_number"),
-    supabase
-      .from("students")
-      .select('id, "first name", "last name"')
-      .eq("is_active", true)
-      .order("id"),
-    supabase
-      .from("class_teachers")
-      .select("teacher_id, is_primary, teachers ( id, is_active )")
-      .eq("class_id", classId)
-      .order("is_primary", { ascending: false }),
-  ]);
+        )
+        .eq("id", classId)
+        .maybeSingle(),
+      supabase
+        .from("class_teachers")
+        .select("teacher_id, is_primary, teachers ( id, is_active )")
+        .eq("class_id", classId)
+        .order("is_primary", { ascending: false }),
+    ]);
 
   if (classError) {
     throw new Error(`Could not load class: ${classError.message}`);
@@ -261,26 +242,61 @@ export default async function ClassDetailPage({
     redirect("/classes");
   }
 
-  const { data: enrollments, error: enrollmentError } = await supabase
-    .from("enrollments")
-    .select(
-      `
+  const detail = classRow as ClassDetail;
+  const locationId = detail.location_id;
+
+  const [
+    { data: teachers },
+    { data: rooms },
+    { data: allStudents },
+    { data: enrollments, error: enrollmentError },
+    { data: balances, error: balancesError },
+  ] =
+    locationId != null
+      ? await Promise.all([
+          supabase
+            .from("teachers")
+            .select("id, first_name, last_name")
+            .eq("is_active", true)
+            .eq("location_id", locationId)
+            .order("first_name"),
+          supabase
+            .from("rooms")
+            .select("id, room_number, class_size")
+            .eq("location_id", locationId)
+            .order("room_number"),
+          supabase
+            .from("students")
+            .select('id, "first name", "last name"')
+            .eq("is_active", true)
+            .eq("location_id", locationId)
+            .order("id"),
+          supabase
+            .from("enrollments")
+            .select(
+              `
       id,
       is_active,
       students ( id, "first name", "last name", dob, is_active )
     `,
-    )
-    .eq("class id", classId)
-    .order("id");
+            )
+            .eq("class id", classId)
+            .order("id"),
+          supabase
+            .from("student_class_balances")
+            .select(
+              "student_id, class_id, sessions_total, sessions_remaining, sessions_used, absence_count",
+            )
+            .eq("class_id", classId),
+        ])
+      : [
+          { data: [] as TeacherOption[] },
+          { data: [] as RoomOption[] },
+          { data: [] as StudentOption[] },
+          { data: null, error: null },
+          { data: null, error: null },
+        ];
 
-  const { data: balances, error: balancesError } = await supabase
-    .from("student_class_balances")
-    .select(
-      "student_id, class_id, sessions_total, sessions_remaining, sessions_used, absence_count",
-    )
-    .eq("class_id", classId);
-
-  const detail = classRow as ClassDetail;
   const teacherEmbed = firstOrNull(detail.teachers);
   const teacher =
     teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
@@ -308,7 +324,22 @@ export default async function ClassDetailPage({
     }
     return detail.teacher_id != null && teacher ? [detail.teacher_id] : [];
   })();
-  const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
+
+  let teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
+  const missingAssignedIds = assignedTeacherIds.filter(
+    (id) => !teacherOptions.some((option) => option.id === id),
+  );
+  if (missingAssignedIds.length > 0) {
+    const { data: extraTeachers } = await supabase
+      .from("teachers")
+      .select("id, first_name, last_name")
+      .in("id", missingAssignedIds);
+    teacherOptions = sortTeachers([
+      ...teacherOptions,
+      ...((extraTeachers as TeacherOption[] | null) ?? []),
+    ]);
+  }
+
   const assignedTeachers = assignedTeacherIds
     .map((id) => teacherOptions.find((teacherOption) => teacherOption.id === id))
     .filter((item): item is TeacherOption => item != null);

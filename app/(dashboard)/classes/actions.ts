@@ -151,6 +151,40 @@ function validateClassFields(fields: ReturnType<typeof parseClassFields>) {
   return null;
 }
 
+async function assertTeachersAtLocation(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  teacherIds: number[],
+  locationId: number,
+) {
+  if (teacherIds.length === 0) {
+    return null;
+  }
+
+  const { data: teachers, error } = await supabase
+    .from("teachers")
+    .select("id, location_id")
+    .in("id", teacherIds);
+
+  if (error) {
+    return error.message;
+  }
+
+  const foundIds = new Set((teachers ?? []).map((teacher) => teacher.id));
+  if (teacherIds.some((id) => !foundIds.has(id))) {
+    return "One or more teachers could not be found.";
+  }
+
+  if (
+    (teachers ?? []).some(
+      (teacher) => teacher.location_id !== locationId,
+    )
+  ) {
+    return "Teachers must belong to the same campus as the class.";
+  }
+
+  return null;
+}
+
 async function syncClassTeachers(
   supabase: ReturnType<typeof createSupabaseServiceClient>,
   classId: number,
@@ -207,6 +241,15 @@ export async function createClass(
   );
   if (!locationId) {
     return { error: "Campus location could not be resolved." };
+  }
+
+  const teacherLocationError = await assertTeachersAtLocation(
+    client.supabase,
+    fields.teacherIds ?? [],
+    locationId,
+  );
+  if (teacherLocationError) {
+    return { error: teacherLocationError };
   }
 
   const { data: createdClass, error: classError } = await client.supabase
@@ -312,6 +355,15 @@ export async function createClassWithPricing(
     return { error: "Campus location could not be resolved." };
   }
 
+  const teacherLocationError = await assertTeachersAtLocation(
+    client.supabase,
+    fields.teacherIds ?? [],
+    locationId,
+  );
+  if (teacherLocationError) {
+    return { error: teacherLocationError };
+  }
+
   const { data: createdClass, error: classError } = await client.supabase
     .from("classes")
     .insert({
@@ -404,6 +456,33 @@ export async function updateClass(
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
+  }
+
+  const { data: existingClass, error: existingError } = await client.supabase
+    .from("classes")
+    .select("location_id")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (existingError) {
+    return { error: existingError.message };
+  }
+
+  if (!existingClass) {
+    return { error: "Class not found." };
+  }
+
+  if (existingClass.location_id == null) {
+    return { error: "Class campus location could not be resolved." };
+  }
+
+  const teacherLocationError = await assertTeachersAtLocation(
+    client.supabase,
+    fields.teacherIds ?? [],
+    existingClass.location_id,
+  );
+  if (teacherLocationError) {
+    return { error: teacherLocationError };
   }
 
   const { error: classError } = await client.supabase
