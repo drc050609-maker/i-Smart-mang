@@ -7,6 +7,7 @@ import {
   setStaffAccountActive,
 } from "@/app/(dashboard)/settings/actions";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
+import { AdminSetStaffPasswordDialog } from "@/components/admin-set-staff-password-dialog";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ListSearchInput } from "@/components/list-search-input";
 import { useLanguage } from "@/components/language-provider";
@@ -326,11 +327,20 @@ export function StaffAccountsTable({
                       </td>
                       {canManageAccounts ? (
                         <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
-                          <StaffDeleteButton
-                            staffId={account.id}
-                            email={account.email}
-                            isSelf={account.id === currentStaffId}
-                          />
+                          <div className="flex flex-col items-end gap-2">
+                            {account.role === "manager" ? (
+                              <AdminSetStaffPasswordDialog
+                                staffId={account.id}
+                                email={account.email}
+                                displayName={formatDisplayName(account)}
+                              />
+                            ) : null}
+                            <StaffDeleteButton
+                              staffId={account.id}
+                              email={account.email}
+                              isSelf={account.id === currentStaffId}
+                            />
+                          </div>
                         </td>
                       ) : null}
                     </tr>

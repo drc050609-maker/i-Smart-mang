@@ -321,6 +321,8 @@ export type TranslationKey =
   | "common.confirmPassword"
   | "common.updatePassword"
   | "common.passwordUpdated"
+  | "common.setPassword"
+  | "common.setManagerPasswordHelp"
   | "common.addStaffAccount"
   | "common.addManager"
   | "common.addStatenIslandManager"
@@ -1089,6 +1091,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirmPassword": "Confirm new password",
     "common.updatePassword": "Update password",
     "common.passwordUpdated": "Password updated successfully.",
+    "common.setPassword": "Set password",
+    "common.setManagerPasswordHelp": "Set a new password for {name}.",
     "common.addStaffAccount": "Add staff account",
     "common.addManager": "Add manager",
     "common.addStatenIslandManager": "Add Staten Island manager",
@@ -1898,6 +1902,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirmPassword": "确认新密码",
     "common.updatePassword": "更新密码",
     "common.passwordUpdated": "密码更新成功。",
+    "common.setPassword": "设置密码",
+    "common.setManagerPasswordHelp": "为 {name} 设置新密码。",
     "common.addStaffAccount": "添加员工账户",
     "common.addManager": "添加经理",
     "common.addStatenIslandManager": "添加史泰登岛经理",

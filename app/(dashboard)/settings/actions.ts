@@ -191,6 +191,78 @@ export async function deleteStaffAccount(
   return { success: true };
 }
 
+export async function adminSetStaffPassword(
+  _prevState: ChangePasswordState,
+  formData: FormData,
+): Promise<ChangePasswordState> {
+  const actor = await getCurrentStaff();
+
+  if (!actor || actor.role !== "admin") {
+    return { error: "Only admins can reset staff passwords." };
+  }
+
+  const staffId = formData.get("staffId")?.toString().trim();
+  const newPassword = formData.get("newPassword")?.toString();
+  const confirmPassword = formData.get("confirmPassword")?.toString();
+
+  if (!staffId) {
+    return { error: "Invalid staff account." };
+  }
+
+  if (actor.id === staffId) {
+    return {
+      error: "Use Change password on your account to update your own password.",
+    };
+  }
+
+  if (!newPassword || !confirmPassword) {
+    return { error: "All password fields are required." };
+  }
+
+  if (newPassword.length < 8) {
+    return { error: "New password must be at least 8 characters." };
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { error: "New passwords do not match." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: target, error: lookupError } = await client.supabase
+    .from("staff_accounts")
+    .select("id, role")
+    .eq("id", staffId)
+    .maybeSingle();
+
+  if (lookupError) {
+    return { error: lookupError.message };
+  }
+
+  if (!target) {
+    return { error: "That staff account was not found." };
+  }
+
+  if (target.role !== "manager") {
+    return { error: "Admins can only reset manager passwords." };
+  }
+
+  const { error: updateError } =
+    await client.supabase.auth.admin.updateUserById(staffId, {
+      password: newPassword,
+    });
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  revalidateStaffSettings();
+  return { success: true };
+}
+
 export async function changeStaffPassword(
   _prevState: ChangePasswordState,
   formData: FormData,
