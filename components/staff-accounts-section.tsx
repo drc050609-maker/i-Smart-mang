@@ -72,6 +72,12 @@ export function StaffAccountsSection({
         </p>
       ) : null}
 
+      {canManageAccounts ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("common.setManagerPasswordHint")}
+        </p>
+      ) : null}
+
       <StaffAccountsTable
         accounts={locationAccounts}
         currentStaffId={currentStaffId}

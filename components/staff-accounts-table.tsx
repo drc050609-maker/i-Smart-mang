@@ -298,7 +298,16 @@ export function StaffAccountsTable({
                   {filteredAccounts.map((account) => (
                     <tr key={account.id}>
                       <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
-                        {formatDisplayName(account)}
+                        <div className="flex flex-col items-start gap-2">
+                          <span>{formatDisplayName(account)}</span>
+                          {canManageAccounts && account.role === "manager" ? (
+                            <AdminSetStaffPasswordDialog
+                              staffId={account.id}
+                              email={account.email}
+                              displayName={formatDisplayName(account)}
+                            />
+                          ) : null}
+                        </div>
                       </td>
                       <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                         {account.email}
@@ -327,20 +336,11 @@ export function StaffAccountsTable({
                       </td>
                       {canManageAccounts ? (
                         <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
-                          <div className="flex flex-col items-end gap-2">
-                            {account.role === "manager" ? (
-                              <AdminSetStaffPasswordDialog
-                                staffId={account.id}
-                                email={account.email}
-                                displayName={formatDisplayName(account)}
-                              />
-                            ) : null}
-                            <StaffDeleteButton
-                              staffId={account.id}
-                              email={account.email}
-                              isSelf={account.id === currentStaffId}
-                            />
-                          </div>
+                          <StaffDeleteButton
+                            staffId={account.id}
+                            email={account.email}
+                            isSelf={account.id === currentStaffId}
+                          />
                         </td>
                       ) : null}
                     </tr>

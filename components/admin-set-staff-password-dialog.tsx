@@ -1,18 +1,15 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useRef, useState, useTransition, type FormEvent } from "react";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { KeyIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
-import {
-  adminSetStaffPassword,
-  type ChangePasswordState,
-} from "@/app/(dashboard)/settings/actions";
+import { adminSetStaffPassword } from "@/app/(dashboard)/settings/actions";
 import { useLanguage } from "@/components/language-provider";
 
 const inputClassName =
@@ -20,8 +17,6 @@ const inputClassName =
 
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
-
-const initialState: ChangePasswordState = {};
 
 export function AdminSetStaffPasswordDialog({
   staffId,
@@ -36,11 +31,8 @@ export function AdminSetStaffPasswordDialog({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const formRef = useRef<HTMLFormElement>(null);
-  const [state, formAction, pending] = useActionState(
-    adminSetStaffPassword,
-    initialState,
-  );
 
   function openDialog() {
     setError(null);
@@ -49,36 +41,44 @@ export function AdminSetStaffPasswordDialog({
   }
 
   function closeDialog() {
+    if (pending) return;
     setError(null);
     setSuccessMessage(null);
     setOpen(false);
   }
 
-  useEffect(() => {
-    if (state.error) {
-      setError(state.error);
-      setSuccessMessage(null);
-    }
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSuccessMessage(null);
 
-    if (state.success) {
+    const formData = new FormData(event.currentTarget);
+    formData.set("staffId", staffId);
+
+    startTransition(async () => {
+      const result = await adminSetStaffPassword({}, formData);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+
       formRef.current?.reset();
-      setError(null);
       setSuccessMessage(t("common.passwordUpdated"));
-      const timer = window.setTimeout(() => {
+      window.setTimeout(() => {
         setOpen(false);
         setSuccessMessage(null);
-      }, 1200);
-      return () => window.clearTimeout(timer);
-    }
-  }, [state.error, state.success, t]);
+      }, 1000);
+    });
+  }
 
   return (
     <>
       <button
         type="button"
         onClick={openDialog}
-        className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+        className="inline-flex items-center gap-1.5 rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-indigo-700 shadow-xs inset-ring inset-ring-indigo-200 hover:bg-indigo-50 dark:bg-indigo-500/10 dark:text-indigo-200 dark:shadow-none dark:inset-ring-indigo-400/30 dark:hover:bg-indigo-500/20"
       >
+        <KeyIcon aria-hidden="true" className="size-4" />
         {t("common.setPassword")}
       </button>
 
@@ -98,7 +98,8 @@ export function AdminSetStaffPasswordDialog({
                 <button
                   type="button"
                   onClick={closeDialog}
-                  className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:bg-gray-900 dark:hover:text-gray-300"
+                  disabled={pending}
+                  className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 disabled:opacity-50 dark:bg-gray-900 dark:hover:text-gray-300"
                 >
                   <span className="sr-only">{t("common.close")}</span>
                   <XMarkIcon aria-hidden="true" className="size-6" />
@@ -120,11 +121,9 @@ export function AdminSetStaffPasswordDialog({
 
               <form
                 ref={formRef}
-                action={formAction}
+                onSubmit={handleSubmit}
                 className="mt-6 space-y-4"
               >
-                <input type="hidden" name="staffId" value={staffId} />
-
                 <div>
                   <label
                     htmlFor={`adminNewPassword-${staffId}`}
@@ -188,7 +187,8 @@ export function AdminSetStaffPasswordDialog({
                   <button
                     type="button"
                     onClick={closeDialog}
-                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+                    disabled={pending}
+                    className="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-50 sm:mt-0 sm:w-auto dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
                   >
                     {t("common.cancel")}
                   </button>
