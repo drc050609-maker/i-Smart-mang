@@ -1,11 +1,13 @@
 "use client";
 
 import {
+  memo,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
+  type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import {
@@ -49,6 +51,7 @@ import {
   getInstancePosition,
   getTeacherEventColors,
   getWeekDays,
+  groupInstancesByDay,
   HOUR_HEIGHT_PX,
   layoutDayEventColumns,
   maxLayoutColumnCount,
@@ -76,9 +79,29 @@ const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
 const COMPACT_MIN_HEIGHT = 36;
 const TIME_GUTTER_WIDTH_PX = 64;
+/** Above this event count, default to one teacher so the grid stays usable. */
+const AUTO_TEACHER_FILTER_THRESHOLD = 250;
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
+}
+
+function initialSelectedTeacherIds(events: ScheduleEvent[]) {
+  if (events.length < AUTO_TEACHER_FILTER_THRESHOLD) {
+    return [] as number[];
+  }
+
+  const counts = countEventsByTeacher(events);
+  let bestId: number | null = null;
+  let bestCount = 0;
+  for (const [teacherId, count] of counts) {
+    if (count > bestCount) {
+      bestId = teacherId;
+      bestCount = count;
+    }
+  }
+
+  return bestId != null ? [bestId] : [];
 }
 
 type DragState = {
@@ -92,7 +115,12 @@ type DragState = {
   moved: boolean;
 };
 
-function ScheduleEventBlock({
+const DEFAULT_EVENT_LAYOUT: ScheduleEventColumnLayout = {
+  columnIndex: 0,
+  columnCount: 1,
+};
+
+const ScheduleEventBlock = memo(function ScheduleEventBlock({
   instance,
   startHour,
   layout,
@@ -100,7 +128,7 @@ function ScheduleEventBlock({
   isDragging,
   showFullName = false,
   colorByTeacherId,
-  onPointerDown,
+  onPointerDownRef,
 }: {
   instance: ScheduleEventInstance;
   startHour: number;
@@ -109,7 +137,13 @@ function ScheduleEventBlock({
   isDragging: boolean;
   showFullName?: boolean;
   colorByTeacherId?: Map<number, EventColorSet>;
-  onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
+  onPointerDownRef: MutableRefObject<
+    | ((
+        instance: ScheduleEventInstance,
+        event: ReactPointerEvent<HTMLDivElement>,
+      ) => void)
+    | null
+  >;
 }) {
   const { language, t } = useLanguage();
   const colors = getTeacherEventColors(instance.teacher_id, colorByTeacherId);
@@ -136,10 +170,24 @@ function ScheduleEventBlock({
 
   return (
     <div
-      style={{ top, height: displayHeight, ...columnStyle }}
-      onPointerDown={onPointerDown}
+      data-instance-key={instance.instanceKey}
+      style={{
+        top,
+        height: displayHeight,
+        contentVisibility: "auto",
+        containIntrinsicSize: `auto ${displayHeight}px`,
+        ...columnStyle,
+      }}
+      onPointerDown={
+        dimmed
+          ? undefined
+          : (event) => onPointerDownRef.current?.(instance, event)
+      }
       className={classNames(
-        "absolute z-10 cursor-grab overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left shadow-sm transition active:cursor-grabbing",
+        "absolute z-10 overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left shadow-sm transition",
+        dimmed
+          ? "pointer-events-none"
+          : "cursor-grab active:cursor-grabbing",
         colors.bg,
         colors.border,
         colors.text,
@@ -174,7 +222,7 @@ function ScheduleEventBlock({
       ) : null}
     </div>
   );
-}
+});
 
 export function ScheduleCalendar({
   events,
@@ -191,6 +239,15 @@ export function ScheduleCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const dayColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragMovedRef = useRef(false);
+  const dragStateRef = useRef<DragState | null>(null);
+  const dragPreviewElRef = useRef<HTMLDivElement | null>(null);
+  const eventPointerDownRef = useRef<
+    | ((
+        instance: ScheduleEventInstance,
+        event: ReactPointerEvent<HTMLDivElement>,
+      ) => void)
+    | null
+  >(null);
 
   const today = useMemo(() => {
     const now = new Date();
@@ -204,19 +261,15 @@ export function ScheduleCalendar({
     now.setHours(0, 0, 0, 0);
     return now;
   });
-  const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>([]);
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>(() =>
+    initialSelectedTeacherIds(events),
+  );
   const [showTeacherFilters, setShowTeacherFilters] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<ScheduleStudent | null>(
     null,
   );
   const [studentQuery, setStudentQuery] = useState("");
-  const [dragState, setDragState] = useState<DragState | null>(null);
-  const [dragPreview, setDragPreview] = useState<{
-    dayIndex: number;
-    topPx: number;
-    heightPx: number;
-    instance: ScheduleEventInstance;
-  } | null>(null);
+  const [draggingKey, setDraggingKey] = useState<string | null>(null);
   const [pendingReschedule, setPendingReschedule] =
     useState<PendingReschedule | null>(null);
 
@@ -265,38 +318,63 @@ export function ScheduleCalendar({
     [visibleEvents, exceptions, weekDays],
   );
 
-  const allWeekInstances = useMemo(
-    () =>
-      buildWeekEventInstances(
-        filterEventsByTeachers(events, selectedTeacherIds),
-        exceptions,
-        weekDays,
-      ),
-    [events, exceptions, weekDays, selectedTeacherIds],
+  const highlightStudentFilter = selectedStudent !== null;
+
+  const allWeekInstances = useMemo(() => {
+    if (!highlightStudentFilter) {
+      return weekInstances;
+    }
+
+    return buildWeekEventInstances(teacherFilteredEvents, exceptions, weekDays);
+  }, [
+    highlightStudentFilter,
+    weekInstances,
+    teacherFilteredEvents,
+    exceptions,
+    weekDays,
+  ]);
+
+  const instancesByDay = useMemo(
+    () => groupInstancesByDay(weekInstances),
+    [weekInstances],
   );
+
+  const allInstancesByDay = useMemo(() => {
+    if (!highlightStudentFilter) {
+      return instancesByDay;
+    }
+    return groupInstancesByDay(allWeekInstances);
+  }, [highlightStudentFilter, instancesByDay, allWeekInstances]);
+
+  const layoutsByDay = useMemo(() => {
+    return allInstancesByDay.map((dayInstances) =>
+      layoutDayEventColumns(dayInstances),
+    );
+  }, [allInstancesByDay]);
+
+  const dimmedInstancesByDay = useMemo(() => {
+    if (!highlightStudentFilter) {
+      return Array.from({ length: 7 }, () => [] as ScheduleEventInstance[]);
+    }
+
+    return allInstancesByDay.map((allDayInstances, dayIndex) => {
+      const visibleKeys = new Set(
+        (instancesByDay[dayIndex] ?? []).map((instance) => instance.instanceKey),
+      );
+      return allDayInstances.filter(
+        (instance) => !visibleKeys.has(instance.instanceKey),
+      );
+    });
+  }, [highlightStudentFilter, allInstancesByDay, instancesByDay]);
 
   const dayColumnWidthsPx = useMemo(() => {
     if (viewMode !== "day") return null;
 
     return displayDays.map(({ dayIndex }) => {
-      const dayInstances = weekInstances.filter(
-        (instance) => instance.displayDayIndex === dayIndex,
-      );
-      const allDayInstances = allWeekInstances.filter(
-        (instance) => instance.displayDayIndex === dayIndex,
-      );
-      const layouts = layoutDayEventColumns(
-        selectedStudent !== null ? allDayInstances : dayInstances,
-      );
+      const layouts = layoutsByDay[dayIndex] ?? new Map();
       return dayColumnWidthPx(maxLayoutColumnCount(layouts));
     });
-  }, [
-    viewMode,
-    displayDays,
-    weekInstances,
-    allWeekInstances,
-    selectedStudent,
-  ]);
+  }, [viewMode, displayDays, layoutsByDay]);
 
   const calendarGridTemplateColumns = useMemo(() => {
     if (!dayColumnWidthsPx) {
@@ -321,16 +399,14 @@ export function ScheduleCalendar({
   const hourRangeEvents = useMemo(() => {
     const instancesForRange =
       viewMode === "day"
-        ? weekInstances.filter(
-            (instance) => instance.displayDayIndex === focusDate.getDay(),
-          )
+        ? (instancesByDay[focusDate.getDay()] ?? [])
         : weekInstances;
 
     return instancesForRange.map((instance) => ({
       schedule_start_time: instance.display_start_time,
       schedule_end_time: instance.display_end_time,
     }));
-  }, [weekInstances, viewMode, focusDate]);
+  }, [instancesByDay, weekInstances, viewMode, focusDate]);
 
   const { startHour, endHour } = useMemo(
     () =>
@@ -377,6 +453,41 @@ export function ScheduleCalendar({
     [teachers, teacherCounts],
   );
 
+  const visibleInstanceCount = useMemo(() => {
+    if (viewMode === "day") {
+      return (instancesByDay[focusDate.getDay()] ?? []).length;
+    }
+    return weekInstances.length;
+  }, [viewMode, instancesByDay, focusDate, weekInstances]);
+
+  const syncDragPreviewDom = useCallback(
+    (dayIndex: number, topPx: number, heightPx: number, visible: boolean) => {
+      const preview = dragPreviewElRef.current;
+      if (!preview) return;
+
+      if (!visible) {
+        preview.style.display = "none";
+        return;
+      }
+
+      const column = dayColumnRefs.current[dayIndex];
+      const grid = gridRef.current;
+      if (!column || !grid) {
+        preview.style.display = "none";
+        return;
+      }
+
+      const gridRect = grid.getBoundingClientRect();
+      const columnRect = column.getBoundingClientRect();
+      preview.style.display = "block";
+      preview.style.top = `${topPx}px`;
+      preview.style.left = `${columnRect.left - gridRect.left + 4}px`;
+      preview.style.width = `${Math.max(0, columnRect.width - 8)}px`;
+      preview.style.height = `${heightPx}px`;
+    },
+    [],
+  );
+
   const resolveDrop = useCallback(
     (dayIndex: number, topPx: number, instance: ScheduleEventInstance) => {
       const gridStartMinutes = startHour * 60;
@@ -402,6 +513,7 @@ export function ScheduleCalendar({
 
   const handlePointerMove = useCallback(
     (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
       if (!dragState || event.pointerId !== dragState.pointerId) {
         return;
       }
@@ -415,6 +527,7 @@ export function ScheduleCalendar({
 
       if (moved) {
         dragMovedRef.current = true;
+        dragState.moved = true;
       }
 
       let dayIndex = dragState.dayIndex;
@@ -439,31 +552,21 @@ export function ScheduleCalendar({
       const rect = column.getBoundingClientRect();
       const relativeY = event.clientY - rect.top;
       const maxTop = gridHeight - dragState.heightPx;
-      const topPx = Math.max(0, Math.min(maxTop, relativeY - dragState.heightPx / 2));
-
-      setDragState((current) =>
-        current
-          ? {
-              ...current,
-              moved,
-              dayIndex,
-              topPx,
-            }
-          : null,
+      const topPx = Math.max(
+        0,
+        Math.min(maxTop, relativeY - dragState.heightPx / 2),
       );
 
-      setDragPreview({
-        dayIndex,
-        topPx,
-        heightPx: dragState.heightPx,
-        instance: dragState.instance,
-      });
+      dragState.dayIndex = dayIndex;
+      dragState.topPx = topPx;
+      syncDragPreviewDom(dayIndex, topPx, dragState.heightPx, true);
     },
-    [dragState, gridHeight],
+    [gridHeight, syncDragPreviewDom],
   );
 
   const handlePointerUp = useCallback(
     (event: PointerEvent) => {
+      const dragState = dragStateRef.current;
       if (!dragState || event.pointerId !== dragState.pointerId) {
         return;
       }
@@ -472,15 +575,16 @@ export function ScheduleCalendar({
         resolveDrop(dragState.dayIndex, dragState.topPx, dragState.instance);
       }
 
-      setDragState(null);
-      setDragPreview(null);
+      dragStateRef.current = null;
+      setDraggingKey(null);
+      syncDragPreviewDom(0, 0, 0, false);
       dragMovedRef.current = false;
     },
-    [dragState, resolveDrop],
+    [resolveDrop, syncDragPreviewDom],
   );
 
   useEffect(() => {
-    if (!dragState) {
+    if (!draggingKey) {
       return;
     }
 
@@ -493,7 +597,7 @@ export function ScheduleCalendar({
       window.removeEventListener("pointerup", handlePointerUp);
       window.removeEventListener("pointercancel", handlePointerUp);
     };
-  }, [dragState, handlePointerMove, handlePointerUp]);
+  }, [draggingKey, handlePointerMove, handlePointerUp]);
 
   function goToPrevious() {
     setFocusDate((current) =>
@@ -552,29 +656,45 @@ export function ScheduleCalendar({
     });
   }
 
-  function handleEventPointerDown(
-    instance: ScheduleEventInstance,
-    event: ReactPointerEvent<HTMLDivElement>,
-  ) {
-    if (event.button !== 0) return;
+  const handleEventPointerDown = useCallback(
+    (
+      instance: ScheduleEventInstance,
+      event: ReactPointerEvent<HTMLDivElement>,
+    ) => {
+      if (event.button !== 0) return;
 
-    dragMovedRef.current = false;
-    const { height, top } = getInstancePosition(instance, startHour);
-    setDragState({
-      instance,
-      pointerId: event.pointerId,
-      originX: event.clientX,
-      originY: event.clientY,
-      dayIndex: instance.displayDayIndex,
-      topPx: top,
-      heightPx: Math.max(height, COMPACT_MIN_HEIGHT),
-      moved: false,
-    });
+      dragMovedRef.current = false;
+      const { height, top } = getInstancePosition(instance, startHour);
+      const nextDrag: DragState = {
+        instance,
+        pointerId: event.pointerId,
+        originX: event.clientX,
+        originY: event.clientY,
+        dayIndex: instance.displayDayIndex,
+        topPx: top,
+        heightPx: Math.max(height, COMPACT_MIN_HEIGHT),
+        moved: false,
+      };
+      dragStateRef.current = nextDrag;
+      setDraggingKey(instance.instanceKey);
+      // Defer so the preview node exists after draggingKey commit.
+      requestAnimationFrame(() => {
+        syncDragPreviewDom(
+          nextDrag.dayIndex,
+          nextDrag.topPx,
+          nextDrag.heightPx,
+          true,
+        );
+      });
 
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
+      event.currentTarget.setPointerCapture(event.pointerId);
+    },
+    [startHour, syncDragPreviewDom],
+  );
 
-  const highlightStudentFilter = selectedStudent !== null;
+  useEffect(() => {
+    eventPointerDownRef.current = handleEventPointerDown;
+  }, [handleEventPointerDown]);
 
   return (
     <div className="mt-6 flex flex-col gap-6 xl:flex-row">
@@ -584,9 +704,6 @@ export function ScheduleCalendar({
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("common.teachers")}
           </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("common.teacherFilterHelp")}
-          </p>
         </div>
 
         <div className="mt-4 space-y-1">
@@ -821,11 +938,7 @@ export function ScheduleCalendar({
             {t("common.showingClassesFor", {
               name: formatStudentName(selectedStudent),
             })}
-            {weekInstances.filter((instance) =>
-              viewMode === "day"
-                ? instance.displayDayIndex === focusDate.getDay()
-                : true,
-            ).length === 0
+            {visibleInstanceCount === 0
               ? t("common.showingClassesNoneFound")
               : "."}
           </p>
@@ -902,118 +1015,98 @@ export function ScheduleCalendar({
               <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
                 <div
                   ref={gridRef}
-                  className="relative grid"
+                  className="relative"
                   style={{
                     height: gridHeight,
-                    gridTemplateColumns: calendarGridTemplateColumns,
                     ...(calendarMinWidthPx != null
                       ? { minWidth: calendarMinWidthPx }
                       : {}),
                   }}
                 >
-                <div className="relative border-r border-gray-200 dark:border-white/10">
-                  {hours.map((hour, index) => (
-                    <div
-                      key={hour}
-                      className="absolute right-2 text-xs text-gray-500 dark:text-gray-400"
-                      style={{
-                        top: index * HOUR_HEIGHT_PX - 8,
-                      }}
-                    >
-                      {formatHourLabel(hour, language)}
-                    </div>
-                  ))}
-                </div>
-
-                {displayDays.map(({ date: day, dayIndex }) => {
-                  const dayInstances = weekInstances.filter(
-                    (instance) => instance.displayDayIndex === dayIndex,
-                  );
-                  const allDayInstances = allWeekInstances.filter(
-                    (instance) => instance.displayDayIndex === dayIndex,
-                  );
-                  const dayLayouts = layoutDayEventColumns(
-                    highlightStudentFilter ? allDayInstances : dayInstances,
-                  );
-                  const defaultLayout: ScheduleEventColumnLayout = {
-                    columnIndex: 0,
-                    columnCount: 1,
-                  };
-
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      ref={(element) => {
-                        dayColumnRefs.current[dayIndex] = element;
-                      }}
-                      className="relative border-r border-gray-200 last:border-r-0 dark:border-white/10"
-                    >
+                  <div
+                    className="grid h-full"
+                    style={{
+                      gridTemplateColumns: calendarGridTemplateColumns,
+                    }}
+                  >
+                    <div className="relative border-r border-gray-200 dark:border-white/10">
                       {hours.map((hour, index) => (
                         <div
                           key={hour}
-                          className="absolute inset-x-0 border-t border-gray-100 dark:border-white/5"
-                          style={{ top: index * HOUR_HEIGHT_PX }}
-                        />
-                      ))}
-
-                      {highlightStudentFilter
-                        ? allDayInstances
-                            .filter(
-                              (instance) =>
-                                !dayInstances.some(
-                                  (visible) =>
-                                    visible.instanceKey === instance.instanceKey,
-                                ),
-                            )
-                            .map((instance) => (
-                              <ScheduleEventBlock
-                                key={`dim-${instance.instanceKey}`}
-                                instance={instance}
-                                startHour={startHour}
-                                layout={
-                                  dayLayouts.get(instance.instanceKey) ??
-                                  defaultLayout
-                                }
-                                dimmed
-                                isDragging={false}
-                                showFullName={viewMode === "day"}
-                                colorByTeacherId={teacherColorById}
-                                onPointerDown={() => {}}
-                              />
-                            ))
-                        : null}
-
-                      {dayInstances.map((instance) => (
-                        <ScheduleEventBlock
-                          key={instance.instanceKey}
-                          instance={instance}
-                          startHour={startHour}
-                          layout={
-                            dayLayouts.get(instance.instanceKey) ?? defaultLayout
-                          }
-                          isDragging={
-                            dragState?.instance.instanceKey === instance.instanceKey
-                          }
-                          showFullName={viewMode === "day"}
-                          colorByTeacherId={teacherColorById}
-                          onPointerDown={(event) =>
-                            handleEventPointerDown(instance, event)
-                          }
-                        />
-                      ))}
-
-                      {dragPreview && dragPreview.dayIndex === dayIndex ? (
-                        <div
-                          className="pointer-events-none absolute inset-x-1 z-30 rounded border-2 border-dashed border-indigo-500 bg-indigo-500/20"
+                          className="absolute right-2 text-xs text-gray-500 dark:text-gray-400"
                           style={{
-                            top: dragPreview.topPx,
-                            height: dragPreview.heightPx,
+                            top: index * HOUR_HEIGHT_PX - 8,
                           }}
-                        />
-                      ) : null}
+                        >
+                          {formatHourLabel(hour, language)}
+                        </div>
+                      ))}
                     </div>
-                  );
-                })}
+
+                    {displayDays.map(({ date: day, dayIndex }) => {
+                      const dayInstances = instancesByDay[dayIndex] ?? [];
+                      const dimmedInstances =
+                        dimmedInstancesByDay[dayIndex] ?? [];
+                      const dayLayouts = layoutsByDay[dayIndex] ?? new Map();
+
+                      return (
+                        <div
+                          key={day.toISOString()}
+                          ref={(element) => {
+                            dayColumnRefs.current[dayIndex] = element;
+                          }}
+                          className="relative border-r border-gray-200 last:border-r-0 dark:border-white/10"
+                        >
+                          {hours.map((hour, index) => (
+                            <div
+                              key={hour}
+                              className="absolute inset-x-0 border-t border-gray-100 dark:border-white/5"
+                              style={{ top: index * HOUR_HEIGHT_PX }}
+                            />
+                          ))}
+
+                          {dimmedInstances.map((instance) => (
+                            <ScheduleEventBlock
+                              key={`dim-${instance.instanceKey}`}
+                              instance={instance}
+                              startHour={startHour}
+                              layout={
+                                dayLayouts.get(instance.instanceKey) ??
+                                DEFAULT_EVENT_LAYOUT
+                              }
+                              dimmed
+                              isDragging={false}
+                              showFullName={viewMode === "day"}
+                              colorByTeacherId={teacherColorById}
+                              onPointerDownRef={eventPointerDownRef}
+                            />
+                          ))}
+
+                          {dayInstances.map((instance) => (
+                            <ScheduleEventBlock
+                              key={instance.instanceKey}
+                              instance={instance}
+                              startHour={startHour}
+                              layout={
+                                dayLayouts.get(instance.instanceKey) ??
+                                DEFAULT_EVENT_LAYOUT
+                              }
+                              isDragging={draggingKey === instance.instanceKey}
+                              showFullName={viewMode === "day"}
+                              colorByTeacherId={teacherColorById}
+                              onPointerDownRef={eventPointerDownRef}
+                            />
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div
+                    ref={dragPreviewElRef}
+                    className="pointer-events-none absolute z-30 rounded border-2 border-dashed border-indigo-500 bg-indigo-500/20"
+                    style={{ display: "none" }}
+                    aria-hidden="true"
+                  />
                 </div>
               </div>
             </div>
