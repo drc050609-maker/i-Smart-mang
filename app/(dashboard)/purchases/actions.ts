@@ -75,6 +75,8 @@ export async function recordStudentPurchase(
   }
 
   const purchasedAt = new Date();
+  revalidatePath("/payments");
+  revalidatePath("/payments/purchases");
   revalidatePath("/purchases");
   revalidatePath(
     `/statements/${purchasedAt.getFullYear()}/${purchasedAt.getMonth() + 1}`,

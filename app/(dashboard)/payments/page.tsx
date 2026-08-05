@@ -16,6 +16,7 @@ import { createClient } from "@/utils/supabase/server";
 type TeacherEmbed = {
   first_name: string;
   last_name: string | null;
+  is_active?: boolean | null;
 };
 
 type ClassRow = {
@@ -40,20 +41,26 @@ type PaymentRow = {
   effective_amount_cents: number | null;
   session_count: number;
   status: import("@/lib/payment-status").PaymentStatus;
-  students: {
-    id: number;
-    "first name": string;
-    "last name": string | null;
-  } | {
-    id: number;
-    "first name": string;
-    "last name": string | null;
-  }[] | null;
-  classes: {
-    subject: string;
-  } | {
-    subject: string;
-  }[] | null;
+  students:
+    | {
+        id: number;
+        "first name": string;
+        "last name": string | null;
+      }
+    | {
+        id: number;
+        "first name": string;
+        "last name": string | null;
+      }[]
+    | null;
+  classes:
+    | {
+        subject: string;
+      }
+    | {
+        subject: string;
+      }[]
+    | null;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -72,7 +79,7 @@ export default async function PaymentsPage() {
     return (
       <p className="text-sm text-red-600 dark:text-red-400">
         {t("common.error.loadFailed", {
-          entity: t("nav.payments"),
+          entity: t("payments.tabPayments"),
           message: "Campus location could not be resolved.",
         })}
       </p>
@@ -98,7 +105,7 @@ export default async function PaymentsPage() {
         single_price_cents,
         package_20_price_cents,
         package_50_price_cents,
-        teachers!classes_teacher_id_fkey ( first_name, last_name )
+        teachers!classes_teacher_id_fkey ( first_name, last_name, is_active )
       `,
       )
       .eq("is_active", true)
@@ -131,24 +138,30 @@ export default async function PaymentsPage() {
   ]);
 
   const payableClasses: PayableClassRow[] =
-    (classes as ClassRow[] | null)?.map((classRow) => ({
-      id: classRow.id,
-      subject: classRow.subject,
-      teacher_id: classRow.teacher_id,
-      duration_minutes: classRow.duration_minutes,
-      lesson_type: classRow.lesson_type,
-      class_track: classRow.class_track,
-      teacher: firstOrNull(classRow.teachers),
-      pricing: buildTuitionPricing(
-        classRow.duration_minutes,
-        classRow.lesson_type,
-        {
-          single_price_cents: classRow.single_price_cents,
-          package_20_price_cents: classRow.package_20_price_cents,
-          package_50_price_cents: classRow.package_50_price_cents,
-        },
-      ),
-    })) ?? [];
+    (classes as ClassRow[] | null)?.map((classRow) => {
+      const teacherEmbed = firstOrNull(classRow.teachers);
+      const teacher =
+        teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
+
+      return {
+        id: classRow.id,
+        subject: classRow.subject,
+        teacher_id: teacher ? classRow.teacher_id : null,
+        duration_minutes: classRow.duration_minutes,
+        lesson_type: classRow.lesson_type,
+        class_track: classRow.class_track,
+        teacher,
+        pricing: buildTuitionPricing(
+          classRow.duration_minutes,
+          classRow.lesson_type,
+          {
+            single_price_cents: classRow.single_price_cents,
+            package_20_price_cents: classRow.package_20_price_cents,
+            package_50_price_cents: classRow.package_50_price_cents,
+          },
+        ),
+      };
+    }) ?? [];
 
   const studentOptions: StudentOption[] =
     (students as StudentOption[] | null) ?? [];
@@ -178,28 +191,22 @@ export default async function PaymentsPage() {
 
   const error = classesError ?? studentsError ?? paymentsError;
 
-  return (
-    <div>
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
-          {t("nav.payments")}
-        </h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.paymentsSubtitle")}
-        </p>
-      </div>
+  if (error) {
+    return (
+      <p className="text-sm text-red-600 dark:text-red-400">
+        {t("common.error.loadFailed", {
+          entity: t("payments.tabPayments"),
+          message: error.message,
+        })}
+      </p>
+    );
+  }
 
-      {error ? (
-        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
-          {t("common.error.loadFailed", { entity: t("nav.payments"), message: error.message })}
-        </p>
-      ) : (
-        <ClassPaymentsSection
-          classes={payableClasses}
-          students={studentOptions}
-          recentPayments={recentPayments}
-        />
-      )}
-    </div>
+  return (
+    <ClassPaymentsSection
+      classes={payableClasses}
+      students={studentOptions}
+      recentPayments={recentPayments}
+    />
   );
 }

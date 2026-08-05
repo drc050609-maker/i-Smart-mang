@@ -10,7 +10,9 @@
     "seed": "node --env-file=.env.local --import tsx ./seed.ts",
     "seed:env": "node --import tsx ./seed.ts",
     "create-admin": "node --env-file=.env.local --import tsx ./scripts/create-admin.ts",
-    "import:brooklyn-ical": "node --env-file=.env.local --import tsx ./scripts/import-brooklyn-ical.ts"
+    "import:brooklyn-ical": "node --env-file=.env.local --import tsx ./scripts/import-brooklyn-ical.ts",
+    "import:si-spreadsheet": "node --env-file=.env.local --import tsx ./scripts/import-si-spreadsheet.ts",
+    "import:si-ical": "node --env-file=.env.local --import tsx ./scripts/import-si-ical.ts"
   },
   "dependencies": {
     "@faker-js/faker": "^10.4.0",

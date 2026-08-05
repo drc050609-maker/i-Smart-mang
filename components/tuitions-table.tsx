@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { EditClassPricingDialog } from "@/components/edit-class-pricing-dialog";
 import { DeleteClassPricingButton } from "@/components/delete-class-pricing-button";
+import { DeleteCourseButton } from "@/components/delete-course-button";
 import { AddTuitionCourseDialog } from "@/components/add-tuition-course-dialog";
 import { RenameCourseDialog } from "@/components/rename-course-dialog";
 import { useLanguage } from "@/components/language-provider";
@@ -16,6 +17,7 @@ import {
   formatClassSubjectWithGrade,
   GRADE_LEVEL_OPTIONS,
 } from "@/lib/class-subject";
+import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
 import type { AppLanguage } from "@/lib/language";
 import type { TranslationKey } from "@/lib/i18n";
 import { type TeacherNameFields } from "@/lib/person-name";
@@ -25,6 +27,7 @@ import {
   type TuitionPricing,
 } from "@/lib/tuition";
 import {
+  collectSheetMatchedClassIds,
   findMatchingClasses,
   gradeTierLabelKey,
   LEVEL_1V1_DURATIONS,
@@ -82,10 +85,16 @@ function CourseLabel({
       <div className="inline-flex items-center gap-1">
         <span>{label}</span>
         {editClass ? (
-          <RenameCourseDialog
-            classId={editClass.id}
-            subject={editClass.subject}
-          />
+          <>
+            <RenameCourseDialog
+              classId={editClass.id}
+              subject={editClass.subject}
+            />
+            <DeleteCourseButton
+              classId={editClass.id}
+              subject={editClass.subject}
+            />
+          </>
         ) : null}
       </div>
       {note ? (
@@ -611,6 +620,79 @@ function FixedSectionBlock({
   );
 }
 
+function OtherClassesBlock({
+  classes,
+}: {
+  classes: TuitionClassRow[];
+}) {
+  const { language, t } = useLanguage();
+
+  if (classes.length === 0) return null;
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+        {t("sheet.otherClasses")}
+      </h3>
+      <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        {t("sheet.otherClassesSubtitle")}
+      </p>
+      <div className="mt-3 overflow-x-auto">
+        <table className="min-w-full">
+          <thead>
+            <tr className="text-left text-xs font-semibold text-gray-500 dark:text-gray-400">
+              <th className="pr-3 pb-2">{t("common.courseName")}</th>
+              <th className="px-3 pb-2 text-right">{t("common.perClass")}</th>
+              <th className="px-3 pb-2 text-right">
+                {t("common.packageCountPack", { count: 20 })}
+              </th>
+              <th className="px-3 pb-2 text-right">
+                {t("common.packageCountPack", { count: 50 })}
+              </th>
+              <th className="pl-3 pb-2 text-right">{t("common.active")}</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-white/10">
+            {classes.map((row) => (
+              <tr key={row.id}>
+                <td className="py-3 pr-3 text-sm text-gray-700 dark:text-gray-300">
+                  <CourseLabel
+                    label={formatClassSubject(row.subject, language)}
+                    editClass={row}
+                    note={[
+                      formatDuration(row.duration_minutes, t),
+                      formatLessonType(
+                        row.lesson_type as LessonType | null,
+                        language,
+                      ),
+                      row.is_active ? null : t("common.inactive"),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  />
+                </td>
+                <PriceCells
+                  pricing={{
+                    perClass: row.pricing.perClass,
+                    package20: row.pricing.package20,
+                    package50: row.pricing.package50,
+                  }}
+                  language={language}
+                  t={t}
+                  editClass={row}
+                />
+                <td className="py-3 pl-3 text-right text-xs text-gray-500 dark:text-gray-400">
+                  {row.is_active ? t("common.active") : t("common.inactive")}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 export function TuitionsTable({ classes }: { classes: TuitionClassRow[] }) {
   const { t } = useLanguage();
 
@@ -631,6 +713,17 @@ export function TuitionsTable({ classes }: { classes: TuitionClassRow[] }) {
     for (const row of classes) map.set(row.id, row);
     return map;
   }, [classes]);
+
+  const otherClasses = useMemo(() => {
+    const matchedIds = collectSheetMatchedClassIds(matchable);
+    return classes
+      .filter((row) => !matchedIds.has(row.id))
+      .sort((a, b) =>
+        a.subject.localeCompare(b.subject, undefined, {
+          sensitivity: "base",
+        }),
+      );
+  }, [classes, matchable]);
 
   return (
     <div className="mt-6 space-y-6">
@@ -683,6 +776,8 @@ export function TuitionsTable({ classes }: { classes: TuitionClassRow[] }) {
             />
           );
         })}
+
+        <OtherClassesBlock classes={otherClasses} />
       </div>
     </div>
   );

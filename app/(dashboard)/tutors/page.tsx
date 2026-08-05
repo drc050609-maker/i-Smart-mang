@@ -22,6 +22,11 @@ type TeacherWithClasses = {
   classes: ClassEmbed | ClassEmbed[] | null;
 };
 
+type ClassTeacherLink = {
+  teacher_id: number;
+  classes: ClassEmbed | ClassEmbed[] | null;
+};
+
 function asClassList(classes: ClassEmbed | ClassEmbed[] | null | undefined) {
   if (!classes) return [];
   return Array.isArray(classes) ? classes : [classes];
@@ -45,10 +50,12 @@ export default async function TutorsPage() {
     );
   }
 
-  const { data: teachers, error } = await supabase
-    .from("teachers")
-    .select(
-      `
+  const [{ data: teachers, error }, { data: classTeacherLinks }] =
+    await Promise.all([
+      supabase
+        .from("teachers")
+        .select(
+          `
       id,
       first_name,
       last_name,
@@ -56,23 +63,50 @@ export default async function TutorsPage() {
       is_active,
       classes!classes_teacher_id_fkey ( id, subject )
     `,
-    )
-    .eq("location_id", locationId);
+        )
+        .eq("location_id", locationId),
+      supabase
+        .from("class_teachers")
+        .select(
+          `
+      teacher_id,
+      classes!inner ( id, subject, location_id )
+    `,
+        )
+        .eq("classes.location_id", locationId),
+    ]);
+
+  const assignedClassesByTeacher = new Map<number, ClassEmbed[]>();
+  for (const link of (classTeacherLinks as ClassTeacherLink[] | null) ?? []) {
+    const classes = asClassList(link.classes);
+    if (classes.length === 0) continue;
+    const current = assignedClassesByTeacher.get(link.teacher_id) ?? [];
+    assignedClassesByTeacher.set(link.teacher_id, [...current, ...classes]);
+  }
 
   const tutorRows =
-    (teachers as TeacherWithClasses[] | null)?.map((teacher) => ({
-      id: teacher.id,
-      first_name: teacher.first_name,
-      last_name: teacher.last_name,
-      dob: teacher.dob,
-      is_active: teacher.is_active,
-      classes: uniqueClassesBySubject(asClassList(teacher.classes)).sort(
-        (a, b) =>
-          a.subject.localeCompare(b.subject, undefined, {
-            sensitivity: "base",
-          }),
-      ),
-    })) ?? [];
+    (teachers as TeacherWithClasses[] | null)?.map((teacher) => {
+      const fromPrimary = asClassList(teacher.classes);
+      const fromJoin = assignedClassesByTeacher.get(teacher.id) ?? [];
+      const mergedById = new Map<number, ClassEmbed>();
+      for (const row of [...fromPrimary, ...fromJoin]) {
+        mergedById.set(row.id, row);
+      }
+
+      return {
+        id: teacher.id,
+        first_name: teacher.first_name,
+        last_name: teacher.last_name,
+        dob: teacher.dob,
+        is_active: teacher.is_active,
+        classes: uniqueClassesBySubject([...mergedById.values()]).sort(
+          (a, b) =>
+            a.subject.localeCompare(b.subject, undefined, {
+              sensitivity: "base",
+            }),
+        ),
+      };
+    }) ?? [];
 
   return (
     <div>

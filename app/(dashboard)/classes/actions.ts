@@ -933,12 +933,7 @@ export async function removeClassStudent(
   return { success: true };
 }
 
-export async function deleteClass(
-  _prevState: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
-  const classId = Number(formData.get("classId"));
-
+async function deleteClassById(classId: number): Promise<ActionState> {
   if (!Number.isInteger(classId) || classId <= 0) {
     return { error: "Invalid class." };
   }
@@ -946,6 +941,22 @@ export async function deleteClass(
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
+  }
+
+  const { count: paymentCount, error: paymentCountError } = await client.supabase
+    .from("class_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("class_id", classId);
+
+  if (paymentCountError) {
+    return { error: paymentCountError.message };
+  }
+
+  if ((paymentCount ?? 0) > 0) {
+    return {
+      error:
+        "This course has payment records and cannot be deleted. Clear or reassign those payments first.",
+    };
   }
 
   const { error: enrollmentError } = await client.supabase
@@ -967,9 +978,32 @@ export async function deleteClass(
   }
 
   revalidatePath("/classes");
+  revalidatePath("/tuitions");
+  revalidatePath("/payments");
   revalidatePath("/tutors", "layout");
   revalidatePath("/students", "layout");
+  return { success: true };
+}
+
+export async function deleteClass(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = Number(formData.get("classId"));
+  const result = await deleteClassById(classId);
+  if (result.error) {
+    return result;
+  }
+
   redirect("/classes", RedirectType.replace);
+}
+
+/** Delete a course from the Tuitions page without leaving the page. */
+export async function deleteTuitionCourse(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  return deleteClassById(Number(formData.get("classId")));
 }
 export async function updateClassActive(
   formData: FormData,

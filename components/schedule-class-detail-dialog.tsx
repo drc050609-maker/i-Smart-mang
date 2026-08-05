@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useActionState, useEffect, useState } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -8,6 +9,10 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 
+import {
+  deleteFromCalendar,
+  type ScheduleActionState,
+} from "@/app/(dashboard)/schedule/actions";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
@@ -19,6 +24,8 @@ import type {
 } from "@/lib/schedule-calendar";
 import { formatStudentName, sortStudents } from "@/lib/person-name";
 
+const initialDeleteState: ScheduleActionState = {};
+
 export function ScheduleClassDetailDialog({
   instance,
   students,
@@ -29,6 +36,23 @@ export function ScheduleClassDetailDialog({
   onClose: () => void;
 }) {
   const { t, language } = useLanguage();
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [scope, setScope] = useState<"occurrence" | "series">("occurrence");
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deleteFromCalendar,
+    initialDeleteState,
+  );
+
+  useEffect(() => {
+    setConfirmingDelete(false);
+    setScope("occurrence");
+  }, [instance?.instanceKey]);
+
+  useEffect(() => {
+    if (deleteState.success) {
+      onClose();
+    }
+  }, [deleteState.success, onClose]);
 
   if (!instance) {
     return null;
@@ -63,8 +87,17 @@ export function ScheduleClassDetailDialog({
         ? formatStudentName(displayStudents[0]!)
         : t("common.enrolled", { count: displayStudents.length });
 
+  const deleteDescription =
+    instance.is_recurring && scope === "series"
+      ? t("common.deleteAllOccurrencesConfirm")
+      : t("common.deleteScheduleEventConfirm");
+
   return (
-    <Dialog open onClose={onClose} className="relative z-50">
+    <Dialog
+      open
+      onClose={() => !deletePending && onClose()}
+      className="relative z-50"
+    >
       <DialogBackdrop className="fixed inset-0 bg-gray-900/50" />
       <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
         <div className="flex min-h-full items-end justify-center p-4 sm:items-center">
@@ -158,21 +191,130 @@ export function ScheduleClassDetailDialog({
               </ul>
             ) : null}
 
-            <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 dark:bg-white/10 dark:text-white"
-              >
-                {t("common.close")}
-              </button>
-              <Link
-                href={`/classes/${instance.classId}`}
-                className="rounded-md bg-violet-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-violet-500"
-              >
-                {t("common.viewClass")}
-              </Link>
-            </div>
+            {confirmingDelete ? (
+              <div className="mt-6 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-500/30 dark:bg-red-500/10">
+                <p className="text-sm font-semibold text-red-800 dark:text-red-200">
+                  {t("common.deleteFromCalendar")}
+                </p>
+                <p className="mt-1 text-sm text-red-700 dark:text-red-300">
+                  {deleteDescription}
+                </p>
+
+                {instance.is_recurring ? (
+                  <fieldset className="mt-3 space-y-2">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-red-200/80 bg-white px-3 py-2 dark:border-red-500/20 dark:bg-gray-900/40">
+                      <input
+                        type="radio"
+                        name="deleteScope"
+                        value="occurrence"
+                        checked={scope === "occurrence"}
+                        onChange={() => setScope("occurrence")}
+                        className="mt-0.5 size-4 border-gray-300 text-red-600 focus:ring-red-600"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                          {t("common.deleteThisOccurrence")}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
+                          {formatScheduleDate(instance.occurrenceDate, language)}
+                        </span>
+                      </span>
+                    </label>
+                    <label className="flex cursor-pointer items-start gap-3 rounded-md border border-red-200/80 bg-white px-3 py-2 dark:border-red-500/20 dark:bg-gray-900/40">
+                      <input
+                        type="radio"
+                        name="deleteScope"
+                        value="series"
+                        checked={scope === "series"}
+                        onChange={() => setScope("series")}
+                        className="mt-0.5 size-4 border-gray-300 text-red-600 focus:ring-red-600"
+                      />
+                      <span className="block text-sm font-medium text-gray-900 dark:text-white">
+                        {t("common.deleteAllOccurrences")}
+                      </span>
+                    </label>
+                  </fieldset>
+                ) : null}
+
+                {deleteState.error ? (
+                  <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+                    {deleteState.error}
+                  </p>
+                ) : null}
+
+                <form
+                  action={deleteAction}
+                  className="mt-4 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
+                >
+                  <input
+                    type="hidden"
+                    name="scheduleId"
+                    value={instance.scheduleId}
+                  />
+                  <input type="hidden" name="classId" value={instance.classId} />
+                  <input
+                    type="hidden"
+                    name="scope"
+                    value={instance.is_recurring ? scope : "series"}
+                  />
+                  <input
+                    type="hidden"
+                    name="occurrenceDate"
+                    value={instance.occurrenceDate}
+                  />
+                  <input
+                    type="hidden"
+                    name="startTime"
+                    value={instance.display_start_time}
+                  />
+                  <input
+                    type="hidden"
+                    name="endTime"
+                    value={instance.display_end_time}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingDelete(false)}
+                    disabled={deletePending}
+                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 disabled:opacity-60 dark:bg-white/10 dark:text-white"
+                  >
+                    {t("common.cancel")}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={deletePending}
+                    className="rounded-md bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                  >
+                    {deletePending ? t("common.deleting") : t("common.delete")}
+                  </button>
+                </form>
+              </div>
+            ) : (
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-between">
+                <button
+                  type="button"
+                  onClick={() => setConfirmingDelete(true)}
+                  className="rounded-md px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10"
+                >
+                  {t("common.deleteFromCalendar")}
+                </button>
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 dark:bg-white/10 dark:text-white"
+                  >
+                    {t("common.close")}
+                  </button>
+                  <Link
+                    href={`/classes/${instance.classId}`}
+                    className="rounded-md bg-violet-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-violet-500"
+                  >
+                    {t("common.viewClass")}
+                  </Link>
+                </div>
+              </div>
+            )}
           </DialogPanel>
         </div>
       </div>

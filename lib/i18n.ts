@@ -9,6 +9,10 @@ export type TranslationKey =
   | "nav.tuitions"
   | "nav.payments"
   | "nav.purchases"
+  | "payments.subtitle"
+  | "payments.tabsAria"
+  | "payments.tabPayments"
+  | "payments.tabPurchases"
   | "nav.statements"
   | "nav.attendance"
   | "nav.schedule"
@@ -61,6 +65,13 @@ export type TranslationKey =
   | "common.email"
   | "common.phone"
   | "common.teacher"
+  | "common.resume"
+  | "common.resumeHelp"
+  | "common.uploadResume"
+  | "common.replaceResume"
+  | "common.viewResume"
+  | "common.removeResume"
+  | "common.noResumeYet"
   | "common.room"
   | "common.subject"
   | "common.track"
@@ -348,6 +359,8 @@ export type TranslationKey =
   | "common.courseName"
   | "common.courseNamePlaceholder"
   | "common.renameCourse"
+  | "common.deleteCourse"
+  | "common.deleteCourseConfirm"
   | "common.saveStudent"
   | "common.saveTutor"
   | "common.saveClass"
@@ -426,14 +439,13 @@ export type TranslationKey =
   | "sheet.piano1v1"
   | "sheet.violin1v1"
   | "sheet.level1v1Hint"
-  | "sheet.smartPianoGroup"
   | "sheet.otherInstrument1v1"
   | "sheet.ensembleGroup"
   | "sheet.specialtyGroup"
   | "sheet.art"
   | "sheet.dance"
   | "sheet.band"
-  | "sheet.specialEducation"
+  | "sheet.art1v1"
   | "sheet.grade.g0_2"
   | "sheet.grade.g3_4"
   | "sheet.grade.g5_6"
@@ -453,6 +465,11 @@ export type TranslationKey =
   | "common.attendanceFooter"
   | "common.rescheduleThisOccurrence"
   | "common.rescheduleAllFuture"
+  | "common.deleteFromCalendar"
+  | "common.deleteThisOccurrence"
+  | "common.deleteAllOccurrences"
+  | "common.deleteScheduleEventConfirm"
+  | "common.deleteAllOccurrencesConfirm"
   | "common.originalTime"
   | "common.newTime"
   | "common.originalDuration"
@@ -742,6 +759,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.tuitions": "Tuitions",
     "nav.payments": "Payments",
     "nav.purchases": "Books & Purchases",
+    "payments.subtitle":
+      "Record class payments and book or material purchases. Completed amounts appear in Statements automatically.",
+    "payments.tabsAria": "Payments sections",
+    "payments.tabPayments": "Class payments",
+    "payments.tabPurchases": "Books & Purchases",
     "nav.statements": "Statements",
     "nav.attendance": "Attendance",
     "nav.schedule": "Schedule",
@@ -791,6 +813,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.email": "Email",
     "common.phone": "Phone",
     "common.teacher": "Teacher",
+    "common.resume": "Resume",
+    "common.resumeHelp": "Upload a PDF resume for this teacher (max 10 MB).",
+    "common.uploadResume": "Upload resume",
+    "common.replaceResume": "Replace resume",
+    "common.viewResume": "View PDF",
+    "common.removeResume": "Remove resume",
+    "common.noResumeYet": "No resume uploaded yet.",
     "common.room": "Room",
     "common.subject": "Subject",
     "common.track": "Track",
@@ -1098,6 +1127,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.courseName": "Course name",
     "common.courseNamePlaceholder": "e.g. Guitar",
     "common.renameCourse": "Rename course",
+    "common.deleteCourse": "Delete course",
+    "common.deleteCourseConfirm":
+      "This permanently deletes this tuition course and related enrollments. Courses with payment history cannot be deleted.",
     "common.saveStudent": "Save student",
     "common.saveTutor": "Save teacher",
     "common.saveClass": "Save class",
@@ -1179,14 +1211,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.violin1v1": "Violin 1V1",
     "sheet.level1v1Hint":
       "Choose duration and grade tier (G0–G2 → Levels 0–2, etc.) to see single, 20-pack, and 50-pack prices.",
-    "sheet.smartPianoGroup": "Smart Piano / Acoustic Piano / Violin group — 60 min",
     "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Guzheng / Cello 1V1",
     "sheet.ensembleGroup": "Ensemble group lessons (Piano / Violin / Guitar / Drum / Guzheng / Vocal) — 60 min",
     "sheet.specialtyGroup": "Sing & Play / Model / Music Theory / Vocal small group — 60 min",
     "sheet.art": "Art",
-    "sheet.dance": "Jazz & Chinese dance / Hip Hop — 90 min",
+    "sheet.dance": "Jazz & Chinese dance / Hip Hop",
     "sheet.band": "Band — 90 min",
-    "sheet.specialEducation": "1-to-1 Special Education — 60 min",
+    "sheet.art1v1": "1-to-1 Art Lessons — 60 min",
     "sheet.grade.g0_2": "Levels 0–2",
     "sheet.grade.g3_4": "Levels 3–4",
     "sheet.grade.g5_6": "Levels 5–6",
@@ -1194,7 +1225,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.grade.performance": "Performance",
     "sheet.perMonth": "/ month",
     "sheet.materialFeeAdd": "+${amount} materials",
-    "sheet.bandMonthlyNote": "$40/month (4 lessons); no 20/50 packs.",
+    "sheet.bandMonthlyNote": "$160/month (4 lessons); no 20/50 packs.",
     "sheet.otherClasses": "Other classes",
     "sheet.otherClassesSubtitle":
       "Classes not listed on the official sheet. Pricing here still drives payments and edits.",
@@ -1207,6 +1238,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.attendanceFooter": "Use the student profile to grant make-up credits for excused absences.",
     "common.rescheduleThisOccurrence": "This occurrence only",
     "common.rescheduleAllFuture": "All future occurrences",
+    "common.deleteFromCalendar": "Delete from calendar",
+    "common.deleteThisOccurrence": "This occurrence only",
+    "common.deleteAllOccurrences": "Entire schedule",
+    "common.deleteScheduleEventConfirm":
+      "Remove this class time from the calendar?",
+    "common.deleteAllOccurrencesConfirm":
+      "This will permanently remove the entire recurring schedule.",
     "common.originalTime": "Original time",
     "common.newTime": "New time",
     "common.originalDuration": "Original duration",
@@ -1533,6 +1571,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.tuitions": "学费",
     "nav.payments": "付款",
     "nav.purchases": "书籍与购买",
+    "payments.subtitle":
+      "记录课程付款以及书籍或材料购买。已完成的金额会自动出现在财务报表中。",
+    "payments.tabsAria": "付款分区",
+    "payments.tabPayments": "课程付款",
+    "payments.tabPurchases": "书籍与购买",
     "nav.statements": "财务报表",
     "nav.attendance": "考勤",
     "nav.schedule": "日程",
@@ -1580,6 +1623,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.email": "邮箱",
     "common.phone": "电话",
     "common.teacher": "老师",
+    "common.resume": "简历",
+    "common.resumeHelp": "为这位老师上传 PDF 简历（最大 10 MB）。",
+    "common.uploadResume": "上传简历",
+    "common.replaceResume": "更换简历",
+    "common.viewResume": "查看 PDF",
+    "common.removeResume": "删除简历",
+    "common.noResumeYet": "尚未上传简历。",
     "common.room": "教室",
     "common.subject": "科目",
     "common.track": "类别",
@@ -1884,6 +1934,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.courseName": "课程名称",
     "common.courseNamePlaceholder": "例如：吉他",
     "common.renameCourse": "重命名课程",
+    "common.deleteCourse": "删除课程",
+    "common.deleteCourseConfirm":
+      "这将永久删除此学费课程及相关报名。有付款记录的课程无法删除。",
     "common.saveStudent": "保存学生",
     "common.saveTutor": "保存老师",
     "common.saveClass": "保存课程",
@@ -1964,14 +2017,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.violin1v1": "小提琴一对一",
     "sheet.level1v1Hint":
       "选择时长与级别（G0–G2 对应 0–2 级等），查看单节、20 节、50 节价格。",
-    "sheet.smartPianoGroup": "智能钢琴 / 原声钢琴 / 小提琴小组课 — 60 分钟",
     "sheet.otherInstrument1v1": "吉他 / 架子鼓 / 声乐 / 古筝 / 大提琴一对一",
     "sheet.ensembleGroup": "合奏小组课（钢琴 / 小提琴 / 吉他 / 架子鼓 / 古筝 / 声乐）— 60 分钟",
     "sheet.specialtyGroup": "边弹边唱 / 模特 / 乐理 / 声乐小班 — 60 分钟",
     "sheet.art": "画画",
-    "sheet.dance": "爵士舞 & 中国舞 / 街舞 — 90 分钟",
+    "sheet.dance": "爵士舞 & 中国舞 / 街舞",
     "sheet.band": "乐队 — 90 分钟",
-    "sheet.specialEducation": "一对一特教 — 60 分钟",
+    "sheet.art1v1": "一对一画画课 — 60 分钟",
     "sheet.grade.g0_2": "0–2 级",
     "sheet.grade.g3_4": "3–4 级",
     "sheet.grade.g5_6": "5–6 级",
@@ -1979,7 +2031,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.grade.performance": "演奏级",
     "sheet.perMonth": "/ 月",
     "sheet.materialFeeAdd": "+${amount} 材料费",
-    "sheet.bandMonthlyNote": "每月 $40（4 节课）；无 20/50 节套餐。",
+    "sheet.bandMonthlyNote": "每月 $160（4 节课）；无 20/50 节套餐。",
     "sheet.otherClasses": "其他课程",
     "sheet.otherClassesSubtitle":
       "未列入官方价目表的课程。此处价格仍用于付款与编辑。",
@@ -1992,6 +2044,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.attendanceFooter": "使用学生档案为请假缺勤授予补课课时。",
     "common.rescheduleThisOccurrence": "仅此次",
     "common.rescheduleAllFuture": "所有未来课程",
+    "common.deleteFromCalendar": "从日历删除",
+    "common.deleteThisOccurrence": "仅此次",
+    "common.deleteAllOccurrences": "整个日程",
+    "common.deleteScheduleEventConfirm": "从日历中移除此上课时间？",
+    "common.deleteAllOccurrencesConfirm": "这将永久删除整个重复日程。",
     "common.originalTime": "原时间",
     "common.newTime": "新时间",
     "common.originalDuration": "原时长",
@@ -2331,9 +2388,9 @@ export function getNavTranslationKey(href: string): TranslationKey {
     case "/tuitions":
       return "nav.tuitions";
     case "/payments":
-      return "nav.payments";
+    case "/payments/purchases":
     case "/purchases":
-      return "nav.purchases";
+      return "nav.payments";
     case "/statements":
       return "nav.statements";
     case "/attendance":

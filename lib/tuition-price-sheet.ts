@@ -56,14 +56,13 @@ export type PriceSheetSection =
       id: string;
       kind: "fixed";
       titleKey:
-        | "sheet.smartPianoGroup"
         | "sheet.otherInstrument1v1"
         | "sheet.ensembleGroup"
         | "sheet.specialtyGroup"
         | "sheet.art"
         | "sheet.dance"
         | "sheet.band"
-        | "sheet.specialEducation";
+        | "sheet.art1v1";
       /** When set, UI shows a duration dropdown over these options. */
       durationOptions?: readonly number[];
       rows: Array<{
@@ -90,23 +89,6 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     kind: "level_1v1",
     subject: "Violin",
     titleKey: "sheet.violin1v1",
-  },
-  {
-    id: "smart_piano_group",
-    kind: "fixed",
-    titleKey: "sheet.smartPianoGroup",
-    rows: [
-      {
-        id: "smart_piano_60",
-        durationMinutes: 60,
-        pricing: { perClass: 50, package20: 1000, package50: 2350 },
-        match: {
-          subjects: ["Smart Piano", "Acoustic Piano", "Violin Group"],
-          durationMinutes: 60,
-          lessonType: "group",
-        },
-      },
-    ],
   },
   {
     id: "other_instrument_1v1",
@@ -226,13 +208,24 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     id: "dance",
     kind: "fixed",
     titleKey: "sheet.dance",
+    durationOptions: [60, 90],
     rows: [
+      {
+        id: "dance_60",
+        durationMinutes: 60,
+        pricing: { perClass: 34, package20: 680, package50: 1550 },
+        match: {
+          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
+          durationMinutes: 60,
+          lessonType: "group",
+        },
+      },
       {
         id: "dance_90",
         durationMinutes: 90,
         pricing: { perClass: 38, package20: 760, package50: 1750 },
         match: {
-          subjects: ["Jazz Dance", "Chinese Dance", "Dance — Hip Hop"],
+          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
           durationMinutes: 90,
           lessonType: "group",
         },
@@ -248,7 +241,7 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
         id: "band_90",
         durationMinutes: 90,
         pricing: {
-          perClass: 40,
+          perClass: 160,
           package20: null,
           package50: null,
           monthlyOnly: true,
@@ -262,16 +255,16 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     ],
   },
   {
-    id: "special_education",
+    id: "art_1v1",
     kind: "fixed",
-    titleKey: "sheet.specialEducation",
+    titleKey: "sheet.art1v1",
     rows: [
       {
-        id: "special_ed_60",
+        id: "art_1v1_60",
         durationMinutes: 60,
         pricing: { perClass: 70, package20: 1400, package50: 3350 },
         match: {
-          subjects: ["Special Education"],
+          subjects: ["1-to-1 Art", "Special Education"],
           durationMinutes: 60,
           lessonType: "private",
         },

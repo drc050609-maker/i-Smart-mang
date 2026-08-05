@@ -51,6 +51,8 @@ import {
   getWeekDays,
   HOUR_HEIGHT_PX,
   layoutDayEventColumns,
+  maxLayoutColumnCount,
+  dayColumnWidthPx,
   minutesToTimeString,
   snapMinutes,
   startOfWeek,
@@ -71,7 +73,8 @@ import {
 
 const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
-const COMPACT_MIN_HEIGHT = 24;
+const COMPACT_MIN_HEIGHT = 36;
+const TIME_GUTTER_WIDTH_PX = 64;
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -94,6 +97,7 @@ function ScheduleEventBlock({
   layout,
   dimmed,
   isDragging,
+  showFullName = false,
   onPointerDown,
 }: {
   instance: ScheduleEventInstance;
@@ -101,6 +105,7 @@ function ScheduleEventBlock({
   layout: ScheduleEventColumnLayout;
   dimmed?: boolean;
   isDragging: boolean;
+  showFullName?: boolean;
   onPointerDown: (event: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   const { language, t } = useLanguage();
@@ -118,9 +123,9 @@ function ScheduleEventBlock({
     unassignedLabel,
   );
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
-  const showSecondary = displayHeight >= 36;
+  const showSecondary = displayHeight >= 40;
   const showSubjectTertiary =
-    displayHeight >= 52 && studentLabel !== subjectLabel;
+    displayHeight >= 58 && studentLabel !== subjectLabel;
   const tooltip =
     studentLabel === subjectLabel
       ? `${subjectLabel} · ${timeLabel}`
@@ -141,16 +146,26 @@ function ScheduleEventBlock({
       )}
       title={tooltip}
     >
-      <p className="truncate text-[11px] font-semibold leading-tight">
+      <p
+        className={classNames(
+          "text-[11px] font-semibold leading-tight",
+          showFullName ? "break-words" : "truncate",
+        )}
+      >
         {studentLabel}
       </p>
       {showSecondary ? (
-        <p className="truncate text-[10px] leading-tight opacity-80">
+        <p className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
           {timeLabel}
         </p>
       ) : null}
       {showSubjectTertiary ? (
-        <p className="truncate text-[10px] leading-tight opacity-70">
+        <p
+          className={classNames(
+            "text-[10px] leading-tight opacity-70",
+            showFullName ? "break-words" : "truncate",
+          )}
+        >
           {subjectLabel}
         </p>
       ) : null}
@@ -187,6 +202,7 @@ export function ScheduleCalendar({
     return now;
   });
   const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>([]);
+  const [showTeacherFilters, setShowTeacherFilters] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<ScheduleStudent | null>(
     null,
   );
@@ -220,8 +236,6 @@ export function ScheduleCalendar({
     }
     return weekDays.map((date, dayIndex) => ({ date, dayIndex }));
   }, [viewMode, focusDate, weekDays]);
-  const dayColumnCount = displayDays.length;
-
   useEffect(() => {
     dayColumnRefs.current = Array.from({ length: 7 }, () => null);
   }, [viewMode, weekStart]);
@@ -254,6 +268,49 @@ export function ScheduleCalendar({
       ),
     [events, exceptions, weekDays, selectedTeacherIds],
   );
+
+  const dayColumnWidthsPx = useMemo(() => {
+    if (viewMode !== "day") return null;
+
+    return displayDays.map(({ dayIndex }) => {
+      const dayInstances = weekInstances.filter(
+        (instance) => instance.displayDayIndex === dayIndex,
+      );
+      const allDayInstances = allWeekInstances.filter(
+        (instance) => instance.displayDayIndex === dayIndex,
+      );
+      const layouts = layoutDayEventColumns(
+        selectedStudent !== null ? allDayInstances : dayInstances,
+      );
+      return dayColumnWidthPx(maxLayoutColumnCount(layouts));
+    });
+  }, [
+    viewMode,
+    displayDays,
+    weekInstances,
+    allWeekInstances,
+    selectedStudent,
+  ]);
+
+  const calendarGridTemplateColumns = useMemo(() => {
+    if (!dayColumnWidthsPx) {
+      return `${TIME_GUTTER_WIDTH_PX}px repeat(${displayDays.length}, minmax(0, 1fr))`;
+    }
+
+    const dayCols = dayColumnWidthsPx
+      .map((width) => `minmax(${width}px, 1fr)`)
+      .join(" ");
+    return `${TIME_GUTTER_WIDTH_PX}px ${dayCols}`;
+  }, [dayColumnWidthsPx, displayDays.length]);
+
+  const calendarMinWidthPx = useMemo(() => {
+    if (!dayColumnWidthsPx) return undefined;
+
+    return (
+      TIME_GUTTER_WIDTH_PX +
+      dayColumnWidthsPx.reduce((sum, width) => sum + width, 0)
+    );
+  }, [dayColumnWidthsPx]);
 
   const hourRangeEvents = useMemo(() => {
     const instancesForRange =
@@ -486,6 +543,16 @@ export function ScheduleCalendar({
     );
   }
 
+  function toggleTeacherFilters() {
+    setShowTeacherFilters((open) => {
+      if (open) {
+        // Hiding the panel → show every class (all kids).
+        setSelectedTeacherIds([]);
+      }
+      return !open;
+    });
+  }
+
   function handleEventPointerDown(
     instance: ScheduleEventInstance,
     event: ReactPointerEvent<HTMLDivElement>,
@@ -512,13 +579,16 @@ export function ScheduleCalendar({
 
   return (
     <div className="mt-6 flex flex-col gap-6 xl:flex-row">
+      {showTeacherFilters ? (
       <aside className="w-full shrink-0 xl:w-56">
-        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
-          {t("common.teachers")}
-        </h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.teacherFilterHelp")}
-        </p>
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
+            {t("common.teachers")}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t("common.teacherFilterHelp")}
+          </p>
+        </div>
 
         <div className="mt-4 space-y-1">
           <button
@@ -594,10 +664,20 @@ export function ScheduleCalendar({
           })}
         </div>
       </aside>
+      ) : null}
 
       <div className="min-w-0 flex-1">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleTeacherFilters}
+              className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+            >
+              {showTeacherFilters
+                ? t("common.hideTeacherFilters")
+                : t("common.showTeacherFilters")}
+            </button>
             <button
               type="button"
               onClick={goToToday}
@@ -758,73 +838,80 @@ export function ScheduleCalendar({
           </p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-            <div
-              className="grid border-b border-gray-200 dark:border-white/10"
-              style={{
-                gridTemplateColumns: `4rem repeat(${dayColumnCount}, minmax(0, 1fr))`,
-              }}
-            >
-              <div className="border-r border-gray-200 dark:border-white/10" />
-              {displayDays.map(({ date: day }) => {
-                const header = formatDayHeader(day, today, language);
-
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className="border-r border-gray-200 px-2 py-3 text-center last:border-r-0 dark:border-white/10"
-                  >
-                    {viewMode === "week" ? (
-                      <button
-                        type="button"
-                        onClick={() => openDayView(day)}
-                        className="mx-auto block rounded-md px-1 py-0.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10 dark:focus-visible:outline-indigo-500"
-                        aria-label={formatDayTitle(day, language)}
-                      >
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                          {header.weekday}
-                        </p>
-                        <p
-                          className={classNames(
-                            header.isToday
-                              ? "bg-indigo-600 text-white"
-                              : "text-gray-900 dark:text-white",
-                            "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                          )}
-                        >
-                          {header.day}
-                        </p>
-                      </button>
-                    ) : (
-                      <>
-                        <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                          {header.weekday}
-                        </p>
-                        <p
-                          className={classNames(
-                            header.isToday
-                              ? "bg-indigo-600 text-white"
-                              : "text-gray-900 dark:text-white",
-                            "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                          )}
-                        >
-                          {header.day}
-                        </p>
-                      </>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
+            <div className="overflow-x-auto">
               <div
-                ref={gridRef}
-                className="relative grid"
+                className="grid border-b border-gray-200 dark:border-white/10"
                 style={{
-                  height: gridHeight,
-                  gridTemplateColumns: `4rem repeat(${dayColumnCount}, minmax(0, 1fr))`,
+                  gridTemplateColumns: calendarGridTemplateColumns,
+                  ...(calendarMinWidthPx != null
+                    ? { minWidth: calendarMinWidthPx }
+                    : {}),
                 }}
               >
+                <div className="border-r border-gray-200 dark:border-white/10" />
+                {displayDays.map(({ date: day }) => {
+                  const header = formatDayHeader(day, today, language);
+
+                  return (
+                    <div
+                      key={day.toISOString()}
+                      className="border-r border-gray-200 px-2 py-3 text-center last:border-r-0 dark:border-white/10"
+                    >
+                      {viewMode === "week" ? (
+                        <button
+                          type="button"
+                          onClick={() => openDayView(day)}
+                          className="mx-auto block rounded-md px-1 py-0.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10 dark:focus-visible:outline-indigo-500"
+                          aria-label={formatDayTitle(day, language)}
+                        >
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            {header.weekday}
+                          </p>
+                          <p
+                            className={classNames(
+                              header.isToday
+                                ? "bg-indigo-600 text-white"
+                                : "text-gray-900 dark:text-white",
+                              "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                            )}
+                          >
+                            {header.day}
+                          </p>
+                        </button>
+                      ) : (
+                        <>
+                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                            {header.weekday}
+                          </p>
+                          <p
+                            className={classNames(
+                              header.isToday
+                                ? "bg-indigo-600 text-white"
+                                : "text-gray-900 dark:text-white",
+                              "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                            )}
+                          >
+                            {header.day}
+                          </p>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
+                <div
+                  ref={gridRef}
+                  className="relative grid"
+                  style={{
+                    height: gridHeight,
+                    gridTemplateColumns: calendarGridTemplateColumns,
+                    ...(calendarMinWidthPx != null
+                      ? { minWidth: calendarMinWidthPx }
+                      : {}),
+                  }}
+                >
                 <div className="relative border-r border-gray-200 dark:border-white/10">
                   {hours.map((hour, index) => (
                     <div
@@ -890,6 +977,7 @@ export function ScheduleCalendar({
                                 }
                                 dimmed
                                 isDragging={false}
+                                showFullName={viewMode === "day"}
                                 onPointerDown={() => {}}
                               />
                             ))
@@ -906,6 +994,7 @@ export function ScheduleCalendar({
                           isDragging={
                             dragState?.instance.instanceKey === instance.instanceKey
                           }
+                          showFullName={viewMode === "day"}
                           onPointerDown={(event) =>
                             handleEventPointerDown(instance, event)
                           }
@@ -924,6 +1013,7 @@ export function ScheduleCalendar({
                     </div>
                   );
                 })}
+                </div>
               </div>
             </div>
           </div>
@@ -963,6 +1053,7 @@ export function ScheduleCalendar({
       ) : null}
 
       <ScheduleClassDetailDialog
+        key={selectedInstance?.instanceKey ?? "closed"}
         instance={selectedInstance}
         students={students}
         onClose={closeClassDetail}
