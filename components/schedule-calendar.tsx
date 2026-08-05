@@ -529,41 +529,6 @@ export function ScheduleCalendar({
     [],
   );
 
-  const visibleInstanceCount = useMemo(() => {
-    if (viewMode === "day") {
-      return (instancesByDay[focusDate.getDay()] ?? []).length;
-    }
-    return weekInstances.length;
-  }, [viewMode, instancesByDay, focusDate, weekInstances]);
-
-  const syncDragPreviewDom = useCallback(
-    (dayIndex: number, topPx: number, heightPx: number, visible: boolean) => {
-      const preview = dragPreviewElRef.current;
-      if (!preview) return;
-
-      if (!visible) {
-        preview.style.display = "none";
-        return;
-      }
-
-      const column = dayColumnRefs.current[dayIndex];
-      const grid = gridRef.current;
-      if (!column || !grid) {
-        preview.style.display = "none";
-        return;
-      }
-
-      const gridRect = grid.getBoundingClientRect();
-      const columnRect = column.getBoundingClientRect();
-      preview.style.display = "block";
-      preview.style.top = `${topPx}px`;
-      preview.style.left = `${columnRect.left - gridRect.left + 4}px`;
-      preview.style.width = `${Math.max(0, columnRect.width - 8)}px`;
-      preview.style.height = `${heightPx}px`;
-    },
-    [],
-  );
-
   const resolveDrop = useCallback(
     (dayIndex: number, topPx: number, instance: ScheduleEventInstance) => {
       const gridStartMinutes = startHour * 60;
