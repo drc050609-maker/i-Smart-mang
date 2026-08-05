@@ -808,6 +808,72 @@ export const TEACHER_EVENT_COLORS: EventColorSet[] = [
     text: "text-cyan-950 dark:text-cyan-50",
     dot: "bg-cyan-700",
   },
+  {
+    bg: "bg-pink-200 dark:bg-pink-900/70",
+    border: "border-pink-600 dark:border-pink-400",
+    text: "text-pink-950 dark:text-pink-50",
+    dot: "bg-pink-700",
+  },
+  {
+    bg: "bg-amber-200 dark:bg-amber-900/70",
+    border: "border-amber-600 dark:border-amber-400",
+    text: "text-amber-950 dark:text-amber-50",
+    dot: "bg-amber-700",
+  },
+  {
+    bg: "bg-teal-200 dark:bg-teal-900/70",
+    border: "border-teal-600 dark:border-teal-400",
+    text: "text-teal-950 dark:text-teal-50",
+    dot: "bg-teal-700",
+  },
+  {
+    bg: "bg-indigo-200 dark:bg-indigo-900/70",
+    border: "border-indigo-600 dark:border-indigo-400",
+    text: "text-indigo-950 dark:text-indigo-50",
+    dot: "bg-indigo-700",
+  },
+  {
+    bg: "bg-lime-200 dark:bg-lime-900/70",
+    border: "border-lime-600 dark:border-lime-400",
+    text: "text-lime-950 dark:text-lime-50",
+    dot: "bg-lime-700",
+  },
+  {
+    bg: "bg-sky-200 dark:bg-sky-900/70",
+    border: "border-sky-600 dark:border-sky-400",
+    text: "text-sky-950 dark:text-sky-50",
+    dot: "bg-sky-700",
+  },
+  {
+    bg: "bg-fuchsia-200 dark:bg-fuchsia-900/70",
+    border: "border-fuchsia-600 dark:border-fuchsia-400",
+    text: "text-fuchsia-950 dark:text-fuchsia-50",
+    dot: "bg-fuchsia-700",
+  },
+  {
+    bg: "bg-red-200 dark:bg-red-900/70",
+    border: "border-red-600 dark:border-red-400",
+    text: "text-red-950 dark:text-red-50",
+    dot: "bg-red-700",
+  },
+  {
+    bg: "bg-green-200 dark:bg-green-900/70",
+    border: "border-green-600 dark:border-green-400",
+    text: "text-green-950 dark:text-green-50",
+    dot: "bg-green-700",
+  },
+  {
+    bg: "bg-purple-200 dark:bg-purple-900/70",
+    border: "border-purple-600 dark:border-purple-400",
+    text: "text-purple-950 dark:text-purple-50",
+    dot: "bg-purple-700",
+  },
+  {
+    bg: "bg-yellow-200 dark:bg-yellow-900/70",
+    border: "border-yellow-600 dark:border-yellow-400",
+    text: "text-yellow-950 dark:text-yellow-50",
+    dot: "bg-yellow-600",
+  },
 ];
 
 export const UNASSIGNED_TEACHER_COLORS: EventColorSet = {
@@ -817,9 +883,39 @@ export const UNASSIGNED_TEACHER_COLORS: EventColorSet = {
   dot: "bg-gray-500",
 };
 
-export function getTeacherEventColors(teacherId: number | null): EventColorSet {
+/** Assign unique palette slots per campus teacher list (stable by id). */
+export function buildTeacherEventColorLookup(
+  teacherIds: Iterable<number | null | undefined>,
+): Map<number, EventColorSet> {
+  const uniqueSorted = [
+    ...new Set(
+      [...teacherIds].filter(
+        (id): id is number => typeof id === "number" && Number.isInteger(id),
+      ),
+    ),
+  ].sort((a, b) => a - b);
+
+  const lookup = new Map<number, EventColorSet>();
+  uniqueSorted.forEach((teacherId, index) => {
+    lookup.set(
+      teacherId,
+      TEACHER_EVENT_COLORS[index % TEACHER_EVENT_COLORS.length]!,
+    );
+  });
+  return lookup;
+}
+
+export function getTeacherEventColors(
+  teacherId: number | null,
+  colorByTeacherId?: Map<number, EventColorSet>,
+): EventColorSet {
   if (teacherId === null) {
     return UNASSIGNED_TEACHER_COLORS;
+  }
+
+  const fromLookup = colorByTeacherId?.get(teacherId);
+  if (fromLookup) {
+    return fromLookup;
   }
 
   const index = Math.abs(teacherId) % TEACHER_EVENT_COLORS.length;
