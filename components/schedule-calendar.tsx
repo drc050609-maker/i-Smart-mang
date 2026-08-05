@@ -30,6 +30,7 @@ import {
   ScheduleRescheduleDialog,
   type PendingReschedule,
 } from "@/components/schedule-reschedule-dialog";
+import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
@@ -229,11 +230,17 @@ export function ScheduleCalendar({
   exceptions,
   teachers,
   students,
+  selectedTeacherIds: selectedTeacherIdsProp,
+  onSelectedTeacherIdsChange,
+  useServerTeacherCounts = false,
 }: {
   events: ScheduleEvent[];
   exceptions: ScheduleException[];
   teachers: ScheduleTeacher[];
   students: ScheduleStudent[];
+  selectedTeacherIds?: number[];
+  onSelectedTeacherIdsChange?: (teacherIds: number[]) => void;
+  useServerTeacherCounts?: boolean;
 }) {
   const { language, t } = useLanguage();
   const gridRef = useRef<HTMLDivElement>(null);
@@ -261,20 +268,39 @@ export function ScheduleCalendar({
     now.setHours(0, 0, 0, 0);
     return now;
   });
-  const [selectedTeacherIds, setSelectedTeacherIds] = useState<number[]>(() =>
-    initialSelectedTeacherIds(events),
+  const [internalSelectedTeacherIds, setInternalSelectedTeacherIds] = useState<
+    number[]
+  >(() =>
+    selectedTeacherIdsProp ?? initialSelectedTeacherIds(events),
   );
+  const selectedTeacherIds =
+    selectedTeacherIdsProp ?? internalSelectedTeacherIds;
+
+  function setSelectedTeacherIds(next: number[]) {
+    if (onSelectedTeacherIdsChange) {
+      onSelectedTeacherIdsChange(next);
+      return;
+    }
+    setInternalSelectedTeacherIds(next);
+  }
+
   const [showTeacherFilters, setShowTeacherFilters] = useState(true);
   const [selectedStudent, setSelectedStudent] = useState<ScheduleStudent | null>(
     null,
   );
   const [studentQuery, setStudentQuery] = useState("");
+  const [selectedInstance, setSelectedInstance] =
+    useState<ScheduleEventInstance | null>(null);
   const [draggingKey, setDraggingKey] = useState<string | null>(null);
   const [pendingReschedule, setPendingReschedule] =
     useState<PendingReschedule | null>(null);
 
   const closeRescheduleDialog = useCallback(() => {
     setPendingReschedule(null);
+  }, []);
+
+  const closeClassDetail = useCallback(() => {
+    setSelectedInstance(null);
   }, []);
 
   const teacherColorById = useMemo(
@@ -300,8 +326,11 @@ export function ScheduleCalendar({
   }, [viewMode, weekStart]);
 
   const teacherFilteredEvents = useMemo(
-    () => filterEventsByTeachers(events, selectedTeacherIds),
-    [events, selectedTeacherIds],
+    () =>
+      onSelectedTeacherIdsChange
+        ? events
+        : filterEventsByTeachers(events, selectedTeacherIds),
+    [events, selectedTeacherIds, onSelectedTeacherIdsChange],
   );
 
   const visibleEvents = useMemo(
@@ -442,16 +471,28 @@ export function ScheduleCalendar({
     [sortedStudents, studentQuery],
   );
 
-  const teachersWithCounts = useMemo(
-    () =>
-      teachers
-        .map((teacher) => ({
-          ...teacher,
-          class_count: teacherCounts.get(teacher.id) ?? 0,
-        }))
-        .filter((teacher) => teacher.class_count > 0),
-    [teachers, teacherCounts],
-  );
+  const teachersWithCounts = useMemo(() => {
+    if (useServerTeacherCounts) {
+      return teachers.filter((teacher) => teacher.class_count > 0);
+    }
+
+    return teachers
+      .map((teacher) => ({
+        ...teacher,
+        class_count: teacherCounts.get(teacher.id) ?? 0,
+      }))
+      .filter((teacher) => teacher.class_count > 0);
+  }, [teachers, teacherCounts, useServerTeacherCounts]);
+
+  const totalScheduleCount = useMemo(() => {
+    if (useServerTeacherCounts) {
+      return teachersWithCounts.reduce(
+        (sum, teacher) => sum + teacher.class_count,
+        0,
+      );
+    }
+    return events.length;
+  }, [useServerTeacherCounts, teachersWithCounts, events.length]);
 
   const visibleInstanceCount = useMemo(() => {
     if (viewMode === "day") {
@@ -573,6 +614,8 @@ export function ScheduleCalendar({
 
       if (dragMovedRef.current) {
         resolveDrop(dragState.dayIndex, dragState.topPx, dragState.instance);
+      } else {
+        setSelectedInstance(dragState.instance);
       }
 
       dragStateRef.current = null;
@@ -639,21 +682,14 @@ export function ScheduleCalendar({
   }
 
   function toggleTeacher(teacherId: number) {
-    setSelectedTeacherIds((current) =>
-      current.includes(teacherId)
-        ? current.filter((id) => id !== teacherId)
-        : [...current, teacherId],
-    );
+    const next = selectedTeacherIds.includes(teacherId)
+      ? selectedTeacherIds.filter((id) => id !== teacherId)
+      : [...selectedTeacherIds, teacherId];
+    setSelectedTeacherIds(next);
   }
 
   function toggleTeacherFilters() {
-    setShowTeacherFilters((open) => {
-      if (open) {
-        // Hiding the panel → show every class (all kids).
-        setSelectedTeacherIds([]);
-      }
-      return !open;
-    });
+    setShowTeacherFilters((open) => !open);
   }
 
   const handleEventPointerDown = useCallback(
@@ -733,7 +769,7 @@ export function ScheduleCalendar({
               {t("common.allTeachers")}
             </span>
             <span className="text-xs text-gray-500 dark:text-gray-400">
-              {events.length}
+              {totalScheduleCount}
             </span>
           </button>
 
@@ -1145,6 +1181,13 @@ export function ScheduleCalendar({
           onSuccess={closeRescheduleDialog}
         />
       ) : null}
+
+      <ScheduleClassDetailDialog
+        key={selectedInstance?.instanceKey ?? "closed"}
+        instance={selectedInstance}
+        students={students}
+        onClose={closeClassDetail}
+      />
     </div>
   );
 }

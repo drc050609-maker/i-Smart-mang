@@ -1,78 +1,19 @@
 import { cookies } from "next/headers";
 
-import { ScheduleCalendar } from "@/components/schedule-calendar";
-import {
-  buildScheduleEvents,
-  type ScheduleException,
-  type ScheduleStudent,
-  type ScheduleTeacher,
-} from "@/lib/schedule-calendar";
+import { ScheduleCalendarLoader } from "@/components/schedule-calendar-loader";
+import type { ScheduleStudent, ScheduleTeacher } from "@/lib/schedule-calendar";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
-import { formatTeacherName, sortTeachers } from "@/lib/person-name";
+import { sortTeachers } from "@/lib/person-name";
+import {
+  fetchTeacherScheduleCounts,
+  loadScheduleCalendarEvents,
+  pickBusiestTeacherId,
+} from "@/lib/schedule-load";
 import { createClient } from "@/utils/supabase/server";
 
-type TeacherEmbed = {
-  first_name: string;
-  last_name: string | null;
-};
-
-type RoomEmbed = {
-  room_number: string;
-};
-
-type ClassEmbed = {
-  id: number;
-  subject: string;
-  teacher_id: number | null;
-  is_active: boolean;
-  class_track: string | null;
-  lesson_type: string | null;
-  teachers: TeacherEmbed | TeacherEmbed[] | null;
-  rooms: RoomEmbed | RoomEmbed[] | null;
-};
-
-type ScheduleStudentEmbed = {
-  id: number;
-  "first name": string;
-  "last name": string | null;
-};
-
-type ScheduleRow = {
-  id: number;
-  class_id: number;
-  student_id: number | null;
-  is_recurring: boolean;
-  schedule_day_of_week: number | null;
-  schedule_date: string | null;
-  schedule_start_time: string;
-  schedule_end_time: string;
-  students: ScheduleStudentEmbed | ScheduleStudentEmbed[] | null;
-  classes: ClassEmbed | ClassEmbed[] | null;
-};
-
-type EnrollmentStudentEmbed = {
-  id: number;
-  "first name": string;
-  "last name": string | null;
-};
-
-type EnrollmentRow = {
-  "class id": number;
-  "student id": number | null;
-  students: EnrollmentStudentEmbed | EnrollmentStudentEmbed[] | null;
-};
-
-type ScheduleQueryClient = ReturnType<typeof createClient>;
-
 const PAGE_SIZE = 1000;
-const IN_FILTER_CHUNK = 200;
-
-function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
-  if (!value) return null;
-  return Array.isArray(value) ? (value[0] ?? null) : value;
-}
 
 async function fetchAllRows<T>(
   fetchPage: (
@@ -99,83 +40,6 @@ async function fetchAllRows<T>(
   return { data: rows, error: null };
 }
 
-async function fetchExceptionsForScheduleIds(
-  supabase: ScheduleQueryClient,
-  scheduleIds: number[],
-): Promise<{ data: ScheduleException[]; error: string | null }> {
-  if (scheduleIds.length === 0) {
-    return { data: [], error: null };
-  }
-
-  const rows: ScheduleException[] = [];
-
-  for (let index = 0; index < scheduleIds.length; index += IN_FILTER_CHUNK) {
-    const chunk = scheduleIds.slice(index, index + IN_FILTER_CHUNK);
-    const { data, error } = await supabase
-      .from("class_schedule_exceptions")
-      .select(
-        `
-        id,
-        schedule_id,
-        original_date,
-        override_date,
-        schedule_start_time,
-        schedule_end_time,
-        is_cancelled
-      `,
-      )
-      .in("schedule_id", chunk);
-
-    if (error) {
-      return { data: rows, error: error.message };
-    }
-
-    rows.push(...((data as ScheduleException[] | null) ?? []));
-  }
-
-  return { data: rows, error: null };
-}
-
-async function fetchEnrollmentsForClassIds(
-  supabase: ScheduleQueryClient,
-  locationId: number,
-  classIds: number[],
-): Promise<{ data: EnrollmentRow[]; error: string | null }> {
-  if (classIds.length === 0) {
-    return { data: [], error: null };
-  }
-
-  const rows: EnrollmentRow[] = [];
-
-  for (let index = 0; index < classIds.length; index += IN_FILTER_CHUNK) {
-    const chunk = classIds.slice(index, index + IN_FILTER_CHUNK);
-    const { data, error } = await fetchAllRows<EnrollmentRow>((from, to) =>
-      supabase
-        .from("enrollments")
-        .select(
-          `
-          "class id",
-          "student id",
-          students ( id, "first name", "last name" ),
-          classes!inner ( location_id )
-        `,
-        )
-        .eq("classes.location_id", locationId)
-        .in("class id", chunk)
-        .not("student id", "is", null)
-        .range(from, to),
-    );
-
-    if (error) {
-      return { data: rows, error };
-    }
-
-    rows.push(...data);
-  }
-
-  return { data: rows, error: null };
-}
-
 export default async function SchedulePage() {
   const staff = await requireStaff();
   const t = createTranslator(staff.preferred_language);
@@ -195,41 +59,10 @@ export default async function SchedulePage() {
   }
 
   const [
-    { data: scheduleRows, error: schedulesError },
     { data: teachers, error: teachersError },
     { data: students, error: studentsError },
+    { data: teacherCounts, error: countsError },
   ] = await Promise.all([
-    fetchAllRows<ScheduleRow>((from, to) =>
-      supabase
-        .from("class_schedules")
-        .select(
-          `
-          id,
-          class_id,
-          student_id,
-          is_recurring,
-          schedule_day_of_week,
-          schedule_date,
-          schedule_start_time,
-          schedule_end_time,
-          students ( id, "first name", "last name" ),
-          classes!inner (
-            id,
-            subject,
-            teacher_id,
-            is_active,
-            class_track,
-            lesson_type,
-            location_id,
-            teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
-            rooms ( room_number )
-          )
-        `,
-        )
-        .eq("classes.location_id", locationId)
-        .order("schedule_start_time")
-        .range(from, to),
-    ),
     fetchAllRows<{
       id: number;
       first_name: string;
@@ -252,103 +85,31 @@ export default async function SchedulePage() {
         .order("first name")
         .range(from, to),
     ),
+    fetchTeacherScheduleCounts(supabase, locationId),
   ]);
 
-  const scheduleIds = scheduleRows.map((row) => row.id);
-  const classIdsNeedingRoster = [
-    ...new Set(
-      scheduleRows
-        .filter((row) => row.student_id == null)
-        .map((row) => row.class_id),
-    ),
-  ];
+  const busiestTeacherId = pickBusiestTeacherId(teacherCounts);
+  const initialTeacherIds = busiestTeacherId != null ? [busiestTeacherId] : [];
 
-  const [
-    { data: exceptionRows, error: exceptionsError },
-    { data: enrollments, error: enrollmentsError },
-  ] = await Promise.all([
-    fetchExceptionsForScheduleIds(supabase, scheduleIds),
-    fetchEnrollmentsForClassIds(supabase, locationId, classIdsNeedingRoster),
-  ]);
+  const {
+    events: initialEvents,
+    exceptions: initialExceptions,
+    error: eventsError,
+  } = await loadScheduleCalendarEvents(
+    supabase,
+    locationId,
+    initialTeacherIds.length > 0 ? initialTeacherIds : null,
+  );
 
   const error =
-    schedulesError ??
-    exceptionsError ??
-    teachersError ??
-    studentsError ??
-    enrollmentsError ??
-    null;
-
-  const enrollmentsByClass = new Map<number, ScheduleStudent[]>();
-
-  for (const enrollment of enrollments) {
-    const classId = enrollment["class id"];
-    const student = firstOrNull(enrollment.students);
-
-    if (!student) {
-      continue;
-    }
-
-    const existing = enrollmentsByClass.get(classId) ?? [];
-    if (existing.some((enrolled) => enrolled.id === student.id)) {
-      continue;
-    }
-
-    existing.push({
-      id: student.id,
-      "first name": student["first name"],
-      "last name": student["last name"],
-    });
-    enrollmentsByClass.set(classId, existing);
-  }
-
-  const scheduleEvents = buildScheduleEvents(
-    scheduleRows.map((scheduleRow) => {
-      const classRow = firstOrNull(scheduleRow.classes);
-      const scheduleStudent = firstOrNull(scheduleRow.students);
-
-      return {
-        id: scheduleRow.id,
-        class_id: scheduleRow.class_id,
-        student_id: scheduleRow.student_id,
-        schedule_student: scheduleStudent
-          ? {
-              id: scheduleStudent.id,
-              "first name": scheduleStudent["first name"],
-              "last name": scheduleStudent["last name"],
-            }
-          : null,
-        is_recurring: scheduleRow.is_recurring,
-        schedule_day_of_week: scheduleRow.schedule_day_of_week,
-        schedule_date: scheduleRow.schedule_date,
-        schedule_start_time: scheduleRow.schedule_start_time,
-        schedule_end_time: scheduleRow.schedule_end_time,
-        classes: classRow
-          ? {
-              id: classRow.id,
-              subject: classRow.subject,
-              teacher_id: classRow.teacher_id,
-              is_active: classRow.is_active,
-              class_track: classRow.class_track,
-              lesson_type: classRow.lesson_type,
-              teachers: firstOrNull(classRow.teachers),
-              rooms: firstOrNull(classRow.rooms),
-            }
-          : null,
-      };
-    }),
-    enrollmentsByClass,
-    formatTeacherName,
-  );
+    teachersError ?? studentsError ?? countsError ?? eventsError ?? null;
 
   const teacherOptions: ScheduleTeacher[] = sortTeachers(
     teachers.map((teacher) => ({
       ...teacher,
-      class_count: 0,
+      class_count: teacherCounts.get(teacher.id) ?? 0,
     })),
   );
-
-  const studentOptions: ScheduleStudent[] = students;
 
   return (
     <div>
@@ -363,14 +124,18 @@ export default async function SchedulePage() {
 
       {error ? (
         <p className="mt-4 text-sm text-red-600 dark:text-red-400">
-          {t("common.error.loadFailed", { entity: t("nav.schedule"), message: error })}
+          {t("common.error.loadFailed", {
+            entity: t("nav.schedule"),
+            message: error,
+          })}
         </p>
       ) : (
-        <ScheduleCalendar
-          events={scheduleEvents}
-          exceptions={exceptionRows}
+        <ScheduleCalendarLoader
           teachers={teacherOptions}
-          students={studentOptions}
+          students={students}
+          initialTeacherIds={initialTeacherIds}
+          initialEvents={initialEvents}
+          initialExceptions={initialExceptions}
         />
       )}
     </div>

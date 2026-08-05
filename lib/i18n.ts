@@ -47,6 +47,7 @@ export type TranslationKey =
   | "common.inactive"
   | "common.save"
   | "common.saving"
+  | "common.loading"
   | "common.cancel"
   | "common.delete"
   | "common.confirm"
@@ -795,6 +796,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.inactive": "Inactive",
     "common.save": "Save",
     "common.saving": "Saving…",
+    "common.loading": "Loading…",
     "common.cancel": "Cancel",
     "common.delete": "Delete",
     "common.confirm": "Confirm",
@@ -1605,6 +1607,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.inactive": "非活跃",
     "common.save": "保存",
     "common.saving": "保存中…",
+    "common.loading": "加载中…",
     "common.cancel": "取消",
     "common.delete": "删除",
     "common.confirm": "确认",

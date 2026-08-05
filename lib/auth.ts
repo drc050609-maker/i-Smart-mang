@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -19,7 +20,7 @@ export type StaffAccount = {
   created_by: string | null;
 };
 
-export async function getCurrentStaff(): Promise<StaffAccount | null> {
+export const getCurrentStaff = cache(async (): Promise<StaffAccount | null> => {
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
   const {
@@ -48,7 +49,7 @@ export async function getCurrentStaff(): Promise<StaffAccount | null> {
       ? staff.preferred_language
       : DEFAULT_APP_LANGUAGE,
   };
-}
+});
 
 export async function requireStaff(): Promise<StaffAccount> {
   const staff = await getCurrentStaff();

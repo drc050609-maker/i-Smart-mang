@@ -1,14 +1,55 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
+import { requireStaff } from "@/lib/auth";
+import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { addMinutesToScheduleTime } from "@/lib/class-schedule";
+import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/utils/supabase/server";
+import type { ScheduleEvent, ScheduleException } from "@/lib/schedule-calendar";
 
 export type ScheduleActionState = {
   error?: string;
   success?: boolean;
 };
+
+export type ScheduleCalendarEventsResult = {
+  events: ScheduleEvent[];
+  exceptions: ScheduleException[];
+  error?: string;
+};
+
+export async function fetchScheduleCalendarEventsAction(
+  teacherIds: number[],
+): Promise<ScheduleCalendarEventsResult> {
+  const staff = await requireStaff();
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const locationId = await getActiveCampusLocationId(supabase, staff);
+
+  if (!locationId) {
+    return {
+      events: [],
+      exceptions: [],
+      error: "Campus location could not be resolved.",
+    };
+  }
+
+  const result = await loadScheduleCalendarEvents(
+    supabase,
+    locationId,
+    teacherIds.length > 0 ? teacherIds : null,
+  );
+
+  return {
+    events: result.events,
+    exceptions: result.exceptions,
+    error: result.error ?? undefined,
+  };
+}
 
 function getServiceClient() {
   try {
