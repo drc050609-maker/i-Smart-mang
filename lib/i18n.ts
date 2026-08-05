@@ -323,6 +323,7 @@ export type TranslationKey =
   | "common.passwordUpdated"
   | "common.setPassword"
   | "common.setManagerPasswordHelp"
+  | "common.setManagerPasswordHint"
   | "common.addStaffAccount"
   | "common.addManager"
   | "common.addStatenIslandManager"
@@ -1093,6 +1094,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.passwordUpdated": "Password updated successfully.",
     "common.setPassword": "Set password",
     "common.setManagerPasswordHelp": "Set a new password for {name}.",
+    "common.setManagerPasswordHint":
+      "To reset a manager login, open their campus tab and click Set password under their name.",
     "common.addStaffAccount": "Add staff account",
     "common.addManager": "Add manager",
     "common.addStatenIslandManager": "Add Staten Island manager",
@@ -1904,6 +1907,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.passwordUpdated": "密码更新成功。",
     "common.setPassword": "设置密码",
     "common.setManagerPasswordHelp": "为 {name} 设置新密码。",
+    "common.setManagerPasswordHint":
+      "重置经理登录密码：打开对应校区标签，点击姓名下方的“设置密码”。",
     "common.addStaffAccount": "添加员工账户",
     "common.addManager": "添加经理",
     "common.addStatenIslandManager": "添加史泰登岛经理",
