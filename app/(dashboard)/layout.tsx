@@ -4,8 +4,11 @@ import { after } from "next/server";
 import { DashboardShell } from "@/components/dashboard-shell";
 import { LanguageProvider } from "@/components/language-provider";
 import { requireStaff } from "@/lib/auth";
-import { getActiveCampusLocation } from "@/lib/campus-location";
-import { processDueClassSessions } from "@/lib/process-due-sessions";
+import {
+  getActiveCampusLocation,
+  getActiveCampusLocationId,
+} from "@/lib/campus-location";
+import { processDueClassSessionsIfNeeded } from "@/lib/process-due-sessions";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function DashboardLayout({
@@ -14,17 +17,22 @@ export default async function DashboardLayout({
   children: React.ReactNode;
 }>) {
   const staff = await requireStaff();
-  const activeCampus = await getActiveCampusLocation(staff);
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const [activeCampus, activeCampusId] = await Promise.all([
+    getActiveCampusLocation(staff),
+    getActiveCampusLocationId(supabase, staff),
+  ]);
 
   after(async () => {
     try {
-      const cookieStore = await cookies();
-      const supabase = createClient(cookieStore);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      await processDueClassSessions(supabase, user?.id ?? null);
+      const afterCookies = await cookies();
+      const afterSupabase = createClient(afterCookies);
+      await processDueClassSessionsIfNeeded(
+        afterSupabase,
+        staff.id,
+        activeCampusId,
+      );
     } catch {
       // Auto-processing should not block the dashboard if it fails.
     }

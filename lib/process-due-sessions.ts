@@ -2,7 +2,6 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   getPastScheduleOccurrences,
-  SESSION_LOOKBACK_DAYS,
   type ScheduleForOccurrences,
 } from "@/lib/class-session-credits";
 import type { Database } from "@/types/database.types";
@@ -30,6 +29,33 @@ function recordKey(
 }
 
 const RPC_BATCH_SIZE = 25;
+const IN_FILTER_CHUNK = 200;
+/** Keep background catch-up small so navigations stay responsive. */
+const MAX_SESSIONS_PER_RUN = 75;
+/** Only backfill recent sessions in the dashboard background job. */
+const AUTO_PROCESS_LOOKBACK_DAYS = 14;
+/** Skip re-running if we already ran recently in this server instance. */
+const THROTTLE_MS = 15 * 60 * 1000;
+
+let lastProcessAttemptAt = 0;
+
+async function fetchInChunks<T>(
+  ids: number[],
+  fetchChunk: (
+    chunk: number[],
+  ) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>,
+): Promise<{ data: T[]; error: string | null }> {
+  const rows: T[] = [];
+  for (let index = 0; index < ids.length; index += IN_FILTER_CHUNK) {
+    const chunk = ids.slice(index, index + IN_FILTER_CHUNK);
+    const { data, error } = await fetchChunk(chunk);
+    if (error) {
+      return { data: rows, error: error.message };
+    }
+    rows.push(...(data ?? []));
+  }
+  return { data: rows, error: null };
+}
 
 async function runInBatches<T>(
   items: T[],
@@ -50,45 +76,126 @@ type PendingSession = {
   sessionDate: string;
 };
 
+export async function processDueClassSessionsIfNeeded(
+  supabase: SupabaseClient<Database>,
+  userId: string | null,
+  locationId?: number | null,
+) {
+  const now = Date.now();
+  if (now - lastProcessAttemptAt < THROTTLE_MS) {
+    return 0;
+  }
+  lastProcessAttemptAt = now;
+
+  return processDueClassSessions(supabase, userId, {
+    locationId: locationId ?? null,
+    lookbackDays: AUTO_PROCESS_LOOKBACK_DAYS,
+    maxSessions: MAX_SESSIONS_PER_RUN,
+  });
+}
+
 export async function processDueClassSessions(
   supabase: SupabaseClient<Database>,
   userId: string | null,
+  options?: {
+    locationId?: number | null;
+    lookbackDays?: number;
+    maxSessions?: number;
+  },
 ) {
   const now = new Date();
+  const lookbackDays = options?.lookbackDays ?? AUTO_PROCESS_LOOKBACK_DAYS;
+  const maxSessions = options?.maxSessions ?? MAX_SESSIONS_PER_RUN;
+  const locationId = options?.locationId ?? null;
   const lookbackDate = new Date(now);
-  lookbackDate.setDate(lookbackDate.getDate() - SESSION_LOOKBACK_DAYS);
+  lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
   const lookbackIso = lookbackDate.toISOString().slice(0, 10);
 
-  const [
-    { data: schedules, error: schedulesError },
-    { data: enrollments, error: enrollmentsError },
-    { data: existingRecords, error: recordsError },
-  ] = await Promise.all([
-    supabase
-      .from("class_schedules")
-      .select(
-        "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time",
-      )
-      .not("schedule_start_time", "is", null)
-      .not("schedule_end_time", "is", null),
-    supabase
-      .from("enrollments")
-      .select('"class id", "student id", is_active')
-      .eq("is_active", true)
-      .not("student id", "is", null),
-    supabase
-      .from("class_session_records")
-      .select("student_id, class_id, class_schedule_id, session_date")
-      .gte("session_date", lookbackIso),
-  ]);
+  let campusClassIds: number[] | null = null;
+  if (locationId != null) {
+    const { data: campusClasses, error: campusClassesError } = await supabase
+      .from("classes")
+      .select("id")
+      .eq("location_id", locationId);
 
-  if (schedulesError) {
-    throw new Error(schedulesError.message);
+    if (campusClassesError) {
+      throw new Error(campusClassesError.message);
+    }
+
+    campusClassIds = (campusClasses ?? []).map((row) => row.id);
+    if (campusClassIds.length === 0) {
+      return 0;
+    }
   }
 
-  if (enrollmentsError) {
-    throw new Error(enrollmentsError.message);
+  let schedules: ScheduleForOccurrences[] = [];
+  let enrollments: EnrollmentRow[] = [];
+
+  if (campusClassIds != null) {
+    const [schedulesResult, enrollmentsResult] = await Promise.all([
+      fetchInChunks<ScheduleForOccurrences>(campusClassIds, (chunk) =>
+        supabase
+          .from("class_schedules")
+          .select(
+            "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time",
+          )
+          .not("schedule_start_time", "is", null)
+          .not("schedule_end_time", "is", null)
+          .in("class_id", chunk),
+      ),
+      fetchInChunks<EnrollmentRow>(campusClassIds, (chunk) =>
+        supabase
+          .from("enrollments")
+          .select('"class id", "student id", is_active')
+          .eq("is_active", true)
+          .not("student id", "is", null)
+          .in("class id", chunk),
+      ),
+    ]);
+
+    if (schedulesResult.error) {
+      throw new Error(schedulesResult.error);
+    }
+    if (enrollmentsResult.error) {
+      throw new Error(enrollmentsResult.error);
+    }
+
+    schedules = schedulesResult.data;
+    enrollments = enrollmentsResult.data;
+  } else {
+    const [
+      { data: allSchedules, error: schedulesError },
+      { data: allEnrollments, error: enrollmentsError },
+    ] = await Promise.all([
+      supabase
+        .from("class_schedules")
+        .select(
+          "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time",
+        )
+        .not("schedule_start_time", "is", null)
+        .not("schedule_end_time", "is", null),
+      supabase
+        .from("enrollments")
+        .select('"class id", "student id", is_active')
+        .eq("is_active", true)
+        .not("student id", "is", null),
+    ]);
+
+    if (schedulesError) {
+      throw new Error(schedulesError.message);
+    }
+    if (enrollmentsError) {
+      throw new Error(enrollmentsError.message);
+    }
+
+    schedules = (allSchedules as ScheduleForOccurrences[] | null) ?? [];
+    enrollments = (allEnrollments as EnrollmentRow[] | null) ?? [];
   }
+
+  const { data: existingRecords, error: recordsError } = await supabase
+    .from("class_session_records")
+    .select("student_id, class_id, class_schedule_id, session_date")
+    .gte("session_date", lookbackIso);
 
   if (recordsError) {
     throw new Error(recordsError.message);
@@ -96,7 +203,7 @@ export async function processDueClassSessions(
 
   const studentsByClass = new Map<number, number[]>();
 
-  for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
+  for (const enrollment of enrollments) {
     const classId = enrollment["class id"];
     const studentId = enrollment["student id"];
 
@@ -121,14 +228,30 @@ export async function processDueClassSessions(
   let processedCount = 0;
   const pendingSessions: PendingSession[] = [];
 
-  for (const schedule of (schedules as ScheduleForOccurrences[] | null) ?? []) {
+  for (const schedule of schedules) {
+    if (pendingSessions.length >= maxSessions) {
+      break;
+    }
+
     const studentIds = studentsByClass.get(schedule.class_id) ?? [];
     if (studentIds.length === 0) continue;
 
-    const occurrences = getPastScheduleOccurrences(schedule, now);
+    const occurrences = getPastScheduleOccurrences(
+      schedule,
+      now,
+      lookbackDays,
+    );
 
     for (const occurrence of occurrences) {
+      if (pendingSessions.length >= maxSessions) {
+        break;
+      }
+
       for (const studentId of studentIds) {
+        if (pendingSessions.length >= maxSessions) {
+          break;
+        }
+
         const key = recordKey(
           studentId,
           occurrence.classId,

@@ -1,0 +1,94 @@
+"use client";
+
+import { useCallback, useRef, useState } from "react";
+
+import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/actions";
+import { ScheduleCalendar } from "@/components/schedule-calendar";
+import { useLanguage } from "@/components/language-provider";
+import type {
+  ScheduleEvent,
+  ScheduleException,
+  ScheduleStudent,
+  ScheduleTeacher,
+} from "@/lib/schedule-calendar";
+
+export function ScheduleCalendarLoader({
+  teachers,
+  students,
+  initialTeacherIds,
+  initialEvents,
+  initialExceptions,
+}: {
+  teachers: ScheduleTeacher[];
+  students: ScheduleStudent[];
+  initialTeacherIds: number[];
+  initialEvents: ScheduleEvent[];
+  initialExceptions: ScheduleException[];
+}) {
+  const { t } = useLanguage();
+  const [events, setEvents] = useState(initialEvents);
+  const [exceptions, setExceptions] = useState(initialExceptions);
+  const [selectedTeacherIds, setSelectedTeacherIds] =
+    useState(initialTeacherIds);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const requestIdRef = useRef(0);
+
+  const handleSelectedTeacherIdsChange = useCallback((nextIds: number[]) => {
+    setSelectedTeacherIds(nextIds);
+    const requestId = ++requestIdRef.current;
+    setError(null);
+    setLoading(true);
+
+    void fetchScheduleCalendarEventsAction(nextIds)
+      .then((result) => {
+        if (requestId !== requestIdRef.current) {
+          return;
+        }
+
+        if (result.error) {
+          setError(result.error);
+          return;
+        }
+
+        setEvents(result.events);
+        setExceptions(result.exceptions);
+      })
+      .finally(() => {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
+      });
+  }, []);
+
+  return (
+    <div className="relative">
+      {loading ? (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 flex justify-center pt-2">
+          <span className="rounded-full bg-white/95 px-3 py-1 text-xs font-medium text-gray-600 shadow-sm ring-1 ring-gray-200 dark:bg-gray-900/95 dark:text-gray-300 dark:ring-white/10">
+            {t("common.loading")}
+          </span>
+        </div>
+      ) : null}
+      {error ? (
+        <p className="mt-4 text-sm text-red-600 dark:text-red-400">
+          {t("common.error.loadFailed", {
+            entity: t("nav.schedule"),
+            message: error,
+          })}
+        </p>
+      ) : null}
+      <div className={loading ? "opacity-60 transition-opacity" : undefined}>
+        <ScheduleCalendar
+          events={events}
+          exceptions={exceptions}
+          teachers={teachers}
+          students={students}
+          selectedTeacherIds={selectedTeacherIds}
+          onSelectedTeacherIdsChange={handleSelectedTeacherIdsChange}
+          useServerTeacherCounts
+        />
+      </div>
+    </div>
+  );
+}
