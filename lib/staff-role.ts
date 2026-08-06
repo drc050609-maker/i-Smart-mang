@@ -2,19 +2,26 @@ import { translate } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 import type { StaffLocation } from "@/lib/staff-location";
 
-export const STAFF_ROLES = ["admin", "manager"] as const;
+export const STAFF_ROLES = ["admin", "manager", "front_desk"] as const;
 
 export type StaffRole = (typeof STAFF_ROLES)[number];
+
+const STAFF_ROLE_KEYS = {
+  admin: "enum.staffRole.admin",
+  manager: "enum.staffRole.manager",
+  front_desk: "enum.staffRole.frontDesk",
+} as const;
 
 export function isStaffRole(value: string): value is StaffRole {
   return STAFF_ROLES.includes(value as StaffRole);
 }
 
+export function isFrontDeskStaffRole(role: StaffRole) {
+  return role === "front_desk";
+}
+
 export function formatStaffRole(role: StaffRole, language: AppLanguage = "en") {
-  return translate(
-    language,
-    role === "admin" ? "enum.staffRole.admin" : "enum.staffRole.manager",
-  );
+  return translate(language, STAFF_ROLE_KEYS[role]);
 }
 
 export function canCreateStaffRole(
@@ -25,7 +32,11 @@ export function canCreateStaffRole(
     return false;
   }
 
-  return targetRole === "admin" || targetRole === "manager";
+  return (
+    targetRole === "admin" ||
+    targetRole === "manager" ||
+    targetRole === "front_desk"
+  );
 }
 
 export function canCreateStaffAtLocation(
@@ -42,4 +53,21 @@ export function canCreateStaffAtLocation(
   }
 
   return true;
+}
+
+/** Paths front desk login accounts may open (plus nested routes). */
+const FRONT_DESK_ALLOWED_PREFIXES = ["/my-hours", "/schedule", "/settings"];
+
+export function frontDeskHomePath() {
+  return "/my-hours";
+}
+
+export function canStaffAccessPath(role: StaffRole, pathname: string) {
+  if (!isFrontDeskStaffRole(role)) {
+    return true;
+  }
+
+  return FRONT_DESK_ALLOWED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+  );
 }

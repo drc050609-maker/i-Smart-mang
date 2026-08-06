@@ -63,13 +63,16 @@ function RoleBadge({
   language: AppLanguage;
 }) {
   const isAdmin = role === "admin";
+  const isFrontDesk = role === "front_desk";
 
   return (
     <span
       className={
         isAdmin
           ? "inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
-          : "inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-white/10 dark:text-gray-300"
+          : isFrontDesk
+            ? "inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
+            : "inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-white/10 dark:text-gray-300"
       }
     >
       {formatStaffRole(role, language)}
@@ -300,7 +303,9 @@ export function StaffAccountsTable({
                       <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                         <div className="flex flex-col items-start gap-2">
                           <span>{formatDisplayName(account)}</span>
-                          {canManageAccounts && account.role === "manager" ? (
+                          {canManageAccounts &&
+                          (account.role === "manager" ||
+                            account.role === "front_desk") ? (
                             <AdminSetStaffPasswordDialog
                               staffId={account.id}
                               email={account.email}

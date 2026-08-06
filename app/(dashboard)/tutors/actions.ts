@@ -10,6 +10,15 @@ import {
   MAX_TEACHER_RESUME_FILE_BYTES,
   TEACHER_RESUME_BUCKET,
 } from "@/lib/teacher-resume";
+import { parseDollarsToCents } from "@/lib/money";
+import {
+  isStaffPosition,
+  minutesToHoursDecimal,
+  workedMinutesBetween,
+  type StaffPosition,
+} from "@/lib/staff-position";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
+import type { StaffAccount } from "@/lib/auth";
 
 export type CreatedTeacher = {
   id: number;
@@ -30,6 +39,17 @@ export type UpdateTeacherState = ActionState;
 function revalidateTeacher(teacherId: number) {
   revalidatePath("/tutors");
   revalidatePath(`/tutors/${teacherId}`);
+  revalidatePath("/my-hours");
+}
+
+function assertCanManageFrontDeskHours(
+  staff: StaffAccount,
+  teacherId: number,
+): string | null {
+  if (isFrontDeskStaffRole(staff.role) && staff.teacher_id !== teacherId) {
+    return "You can only log hours for your own front desk profile.";
+  }
+  return null;
 }
 
 function revalidateTeacherClasses(teacherId: number) {
@@ -51,11 +71,30 @@ function getServiceClient() {
 }
 
 function parseTeacherFields(formData: FormData) {
+  const positionRaw = formData.get("position")?.toString().trim() ?? "teacher";
+  const position: StaffPosition = isStaffPosition(positionRaw)
+    ? positionRaw
+    : "teacher";
+  const hourlyRateRaw = formData.get("hourlyRate")?.toString().trim() ?? "";
+  let hourlyRateCents: number | null = null;
+  if (position === "front_desk" && hourlyRateRaw) {
+    const parsed = parseDollarsToCents(hourlyRateRaw, {
+      allowZero: true,
+      fieldLabel: "Hourly rate",
+    });
+    if (!parsed.ok) {
+      return { error: parsed.error } as const;
+    }
+    hourlyRateCents = parsed.cents;
+  }
+
   return {
     firstName: formData.get("firstName")?.toString().trim(),
     lastName: formData.get("lastName")?.toString().trim() || null,
     dob: formData.get("dob")?.toString().trim() || null,
     phoneNumber: formData.get("phoneNumber")?.toString().trim() || null,
+    position,
+    hourlyRateCents: position === "front_desk" ? hourlyRateCents : null,
   };
 }
 
@@ -63,10 +102,19 @@ export async function createTeacher(
   _prevState: CreateTeacherState,
   formData: FormData,
 ): Promise<CreateTeacherState> {
-  const { firstName, lastName, dob, phoneNumber } = parseTeacherFields(formData);
+  const fields = parseTeacherFields(formData);
+  if ("error" in fields) {
+    return { error: fields.error };
+  }
+  const { firstName, lastName, dob, phoneNumber, position, hourlyRateCents } =
+    fields;
 
   if (!firstName) {
     return { error: "First name is required." };
+  }
+
+  if (position === "front_desk" && hourlyRateCents == null) {
+    return { error: "Hourly rate is required for front desk staff." };
   }
 
   const staff = await requireStaff();
@@ -91,6 +139,8 @@ export async function createTeacher(
       dob,
       phone_number: phoneNumber,
       location_id: locationId,
+      position,
+      hourly_rate_cents: hourlyRateCents,
     })
     .select("id, first_name, last_name")
     .single();
@@ -116,7 +166,12 @@ export async function updateTeacher(
   formData: FormData,
 ): Promise<UpdateTeacherState> {
   const teacherId = Number(formData.get("teacherId"));
-  const { firstName, lastName, dob, phoneNumber } = parseTeacherFields(formData);
+  const fields = parseTeacherFields(formData);
+  if ("error" in fields) {
+    return { error: fields.error };
+  }
+  const { firstName, lastName, dob, phoneNumber, position, hourlyRateCents } =
+    fields;
 
   if (!Number.isInteger(teacherId) || teacherId <= 0) {
     return { error: "Invalid tutor." };
@@ -124,6 +179,10 @@ export async function updateTeacher(
 
   if (!firstName) {
     return { error: "First name is required." };
+  }
+
+  if (position === "front_desk" && hourlyRateCents == null) {
+    return { error: "Hourly rate is required for front desk staff." };
   }
 
   const client = getServiceClient();
@@ -138,6 +197,8 @@ export async function updateTeacher(
       last_name: lastName,
       dob,
       phone_number: phoneNumber,
+      position,
+      hourly_rate_cents: hourlyRateCents,
     })
     .eq("id", teacherId);
 
@@ -491,6 +552,192 @@ export async function removeTeacherResume(
       .from(TEACHER_RESUME_BUCKET)
       .remove([existing.resume_path]);
   }
+
+  revalidateTeacher(teacherId);
+  return { success: true };
+}
+
+export type FrontDeskHourLogState = ActionState;
+
+function normalizeClockTime(value: string) {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+}
+
+function parseHourLogFields(formData: FormData) {
+  const workDate = formData.get("workDate")?.toString().trim() ?? "";
+  const clockInRaw = formData.get("clockIn")?.toString().trim() ?? "";
+  const clockOutRaw = formData.get("clockOut")?.toString().trim() ?? "";
+  const notes = formData.get("notes")?.toString().trim() || null;
+  const rateParsed = parseDollarsToCents(formData.get("hourlyRate"), {
+    allowZero: true,
+    fieldLabel: "Hourly rate",
+  });
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(workDate)) {
+    return { error: "Work date is required." } as const;
+  }
+
+  const clockIn = normalizeClockTime(clockInRaw);
+  const clockOut = normalizeClockTime(clockOutRaw);
+  if (!clockIn || !clockOut) {
+    return { error: "Clock in and clock out times are required." } as const;
+  }
+
+  const totalMinutes = workedMinutesBetween(clockIn, clockOut);
+  if (totalMinutes == null || totalMinutes <= 0) {
+    return { error: "Clock out must be after clock in." } as const;
+  }
+  if (totalMinutes > 24 * 60) {
+    return { error: "Worked time cannot exceed 24 hours." } as const;
+  }
+
+  if (!rateParsed.ok) {
+    return { error: rateParsed.error } as const;
+  }
+
+  return {
+    workDate,
+    clockIn,
+    clockOut,
+    hours: minutesToHoursDecimal(totalMinutes),
+    rateCents: rateParsed.cents,
+    notes,
+  };
+}
+
+export async function createFrontDeskHourLog(
+  _prevState: FrontDeskHourLogState,
+  formData: FormData,
+): Promise<FrontDeskHourLogState> {
+  const teacherId = Number(formData.get("teacherId"));
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid tutor." };
+  }
+
+  const fields = parseHourLogFields(formData);
+  if ("error" in fields) return { error: fields.error };
+
+  const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
+  const client = getServiceClient();
+  if ("error" in client) return { error: client.error };
+
+  const { data: teacher, error: teacherError } = await client.supabase
+    .from("teachers")
+    .select("position")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (teacherError) return { error: teacherError.message };
+  if (!teacher || teacher.position !== "front_desk") {
+    return { error: "Hour logs are only for front desk staff." };
+  }
+
+  const { error } = await client.supabase.from("front_desk_hour_logs").upsert(
+    {
+      teacher_id: teacherId,
+      work_date: fields.workDate,
+      clock_in: fields.clockIn,
+      clock_out: fields.clockOut,
+      hours: fields.hours,
+      rate_cents: fields.rateCents,
+      notes: fields.notes,
+      created_by: staff.id,
+    },
+    { onConflict: "teacher_id,work_date" },
+  );
+
+  if (error) return { error: error.message };
+
+  revalidateTeacher(teacherId);
+  return { success: true };
+}
+
+export async function updateFrontDeskHourLog(
+  _prevState: FrontDeskHourLogState,
+  formData: FormData,
+): Promise<FrontDeskHourLogState> {
+  const teacherId = Number(formData.get("teacherId"));
+  const logId = Number(formData.get("logId"));
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid tutor." };
+  }
+  if (!Number.isInteger(logId) || logId <= 0) {
+    return { error: "Invalid hour log." };
+  }
+
+  const fields = parseHourLogFields(formData);
+  if ("error" in fields) return { error: fields.error };
+
+  const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
+  const client = getServiceClient();
+  if ("error" in client) return { error: client.error };
+
+  const { error } = await client.supabase
+    .from("front_desk_hour_logs")
+    .update({
+      work_date: fields.workDate,
+      clock_in: fields.clockIn,
+      clock_out: fields.clockOut,
+      hours: fields.hours,
+      rate_cents: fields.rateCents,
+      notes: fields.notes,
+    })
+    .eq("id", logId)
+    .eq("teacher_id", teacherId);
+
+  if (error) return { error: error.message };
+
+  revalidateTeacher(teacherId);
+  return { success: true };
+}
+
+export async function deleteFrontDeskHourLog(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const teacherId = Number(formData.get("teacherId"));
+  const logId = Number(formData.get("logId"));
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid tutor." };
+  }
+  if (!Number.isInteger(logId) || logId <= 0) {
+    return { error: "Invalid hour log." };
+  }
+
+  const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
+  const client = getServiceClient();
+  if ("error" in client) return { error: client.error };
+
+  const { error } = await client.supabase
+    .from("front_desk_hour_logs")
+    .delete()
+    .eq("id", logId)
+    .eq("teacher_id", teacherId);
+
+  if (error) return { error: error.message };
 
   revalidateTeacher(teacherId);
   return { success: true };

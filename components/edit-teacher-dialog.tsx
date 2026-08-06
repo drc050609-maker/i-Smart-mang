@@ -7,13 +7,19 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, PencilIcon, XMarkIcon } from "@heroicons/react/24/outline";
 
 import {
   updateTeacher,
   type UpdateTeacherState,
 } from "@/app/(dashboard)/tutors/actions";
 import { useLanguage } from "@/components/language-provider";
+import { centsToDollarsInput } from "@/lib/money";
+import {
+  STAFF_POSITIONS,
+  staffPositionLabelKey,
+  type StaffPosition,
+} from "@/lib/staff-position";
 
 import type { Database } from "@/types/database.types";
 
@@ -21,6 +27,8 @@ type Teacher = Database["public"]["Tables"]["teachers"]["Row"];
 
 const inputClassName =
   "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
+
+const selectClassName = `${inputClassName} appearance-none pr-10`;
 
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
@@ -35,11 +43,21 @@ function toDateInputValue(dob: string | null) {
 export function EditTeacherDialog({
   teacher,
 }: {
-  teacher: Pick<Teacher, "id" | "first_name" | "last_name" | "dob" | "phone_number">;
+  teacher: Pick<
+    Teacher,
+    | "id"
+    | "first_name"
+    | "last_name"
+    | "dob"
+    | "phone_number"
+    | "position"
+    | "hourly_rate_cents"
+  >;
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [position, setPosition] = useState<StaffPosition>(teacher.position);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     updateTeacher,
@@ -48,6 +66,7 @@ export function EditTeacherDialog({
 
   function openDialog() {
     setError(null);
+    setPosition(teacher.position);
     setOpen(true);
   }
 
@@ -109,7 +128,7 @@ export function EditTeacherDialog({
               </DialogTitle>
 
               <form
-                key={`${teacher.id}-${teacher.first_name}-${teacher.last_name}-${teacher.dob}-${teacher.phone_number}`}
+                key={`${teacher.id}-${teacher.first_name}-${teacher.last_name}-${teacher.dob}-${teacher.phone_number}-${teacher.position}-${teacher.hourly_rate_cents}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
@@ -150,6 +169,60 @@ export function EditTeacherDialog({
                     </div>
                   </div>
                 </div>
+
+                <div>
+                  <label htmlFor="editTeacherPosition" className={labelClassName}>
+                    {t("common.position")}
+                  </label>
+                  <div className="relative mt-2">
+                    <select
+                      id="editTeacherPosition"
+                      name="position"
+                      value={position}
+                      onChange={(e) =>
+                        setPosition(e.target.value as StaffPosition)
+                      }
+                      className={selectClassName}
+                    >
+                      {STAFF_POSITIONS.map((value) => (
+                        <option key={value} value={value}>
+                          {t(staffPositionLabelKey(value))}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500"
+                    />
+                  </div>
+                </div>
+
+                {position === "front_desk" ? (
+                  <div>
+                    <label
+                      htmlFor="editTeacherHourlyRate"
+                      className={labelClassName}
+                    >
+                      {t("common.hourlyRate")}
+                    </label>
+                    <div className="mt-2">
+                      <input
+                        id="editTeacherHourlyRate"
+                        name="hourlyRate"
+                        type="text"
+                        inputMode="decimal"
+                        required
+                        defaultValue={
+                          teacher.hourly_rate_cents != null
+                            ? centsToDollarsInput(teacher.hourly_rate_cents)
+                            : ""
+                        }
+                        placeholder={t("common.hourlyRatePlaceholder")}
+                        className={inputClassName}
+                      />
+                    </div>
+                  </div>
+                ) : null}
 
                 <div>
                   <label htmlFor="editTeacherDob" className={labelClassName}>

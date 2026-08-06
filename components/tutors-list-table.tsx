@@ -18,6 +18,7 @@ import {
   formatTeacherName,
   sortTeachers,
 } from "@/lib/person-name";
+import { staffPositionLabelKey } from "@/lib/staff-position";
 
 type ClassEmbed = {
   id: number;
@@ -30,6 +31,7 @@ type TutorRow = {
   last_name: string | null;
   dob: string | null;
   is_active: boolean;
+  position: "teacher" | "front_desk";
   classes: ClassEmbed[];
 };
 
@@ -154,6 +156,12 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                     >
+                      {t("common.position")}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                       {t("common.class")}
                     </th>
                     <th
@@ -187,8 +195,13 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                           {formatTeacherName(teacher)}
                         </Link>
                       </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                        {t(staffPositionLabelKey(teacher.position))}
+                      </td>
                       <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
-                        {teacher.classes.length === 0 ? (
+                        {teacher.position === "front_desk" ? (
+                          t("staffPosition.frontDesk")
+                        ) : teacher.classes.length === 0 ? (
                           t("common.notAvailable")
                         ) : (
                           <span className="flex flex-wrap gap-x-2 gap-y-1">

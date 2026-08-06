@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useEffect, useMemo, useRef, useState } from "react";
 import {
   Dialog,
   DialogBackdrop,
@@ -14,7 +14,7 @@ import {
   type CreateStaffAccountState,
 } from "@/app/(dashboard)/settings/actions";
 import { useLanguage } from "@/components/language-provider";
-import { STAFF_ROLES, formatStaffRole } from "@/lib/staff-role";
+import { STAFF_ROLES, formatStaffRole, type StaffRole } from "@/lib/staff-role";
 import {
   STAFF_LOCATIONS,
   formatStaffLocation,
@@ -29,14 +29,32 @@ const labelClassName =
 
 const initialState: CreateStaffAccountState = {};
 
+export type FrontDeskTeacherOption = {
+  id: number;
+  first_name: string;
+  last_name: string | null;
+  location_slug: StaffLocation;
+  hourly_rate_cents: number | null;
+};
+
+function teacherLabel(teacher: FrontDeskTeacherOption) {
+  const name = [teacher.first_name, teacher.last_name].filter(Boolean).join(" ");
+  return name || `Front desk #${teacher.id}`;
+}
+
 export function AddStaffAccountDialog({
   defaultLocation = "brooklyn",
+  frontDeskTeachers = [],
 }: {
   defaultLocation?: StaffLocation;
+  frontDeskTeachers?: FrontDeskTeacherOption[];
 }) {
   const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [role, setRole] = useState<StaffRole>("manager");
+  const [location, setLocation] = useState<StaffLocation>(defaultLocation);
+  const [teacherId, setTeacherId] = useState("new");
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createStaffAccount,
@@ -45,11 +63,20 @@ export function AddStaffAccountDialog({
 
   const isStatenIsland = defaultLocation === "staten_island";
   const availableRoles = isStatenIsland
-    ? STAFF_ROLES.filter((role) => role === "manager")
+    ? STAFF_ROLES.filter((value) => value === "manager" || value === "front_desk")
     : STAFF_ROLES;
+
+  const teachersForCampus = useMemo(
+    () =>
+      frontDeskTeachers.filter((teacher) => teacher.location_slug === location),
+    [frontDeskTeachers, location],
+  );
 
   function openDialog() {
     setError(null);
+    setRole(isStatenIsland ? "manager" : "manager");
+    setLocation(defaultLocation);
+    setTeacherId("new");
     setOpen(true);
   }
 
@@ -70,6 +97,16 @@ export function AddStaffAccountDialog({
     }
   }, [state.error, state.success]);
 
+  useEffect(() => {
+    setLocation(defaultLocation);
+  }, [defaultLocation]);
+
+  useEffect(() => {
+    if (teacherId !== "new" && !teachersForCampus.some((row) => String(row.id) === teacherId)) {
+      setTeacherId("new");
+    }
+  }, [teachersForCampus, teacherId]);
+
   return (
     <>
       <button
@@ -78,7 +115,7 @@ export function AddStaffAccountDialog({
         className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
       >
         <PlusIcon aria-hidden="true" className="size-4" />
-        {isStatenIsland ? t("common.addManager") : t("common.addStaffAccount")}
+        {t("common.addStaffAccount")}
       </button>
 
       <Dialog open={open} onClose={closeDialog} className="relative z-50">
@@ -113,11 +150,13 @@ export function AddStaffAccountDialog({
                   : t("common.addStaffAccount")}
               </DialogTitle>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {t("settings.staffAccountsDescription")}
+                {role === "front_desk"
+                  ? t("common.frontDeskAccountHelp")
+                  : t("settings.staffAccountsDescription")}
               </p>
 
               <form
-                key={defaultLocation}
+                key={`${defaultLocation}-${role}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-4"
@@ -131,6 +170,7 @@ export function AddStaffAccountDialog({
                       id="fullName"
                       name="fullName"
                       type="text"
+                      required={role === "front_desk" && teacherId === "new"}
                       autoComplete="name"
                       className={inputClassName}
                     />
@@ -175,11 +215,11 @@ export function AddStaffAccountDialog({
                     {t("common.role")}
                   </label>
                   <div className="mt-2">
-                    {isStatenIsland ? (
+                    {isStatenIsland && availableRoles.length === 1 ? (
                       <>
-                        <input type="hidden" name="role" value="manager" />
+                        <input type="hidden" name="role" value={availableRoles[0]} />
                         <div className={inputClassName}>
-                          {formatStaffRole("manager", language)}
+                          {formatStaffRole(availableRoles[0]!, language)}
                         </div>
                       </>
                     ) : (
@@ -187,12 +227,15 @@ export function AddStaffAccountDialog({
                         id="role"
                         name="role"
                         required
-                        defaultValue="manager"
+                        value={role}
+                        onChange={(event) =>
+                          setRole(event.target.value as StaffRole)
+                        }
                         className={inputClassName}
                       >
-                        {availableRoles.map((role) => (
-                          <option key={role} value={role}>
-                            {formatStaffRole(role, language)}
+                        {availableRoles.map((value) => (
+                          <option key={value} value={value}>
+                            {formatStaffRole(value, language)}
                           </option>
                         ))}
                       </select>
@@ -210,12 +253,15 @@ export function AddStaffAccountDialog({
                         id="location"
                         name="location"
                         required
-                        defaultValue={defaultLocation}
+                        value={location}
+                        onChange={(event) =>
+                          setLocation(event.target.value as StaffLocation)
+                        }
                         className={inputClassName}
                       >
-                        {STAFF_LOCATIONS.map((location) => (
-                          <option key={location} value={location}>
-                            {formatStaffLocation(location, language)} iSmart
+                        {STAFF_LOCATIONS.map((value) => (
+                          <option key={value} value={value}>
+                            {formatStaffLocation(value, language)} iSmart
                           </option>
                         ))}
                       </select>
@@ -225,10 +271,64 @@ export function AddStaffAccountDialog({
                   <>
                     <input type="hidden" name="location" value="staten_island" />
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {t("common.campus")}: {formatStaffLocation("staten_island", language)} iSmart
+                      {t("common.campus")}:{" "}
+                      {formatStaffLocation("staten_island", language)} iSmart
                     </p>
                   </>
                 )}
+
+                {role === "front_desk" ? (
+                  <>
+                    <div>
+                      <label htmlFor="teacherId" className={labelClassName}>
+                        {t("common.linkFrontDeskTeacher")}
+                      </label>
+                      <div className="mt-2">
+                        <select
+                          id="teacherId"
+                          name="teacherId"
+                          required
+                          value={teacherId}
+                          onChange={(event) => setTeacherId(event.target.value)}
+                          className={inputClassName}
+                        >
+                          <option value="new">
+                            {t("common.createNewFrontDeskTeacher")}
+                          </option>
+                          {teachersForCampus.map((teacher) => (
+                            <option key={teacher.id} value={teacher.id}>
+                              {teacherLabel(teacher)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      {teachersForCampus.length === 0 ? (
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          {t("common.noFrontDeskTeachers")}
+                        </p>
+                      ) : null}
+                    </div>
+
+                    {teacherId === "new" ? (
+                      <div>
+                        <label htmlFor="hourlyRate" className={labelClassName}>
+                          {t("common.hourlyRate")}
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            id="hourlyRate"
+                            name="hourlyRate"
+                            type="text"
+                            inputMode="decimal"
+                            required
+                            placeholder={t("common.hourlyRatePlaceholder")}
+                            className={inputClassName}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
+                  </>
+                ) : null}
 
                 {error ? (
                   <p className="text-sm text-red-600 dark:text-red-400">

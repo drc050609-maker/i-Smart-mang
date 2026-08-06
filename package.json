@@ -11,6 +11,7 @@
     "seed:env": "node --import tsx ./seed.ts",
     "create-admin": "node --env-file=.env.local --import tsx ./scripts/create-admin.ts",
     "import:brooklyn-ical": "node --env-file=.env.local --import tsx ./scripts/import-brooklyn-ical.ts",
+    "import:brooklyn-spreadsheet": "node --env-file=.env.local --import tsx ./scripts/import-brooklyn-spreadsheet.ts",
     "import:si-spreadsheet": "node --env-file=.env.local --import tsx ./scripts/import-si-spreadsheet.ts",
     "import:si-ical": "node --env-file=.env.local --import tsx ./scripts/import-si-ical.ts"
   },

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 
-import { AddStaffAccountDialog } from "@/components/add-staff-account-dialog";
+import { AddStaffAccountDialog, type FrontDeskTeacherOption } from "@/components/add-staff-account-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { StaffAccountsTable, type StaffAccountRow } from "@/components/staff-accounts-table";
 import { StaffLocationTabs } from "@/components/staff-location-tabs";
@@ -16,12 +16,14 @@ export function StaffAccountsSection({
   currentStaffRole,
   currentStaffLocation,
   canManageAccounts,
+  frontDeskTeachers = [],
 }: {
   accounts: StaffAccountRow[];
   currentStaffId: string;
   currentStaffRole: StaffRole;
   currentStaffLocation: StaffLocation;
   canManageAccounts: boolean;
+  frontDeskTeachers?: FrontDeskTeacherOption[];
 }) {
   const { language, t } = useLanguage();
   const isAdmin = currentStaffRole === "admin";
@@ -62,7 +64,10 @@ export function StaffAccountsSection({
         )}
 
         {canManageAccounts ? (
-          <AddStaffAccountDialog defaultLocation={activeLocation} />
+          <AddStaffAccountDialog
+            defaultLocation={activeLocation}
+            frontDeskTeachers={frontDeskTeachers}
+          />
         ) : null}
       </div>
 

@@ -1,0 +1,491 @@
+"use client";
+
+import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  DialogTitle,
+} from "@headlessui/react";
+import { ChevronLeftIcon, ChevronRightIcon, XMarkIcon } from "@heroicons/react/24/outline";
+
+import {
+  createFrontDeskHourLog,
+  updateFrontDeskHourLog,
+  type FrontDeskHourLogState,
+} from "@/app/(dashboard)/tutors/actions";
+import { useLanguage } from "@/components/language-provider";
+import { DeleteFrontDeskHourButton } from "@/components/delete-front-desk-hour-button";
+import { formatCentsAsCurrency } from "@/lib/money";
+import {
+  formatClockTime,
+  formatWorkedDuration,
+  frontDeskDayPayCents,
+  workedMinutesBetween,
+} from "@/lib/staff-position";
+import type { TranslationKey } from "@/lib/i18n";
+
+export type FrontDeskHourLog = {
+  id: number;
+  work_date: string;
+  clock_in: string;
+  clock_out: string;
+  hours: number;
+  rate_cents: number;
+  notes: string | null;
+};
+
+const WEEKDAY_KEYS: TranslationKey[] = [
+  "enum.weekday.sunday",
+  "enum.weekday.monday",
+  "enum.weekday.tuesday",
+  "enum.weekday.wednesday",
+  "enum.weekday.thursday",
+  "enum.weekday.friday",
+  "enum.weekday.saturday",
+];
+
+const inputClassName =
+  "block w-full min-h-[2.375rem] rounded-md bg-white px-3 py-1.5 text-base leading-6 text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
+
+const labelClassName =
+  "block text-sm/6 font-medium text-gray-900 dark:text-white";
+
+function pad2(n: number) {
+  return String(n).padStart(2, "0");
+}
+
+function toDateKey(year: number, monthIndex: number, day: number) {
+  return `${year}-${pad2(monthIndex + 1)}-${pad2(day)}`;
+}
+
+function monthLabel(year: number, monthIndex: number, language: string) {
+  return new Date(year, monthIndex, 1).toLocaleDateString(
+    language === "zh" ? "zh-CN" : "en-US",
+    { month: "long", year: "numeric" },
+  );
+}
+
+function HoursFormFields({
+  idPrefix,
+  workDate,
+  log,
+  defaultRateCents,
+}: {
+  idPrefix: string;
+  workDate: string;
+  log?: FrontDeskHourLog;
+  defaultRateCents: number | null;
+}) {
+  const { t } = useLanguage();
+  const rateDefault =
+    log != null
+      ? (log.rate_cents / 100).toFixed(log.rate_cents % 100 === 0 ? 0 : 2)
+      : defaultRateCents != null
+        ? (defaultRateCents / 100).toFixed(
+            defaultRateCents % 100 === 0 ? 0 : 2,
+          )
+        : "";
+
+  const clockInDefault = log?.clock_in
+    ? formatClockTime(log.clock_in)
+    : "09:00";
+  const clockOutDefault = log?.clock_out
+    ? formatClockTime(log.clock_out)
+    : "17:00";
+
+  return (
+    <>
+      <input type="hidden" name="workDate" value={workDate} />
+
+      <div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("common.workDate")}:{" "}
+          <span className="font-medium text-gray-900 dark:text-white">
+            {workDate}
+          </span>
+        </p>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div>
+          <label htmlFor={`${idPrefix}-clockIn`} className={labelClassName}>
+            {t("common.clockIn")}
+          </label>
+          <div className="mt-2">
+            <input
+              id={`${idPrefix}-clockIn`}
+              name="clockIn"
+              type="time"
+              required
+              defaultValue={clockInDefault}
+              className={inputClassName}
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor={`${idPrefix}-clockOut`} className={labelClassName}>
+            {t("common.clockOut")}
+          </label>
+          <div className="mt-2">
+            <input
+              id={`${idPrefix}-clockOut`}
+              name="clockOut"
+              type="time"
+              required
+              defaultValue={clockOutDefault}
+              className={inputClassName}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-rate`} className={labelClassName}>
+          {t("common.hourlyRate")}
+        </label>
+        <div className="mt-2">
+          <input
+            id={`${idPrefix}-rate`}
+            name="hourlyRate"
+            type="text"
+            inputMode="decimal"
+            required
+            defaultValue={rateDefault}
+            placeholder={t("common.hourlyRatePlaceholder")}
+            className={inputClassName}
+          />
+        </div>
+      </div>
+
+      <div>
+        <label htmlFor={`${idPrefix}-notes`} className={labelClassName}>
+          {t("common.notes")}
+        </label>
+        <div className="mt-2">
+          <input
+            id={`${idPrefix}-notes`}
+            name="notes"
+            type="text"
+            defaultValue={log?.notes ?? ""}
+            className={inputClassName}
+          />
+        </div>
+      </div>
+    </>
+  );
+}
+
+const initialState: FrontDeskHourLogState = {};
+
+export function FrontDeskHoursSection({
+  teacherId,
+  hourlyRateCents,
+  logs,
+}: {
+  teacherId: number;
+  hourlyRateCents: number | null;
+  logs: FrontDeskHourLog[];
+}) {
+  const { language, t } = useLanguage();
+  const today = useMemo(() => new Date(), []);
+  const [viewYear, setViewYear] = useState(today.getFullYear());
+  const [viewMonth, setViewMonth] = useState(today.getMonth());
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+  const idPrefix = useId();
+  const [createState, createAction, createPending] = useActionState(
+    createFrontDeskHourLog,
+    initialState,
+  );
+  const [updateState, updateAction, updatePending] = useActionState(
+    updateFrontDeskHourLog,
+    initialState,
+  );
+
+  const logsByDate = useMemo(() => {
+    const map = new Map<string, FrontDeskHourLog>();
+    for (const log of logs) map.set(log.work_date, log);
+    return map;
+  }, [logs]);
+
+  const selectedLog = selectedDate ? (logsByDate.get(selectedDate) ?? null) : null;
+  const dialogOpen = selectedDate != null;
+
+  useEffect(() => {
+    if (createState.error) setError(createState.error);
+    if (createState.success) {
+      formRef.current?.reset();
+      setError(null);
+      setSelectedDate(null);
+    }
+  }, [createState.error, createState.success]);
+
+  useEffect(() => {
+    if (updateState.error) setError(updateState.error);
+    if (updateState.success) {
+      setError(null);
+      setSelectedDate(null);
+    }
+  }, [updateState.error, updateState.success]);
+
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+
+  const monthLogs = useMemo(() => {
+    const prefix = `${viewYear}-${pad2(viewMonth + 1)}-`;
+    return logs.filter((log) => log.work_date.startsWith(prefix));
+  }, [logs, viewYear, viewMonth]);
+
+  const monthMinutes = monthLogs.reduce((sum, log) => {
+    const minutes =
+      workedMinutesBetween(log.clock_in, log.clock_out) ??
+      Math.round(Number(log.hours) * 60);
+    return sum + minutes;
+  }, 0);
+  const monthDuration = formatWorkedDuration(monthMinutes);
+  const monthPay = monthLogs.reduce(
+    (sum, log) => sum + frontDeskDayPayCents(Number(log.hours), log.rate_cents),
+    0,
+  );
+
+  function shiftMonth(delta: number) {
+    const next = new Date(viewYear, viewMonth + delta, 1);
+    setViewYear(next.getFullYear());
+    setViewMonth(next.getMonth());
+  }
+
+  function openDay(day: number) {
+    setError(null);
+    setSelectedDate(toDateKey(viewYear, viewMonth, day));
+  }
+
+  const cells: Array<{ day: number | null; dateKey: string | null }> = [];
+  for (let i = 0; i < firstWeekday; i++) {
+    cells.push({ day: null, dateKey: null });
+  }
+  for (let day = 1; day <= daysInMonth; day++) {
+    cells.push({
+      day,
+      dateKey: toDateKey(viewYear, viewMonth, day),
+    });
+  }
+
+  return (
+    <section className="mt-8">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t("common.hoursWorked")}
+          </h2>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            {t("common.clickDayToLog")}
+          </p>
+        </div>
+        <div className="rounded-lg bg-gray-50 px-4 py-2 text-sm dark:bg-white/5">
+          <p className="font-medium text-gray-900 dark:text-white">
+            {t("common.monthTotal")}:{" "}
+            {t("common.durationHoursMinutes", {
+              hours: monthDuration.hours,
+              minutes: monthDuration.minutes,
+            })}
+          </p>
+          {monthLogs.length > 0 ? (
+            <p className="mt-0.5 text-gray-500 dark:text-gray-400">
+              {formatCentsAsCurrency(monthPay, language)}
+            </p>
+          ) : null}
+        </div>
+      </div>
+
+      <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-white/10">
+          <button
+            type="button"
+            onClick={() => shiftMonth(-1)}
+            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label={t("common.previousMonth")}
+          >
+            <ChevronLeftIcon className="size-5" />
+          </button>
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white">
+            {monthLabel(viewYear, viewMonth, language)}
+          </h3>
+          <button
+            type="button"
+            onClick={() => shiftMonth(1)}
+            className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:hover:bg-white/10 dark:hover:text-white"
+            aria-label={t("common.nextMonth")}
+          >
+            <ChevronRightIcon className="size-5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-7 border-b border-gray-200 dark:border-white/10">
+          {WEEKDAY_KEYS.map((key) => (
+            <div
+              key={key}
+              className="px-1 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400"
+            >
+              {t(key)}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7">
+          {cells.map((cell, index) => {
+            if (cell.day == null || cell.dateKey == null) {
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="min-h-24 border-b border-r border-gray-100 bg-gray-50/50 dark:border-white/5 dark:bg-white/[0.02]"
+                />
+              );
+            }
+
+            const log = logsByDate.get(cell.dateKey);
+            const isToday =
+              cell.dateKey ===
+              toDateKey(today.getFullYear(), today.getMonth(), today.getDate());
+            const duration = log
+              ? formatWorkedDuration(
+                  workedMinutesBetween(log.clock_in, log.clock_out) ??
+                    Math.round(Number(log.hours) * 60),
+                )
+              : null;
+
+            return (
+              <button
+                key={cell.dateKey}
+                type="button"
+                onClick={() => openDay(cell.day!)}
+                className={`min-h-24 border-b border-r border-gray-100 p-1.5 text-left transition hover:bg-indigo-50/60 dark:border-white/5 dark:hover:bg-indigo-500/10 ${
+                  log
+                    ? "bg-indigo-50/40 dark:bg-indigo-500/5"
+                    : "bg-white dark:bg-transparent"
+                }`}
+              >
+                <span
+                  className={`inline-flex size-6 items-center justify-center rounded-full text-xs font-medium ${
+                    isToday
+                      ? "bg-indigo-600 text-white"
+                      : "text-gray-700 dark:text-gray-200"
+                  }`}
+                >
+                  {cell.day}
+                </span>
+                {log && duration ? (
+                  <div className="mt-1 space-y-0.5 px-0.5">
+                    <p className="text-[10px] leading-tight text-gray-600 dark:text-gray-300 sm:text-xs">
+                      {formatClockTime(log.clock_in)}–
+                      {formatClockTime(log.clock_out)}
+                    </p>
+                    <p className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 sm:text-xs">
+                      {t("common.durationHoursMinutes", {
+                        hours: duration.hours,
+                        minutes: duration.minutes,
+                      })}
+                    </p>
+                  </div>
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <Dialog
+        open={dialogOpen}
+        onClose={() => setSelectedDate(null)}
+        className="relative z-50"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-black/30" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <DialogPanel className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900">
+            <div className="flex items-start justify-between gap-4">
+              <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                {selectedLog ? t("common.editHours") : t("common.logHours")}
+              </DialogTitle>
+              <button
+                type="button"
+                onClick={() => setSelectedDate(null)}
+                className="rounded-md p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <XMarkIcon className="size-5" />
+              </button>
+            </div>
+
+            {selectedLog ? (
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {t("common.duration")}:{" "}
+                {(() => {
+                  const d = formatWorkedDuration(
+                    workedMinutesBetween(
+                      selectedLog.clock_in,
+                      selectedLog.clock_out,
+                    ) ?? Math.round(Number(selectedLog.hours) * 60),
+                  );
+                  return t("common.durationHoursMinutes", {
+                    hours: d.hours,
+                    minutes: d.minutes,
+                  });
+                })()}
+                {" · "}
+                {t("common.dayPay")}:{" "}
+                {formatCentsAsCurrency(
+                  frontDeskDayPayCents(
+                    Number(selectedLog.hours),
+                    selectedLog.rate_cents,
+                  ),
+                  language,
+                )}
+              </p>
+            ) : null}
+
+            <form
+              ref={formRef}
+              action={selectedLog ? updateAction : createAction}
+              className="mt-4 space-y-4"
+            >
+              <input type="hidden" name="teacherId" value={teacherId} />
+              {selectedLog ? (
+                <input type="hidden" name="logId" value={selectedLog.id} />
+              ) : null}
+              <HoursFormFields
+                idPrefix={idPrefix}
+                workDate={selectedDate!}
+                log={selectedLog ?? undefined}
+                defaultRateCents={hourlyRateCents}
+              />
+              {error ? (
+                <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+              ) : null}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={createPending || updatePending}
+                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-60"
+                >
+                  {createPending || updatePending
+                    ? t("common.saving")
+                    : t("common.saveHours")}
+                </button>
+              </div>
+            </form>
+
+            {selectedLog ? (
+              <div className="mt-3 border-t border-gray-100 pt-3 dark:border-white/10">
+                <DeleteFrontDeskHourButton
+                  teacherId={teacherId}
+                  logId={selectedLog.id}
+                  onDeleted={() => setSelectedDate(null)}
+                />
+              </div>
+            ) : null}
+          </DialogPanel>
+        </div>
+      </Dialog>
+    </section>
+  );
+}

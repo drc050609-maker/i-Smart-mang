@@ -7,6 +7,8 @@ import { EditStudentDobDialog } from "@/components/edit-student-dob-dialog";
 import { EditStudentNameDialog } from "@/components/edit-student-name-dialog";
 import { StudentAddressesSection } from "@/components/student-addresses-section";
 import { AddStudentAddressDialog } from "@/components/add-student-address-dialog";
+import { StudentPhonesSection } from "@/components/student-phones-section";
+import { AddStudentPhoneDialog } from "@/components/add-student-phone-dialog";
 import { AddStudentClassesDialog } from "@/components/add-student-classes-dialog";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import type { ClassOption } from "@/components/class-multi-combobox";
@@ -40,6 +42,7 @@ import type { Database } from "@/types/database.types";
 
 type Student = Database["public"]["Tables"]["students"]["Row"];
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
+type PhoneContact = Database["public"]["Tables"]["student_phone_contacts"]["Row"];
 
 type TeacherEmbed = {
   first_name: string;
@@ -135,6 +138,7 @@ export default async function StudentDetailPage({
 
   const [
     { data: addresses, error: addressError },
+    { data: phones, error: phonesError },
     { data: enrollments, error: enrollmentError },
     { data: allClasses, error: allClassesError },
     { data: balances, error: balancesError },
@@ -145,6 +149,13 @@ export default async function StudentDetailPage({
       .from("addresses")
       .select('id, "street 1", "street 2", city, state, "zip code"')
       .eq("student", studentId)
+      .order("id"),
+    supabase
+      .from("student_phone_contacts")
+      .select("id, phone_number, owner_role, owner_name, is_primary")
+      .eq("student_id", studentId)
+      .order("is_primary", { ascending: false })
+      .order("sort_order")
       .order("id"),
     supabase
       .from("enrollments")
@@ -209,6 +220,7 @@ export default async function StudentDetailPage({
     enrollments: (enrollments as EnrollmentEmbed[] | null) ?? null,
   };
   const addressRows = (addresses as Address[] | null) ?? [];
+  const phoneRows = (phones as PhoneContact[] | null) ?? [];
   const enrollmentRows = [...((enrollments as EnrollmentEmbed[] | null) ?? [])].sort(
     (a, b) => {
       const classA = classFromEnrollment(a);
@@ -349,6 +361,25 @@ export default async function StudentDetailPage({
           </div>
         </dl>
       </div>
+
+      <section className="mt-8">
+        <div className="flex items-center justify-between gap-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            {t("common.phones")}
+          </h2>
+          <AddStudentPhoneDialog studentId={studentId} />
+        </div>
+        {phonesError ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+            {t("common.error.loadFailed", {
+              entity: t("common.phones"),
+              message: phonesError.message,
+            })}
+          </p>
+        ) : (
+          <StudentPhonesSection studentId={studentId} phones={phoneRows} />
+        )}
+      </section>
 
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">

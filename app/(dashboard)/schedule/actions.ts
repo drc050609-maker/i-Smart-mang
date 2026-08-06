@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 import { requireStaff } from "@/lib/auth";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { addMinutesToScheduleTime } from "@/lib/class-schedule";
 import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
@@ -106,6 +107,11 @@ export async function rescheduleFromCalendar(
   _prevState: ScheduleActionState,
   formData: FormData,
 ): Promise<ScheduleActionState> {
+  const staff = await requireStaff();
+  if (isFrontDeskStaffRole(staff.role)) {
+    return { error: "Front desk accounts cannot change the schedule." };
+  }
+
   const scheduleId = Number(formData.get("scheduleId"));
   const classId = Number(formData.get("classId"));
   const scope = formData.get("scope")?.toString();
@@ -252,6 +258,11 @@ export async function deleteFromCalendar(
   _prevState: ScheduleActionState,
   formData: FormData,
 ): Promise<ScheduleActionState> {
+  const staff = await requireStaff();
+  if (isFrontDeskStaffRole(staff.role)) {
+    return { error: "Front desk accounts cannot change the schedule." };
+  }
+
   const scheduleId = Number(formData.get("scheduleId"));
   const classId = Number(formData.get("classId"));
   const scope = formData.get("scope")?.toString();

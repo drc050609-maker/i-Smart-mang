@@ -18,6 +18,7 @@ export type TranslationKey =
   | "nav.schedule"
   | "nav.events"
   | "nav.settings"
+  | "nav.myHours"
   | "brand.musicSchool"
   | "settings.title"
   | "settings.subtitleAdmin"
@@ -65,6 +66,53 @@ export type TranslationKey =
   | "common.id"
   | "common.email"
   | "common.phone"
+  | "staffPosition.teacher"
+  | "staffPosition.frontDesk"
+  | "common.position"
+  | "common.hourlyRate"
+  | "common.hourlyRatePlaceholder"
+  | "common.hoursWorked"
+  | "common.workDate"
+  | "common.clockIn"
+  | "common.clockOut"
+  | "common.durationHoursMinutes"
+  | "common.monthTotal"
+  | "common.clickDayToLog"
+  | "common.logHours"
+  | "common.editHours"
+  | "common.saveHours"
+  | "common.noHourLogs"
+  | "common.deleteHourLogConfirm"
+  | "common.dayPay"
+  | "common.hoursPaySummary"
+  | "common.frontDeskNoClasses"
+  | "common.linkFrontDeskTeacher"
+  | "common.createNewFrontDeskTeacher"
+  | "common.frontDeskAccountHelp"
+  | "common.noFrontDeskTeachers"
+  | "common.myHoursTitle"
+  | "common.myHoursSubtitle"
+  | "common.frontDeskProfileMissing"
+  | "common.phones"
+  | "common.noPhones"
+  | "common.addPhone"
+  | "common.editPhone"
+  | "common.savePhone"
+  | "common.deletePhoneConfirm"
+  | "common.phoneOwner"
+  | "common.ownerName"
+  | "common.ownerNamePlaceholder"
+  | "common.primaryPhone"
+  | "phoneOwner.self"
+  | "phoneOwner.mother"
+  | "phoneOwner.father"
+  | "phoneOwner.grandmother"
+  | "phoneOwner.grandfather"
+  | "phoneOwner.guardian"
+  | "phoneOwner.aunt"
+  | "phoneOwner.uncle"
+  | "phoneOwner.sibling"
+  | "phoneOwner.other"
   | "common.teacher"
   | "common.resume"
   | "common.resumeHelp"
@@ -584,6 +632,7 @@ export type TranslationKey =
   | "enum.attendanceDescription.excused"
   | "enum.staffRole.admin"
   | "enum.staffRole.manager"
+  | "enum.staffRole.frontDesk"
   | "enum.staffLocation.brooklyn"
   | "enum.staffLocation.staten_island"
   | "enum.staffLocation.brooklynLabel"
@@ -775,6 +824,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.schedule": "Schedule",
     "nav.events": "Events",
     "nav.settings": "Settings",
+    "nav.myHours": "My hours",
     "brand.musicSchool": "Music School",
     "settings.title": "Settings",
     "settings.subtitleAdmin":
@@ -819,6 +869,59 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "ID",
     "common.email": "Email",
     "common.phone": "Phone",
+    "staffPosition.teacher": "Teacher",
+    "staffPosition.frontDesk": "Front desk",
+    "common.position": "Position",
+    "common.hourlyRate": "Hourly rate",
+    "common.hourlyRatePlaceholder": "e.g. 18.00",
+    "common.hoursWorked": "Hours worked",
+    "common.workDate": "Work date",
+    "common.clockIn": "Clock in",
+    "common.clockOut": "Clock out",
+    "common.durationHoursMinutes": "{hours}h {minutes}m",
+    "common.monthTotal": "Month total",
+    "common.clickDayToLog": "Click a day to log when you arrived and left.",
+    "common.logHours": "Log hours",
+    "common.editHours": "Edit hours",
+    "common.saveHours": "Save hours",
+    "common.noHourLogs": "No hours logged yet.",
+    "common.deleteHourLogConfirm":
+      "This will permanently delete this day’s hour log.",
+    "common.dayPay": "Pay",
+    "common.hoursPaySummary": "{hours} hrs · {pay}",
+    "common.frontDeskNoClasses":
+      "Front desk staff do not teach classes. Log daily hours below.",
+    "common.linkFrontDeskTeacher": "Link to front desk profile",
+    "common.createNewFrontDeskTeacher": "Create a new front desk profile",
+    "common.frontDeskAccountHelp":
+      "Front desk accounts can only open My hours and Schedule. Link an existing front desk teacher, or create a new profile.",
+    "common.noFrontDeskTeachers":
+      "No unlinked front desk profiles at this campus. A new profile will be created from the name and hourly rate.",
+    "common.myHoursTitle": "My hours",
+    "common.myHoursSubtitle": "Log when you arrive and leave each day.",
+    "common.frontDeskProfileMissing":
+      "This account is not linked to a front desk profile. Ask an admin to fix it.",
+    "common.phones": "Phone numbers",
+    "common.noPhones": "No phone numbers on file.",
+    "common.addPhone": "Add phone",
+    "common.editPhone": "Edit phone",
+    "common.savePhone": "Save phone",
+    "common.deletePhoneConfirm":
+      "This will permanently delete this phone number.",
+    "common.phoneOwner": "Whose phone",
+    "common.ownerName": "Contact name",
+    "common.ownerNamePlaceholder": "Optional name",
+    "common.primaryPhone": "Primary",
+    "phoneOwner.self": "Self",
+    "phoneOwner.mother": "Mother",
+    "phoneOwner.father": "Father",
+    "phoneOwner.grandmother": "Grandmother",
+    "phoneOwner.grandfather": "Grandfather",
+    "phoneOwner.guardian": "Guardian",
+    "phoneOwner.aunt": "Aunt",
+    "phoneOwner.uncle": "Uncle",
+    "phoneOwner.sibling": "Sibling",
+    "phoneOwner.other": "Other",
     "common.teacher": "Teacher",
     "common.resume": "Resume",
     "common.resumeHelp": "Upload a PDF resume for this teacher (max 10 MB).",
@@ -1368,6 +1471,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendanceDescription.excused": "Excused absence — no credit used",
     "enum.staffRole.admin": "Admin",
     "enum.staffRole.manager": "Manager",
+    "enum.staffRole.frontDesk": "Front desk",
     "enum.staffLocation.brooklyn": "Brooklyn",
     "enum.staffLocation.staten_island": "Staten Island",
     "enum.staffLocation.brooklynLabel": "Brooklyn, NY",
@@ -1595,6 +1699,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.schedule": "日程",
     "nav.events": "活动",
     "nav.settings": "设置",
+    "nav.myHours": "我的工时",
     "brand.musicSchool": "音乐学校",
     "settings.title": "设置",
     "settings.subtitleAdmin": "管理布鲁克林和史泰登岛的管理员与经理账户。",
@@ -1637,6 +1742,56 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "编号",
     "common.email": "邮箱",
     "common.phone": "电话",
+    "staffPosition.teacher": "老师",
+    "staffPosition.frontDesk": "前台",
+    "common.position": "职位",
+    "common.hourlyRate": "时薪",
+    "common.hourlyRatePlaceholder": "例如 18.00",
+    "common.hoursWorked": "工作时长",
+    "common.workDate": "工作日期",
+    "common.clockIn": "上班时间",
+    "common.clockOut": "下班时间",
+    "common.durationHoursMinutes": "{hours}小时 {minutes}分钟",
+    "common.monthTotal": "本月合计",
+    "common.clickDayToLog": "点击某一天记录上班和下班时间。",
+    "common.logHours": "记录工时",
+    "common.editHours": "编辑工时",
+    "common.saveHours": "保存工时",
+    "common.noHourLogs": "暂无工时记录。",
+    "common.deleteHourLogConfirm": "这将永久删除该日工时记录。",
+    "common.dayPay": "工资",
+    "common.hoursPaySummary": "{hours} 小时 · {pay}",
+    "common.frontDeskNoClasses": "前台人员不授课。请在下方记录每日工时。",
+    "common.linkFrontDeskTeacher": "关联前台档案",
+    "common.createNewFrontDeskTeacher": "新建前台档案",
+    "common.frontDeskAccountHelp":
+      "前台账号只能访问“我的工时”和“日程”。请关联现有前台人员，或根据姓名与时薪新建档案。",
+    "common.noFrontDeskTeachers":
+      "本校园没有未关联的前台档案。将根据姓名和时薪新建档案。",
+    "common.myHoursTitle": "我的工时",
+    "common.myHoursSubtitle": "记录每天的上班和下班时间。",
+    "common.frontDeskProfileMissing":
+      "此账号尚未关联前台档案。请联系管理员处理。",
+    "common.phones": "电话号码",
+    "common.noPhones": "暂无电话号码记录。",
+    "common.addPhone": "添加电话",
+    "common.editPhone": "编辑电话",
+    "common.savePhone": "保存电话",
+    "common.deletePhoneConfirm": "这将永久删除此电话号码。",
+    "common.phoneOwner": "号码归属",
+    "common.ownerName": "联系人姓名",
+    "common.ownerNamePlaceholder": "可选姓名",
+    "common.primaryPhone": "主要",
+    "phoneOwner.self": "本人",
+    "phoneOwner.mother": "母亲",
+    "phoneOwner.father": "父亲",
+    "phoneOwner.grandmother": "祖母/外祖母",
+    "phoneOwner.grandfather": "祖父/外祖父",
+    "phoneOwner.guardian": "监护人",
+    "phoneOwner.aunt": "阿姨/姑姑",
+    "phoneOwner.uncle": "叔叔/舅舅",
+    "phoneOwner.sibling": "兄弟姐妹",
+    "phoneOwner.other": "其他",
     "common.teacher": "老师",
     "common.resume": "简历",
     "common.resumeHelp": "为这位老师上传 PDF 简历（最大 10 MB）。",
@@ -2180,6 +2335,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendanceDescription.excused": "请假 — 不扣课时",
     "enum.staffRole.admin": "管理员",
     "enum.staffRole.manager": "经理",
+    "enum.staffRole.frontDesk": "前台",
     "enum.staffLocation.brooklyn": "布鲁克林",
     "enum.staffLocation.staten_island": "史泰登岛",
     "enum.staffLocation.brooklynLabel": "布鲁克林，纽约",
@@ -2419,6 +2575,8 @@ export function getNavTranslationKey(href: string): TranslationKey {
       return "nav.attendance";
     case "/schedule":
       return "nav.schedule";
+    case "/my-hours":
+      return "nav.myHours";
     case "/events":
       return "nav.events";
     case "/settings":

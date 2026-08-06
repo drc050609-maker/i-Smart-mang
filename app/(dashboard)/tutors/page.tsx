@@ -19,6 +19,7 @@ type TeacherWithClasses = {
   last_name: string | null;
   dob: string | null;
   is_active: boolean;
+  position: "teacher" | "front_desk";
   classes: ClassEmbed | ClassEmbed[] | null;
 };
 
@@ -61,6 +62,7 @@ export default async function TutorsPage() {
       last_name,
       dob,
       is_active,
+      position,
       classes!classes_teacher_id_fkey ( id, subject )
     `,
         )
@@ -99,6 +101,7 @@ export default async function TutorsPage() {
         last_name: teacher.last_name,
         dob: teacher.dob,
         is_active: teacher.is_active,
+        position: teacher.position,
         classes: uniqueClassesBySubject([...mergedById.values()]).sort(
           (a, b) =>
             a.subject.localeCompare(b.subject, undefined, {

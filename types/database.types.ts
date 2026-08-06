@@ -1096,6 +1096,7 @@ export type Database = {
           location: Database["public"]["Enums"]["staff_location"]
           preferred_language: Database["public"]["Enums"]["staff_language"]
           role: Database["public"]["Enums"]["staff_role"]
+          teacher_id: number | null
         }
         Insert: {
           created_at?: string
@@ -1107,6 +1108,7 @@ export type Database = {
           location?: Database["public"]["Enums"]["staff_location"]
           preferred_language?: Database["public"]["Enums"]["staff_language"]
           role?: Database["public"]["Enums"]["staff_role"]
+          teacher_id?: number | null
         }
         Update: {
           created_at?: string
@@ -1118,8 +1120,71 @@ export type Database = {
           location?: Database["public"]["Enums"]["staff_location"]
           preferred_language?: Database["public"]["Enums"]["staff_language"]
           role?: Database["public"]["Enums"]["staff_role"]
+          teacher_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_accounts_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      front_desk_hour_logs: {
+        Row: {
+          clock_in: string
+          clock_out: string
+          created_at: string
+          created_by: string | null
+          hours: number
+          id: number
+          notes: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Insert: {
+          clock_in: string
+          clock_out: string
+          created_at?: string
+          created_by?: string | null
+          hours: number
+          id?: number
+          notes?: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Update: {
+          clock_in?: string
+          clock_out?: string
+          created_at?: string
+          created_by?: string | null
+          hours?: number
+          id?: number
+          notes?: string | null
+          rate_cents?: number
+          teacher_id?: number
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "front_desk_hour_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "front_desk_hour_logs_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_adjustments: {
         Row: {
@@ -1464,6 +1529,47 @@ export type Database = {
           },
         ]
       }
+      student_phone_contacts: {
+        Row: {
+          created_at: string
+          id: number
+          is_primary: boolean
+          owner_name: string | null
+          owner_role: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order: number
+          student_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order?: number
+          student_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number?: string
+          sort_order?: number
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_phone_contacts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           dob: string | null
@@ -1650,36 +1756,42 @@ export type Database = {
         Row: {
           dob: string | null
           first_name: string
+          hourly_rate_cents: number | null
           id: number
           is_active: boolean
           last_name: string | null
           location_id: number | null
           notes: string | null
           phone_number: string | null
+          position: Database["public"]["Enums"]["staff_position"]
           resume_file_name: string | null
           resume_path: string | null
         }
         Insert: {
           dob?: string | null
           first_name: string
+          hourly_rate_cents?: number | null
           id?: number
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
           notes?: string | null
           phone_number?: string | null
+          position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
         }
         Update: {
           dob?: string | null
           first_name?: string
+          hourly_rate_cents?: number | null
           id?: number
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
           notes?: string | null
           phone_number?: string | null
+          position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
         }
@@ -1956,11 +2068,23 @@ export type Database = {
       member_type: "student" | "teacher"
       payment_plan: "single" | "package_20" | "package_50"
       payment_status: "completed" | "refunded" | "exchanged"
+      phone_owner_role:
+        | "self"
+        | "mother"
+        | "father"
+        | "grandmother"
+        | "grandfather"
+        | "guardian"
+        | "aunt"
+        | "uncle"
+        | "sibling"
+        | "other"
       session_record_source: "automatic" | "manual"
       session_record_status: "used" | "absent"
       staff_language: "en" | "zh"
       staff_location: "brooklyn" | "staten_island"
-      staff_role: "admin" | "manager"
+      staff_position: "teacher" | "front_desk"
+      staff_role: "admin" | "manager" | "front_desk"
       statement_entry_type: "income" | "expense"
       financial_source_kind:
         | "class_payment"
@@ -2104,11 +2228,24 @@ export const Constants = {
       member_type: ["student", "teacher"],
       payment_plan: ["single", "package_20", "package_50"],
       payment_status: ["completed", "refunded", "exchanged"],
+      phone_owner_role: [
+        "self",
+        "mother",
+        "father",
+        "grandmother",
+        "grandfather",
+        "guardian",
+        "aunt",
+        "uncle",
+        "sibling",
+        "other",
+      ],
       session_record_source: ["automatic", "manual"],
       session_record_status: ["used", "absent"],
       staff_language: ["en", "zh"],
       staff_location: ["brooklyn", "staten_island"],
-      staff_role: ["admin", "manager"],
+      staff_position: ["teacher", "front_desk"],
+      staff_role: ["admin", "manager", "front_desk"],
       statement_entry_type: ["income", "expense"],
       financial_source_kind: [
         "class_payment",

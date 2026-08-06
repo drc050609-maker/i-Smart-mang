@@ -7,16 +7,23 @@ import {
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
-import { PlusIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { PlusIcon, XMarkIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 
 import {
   createTeacher,
   type CreateTeacherState,
 } from "@/app/(dashboard)/tutors/actions";
 import { useLanguage } from "@/components/language-provider";
+import {
+  STAFF_POSITIONS,
+  staffPositionLabelKey,
+  type StaffPosition,
+} from "@/lib/staff-position";
 
 const inputClassName =
   "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
+
+const selectClassName = `${inputClassName} appearance-none pr-10`;
 
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
@@ -27,6 +34,7 @@ export function AddTeacherDialog() {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [position, setPosition] = useState<StaffPosition>("teacher");
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createTeacher,
@@ -35,6 +43,7 @@ export function AddTeacherDialog() {
 
   function openDialog() {
     setError(null);
+    setPosition("teacher");
     setOpen(true);
   }
 
@@ -50,6 +59,7 @@ export function AddTeacherDialog() {
 
     if (state.success) {
       formRef.current?.reset();
+      setPosition("teacher");
       setError(null);
       setOpen(false);
     }
@@ -135,6 +145,52 @@ export function AddTeacherDialog() {
                         </div>
                       </div>
                     </div>
+
+                    <div>
+                      <label htmlFor="teacherPosition" className={labelClassName}>
+                        {t("common.position")}
+                      </label>
+                      <div className="relative mt-2">
+                        <select
+                          id="teacherPosition"
+                          name="position"
+                          value={position}
+                          onChange={(e) =>
+                            setPosition(e.target.value as StaffPosition)
+                          }
+                          className={selectClassName}
+                        >
+                          {STAFF_POSITIONS.map((value) => (
+                            <option key={value} value={value}>
+                              {t(staffPositionLabelKey(value))}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDownIcon
+                          aria-hidden="true"
+                          className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500"
+                        />
+                      </div>
+                    </div>
+
+                    {position === "front_desk" ? (
+                      <div>
+                        <label htmlFor="teacherHourlyRate" className={labelClassName}>
+                          {t("common.hourlyRate")}
+                        </label>
+                        <div className="mt-2">
+                          <input
+                            id="teacherHourlyRate"
+                            name="hourlyRate"
+                            type="text"
+                            inputMode="decimal"
+                            required
+                            placeholder={t("common.hourlyRatePlaceholder")}
+                            className={inputClassName}
+                          />
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div>
                       <label htmlFor="teacherDob" className={labelClassName}>
