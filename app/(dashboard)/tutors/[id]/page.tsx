@@ -9,6 +9,7 @@ import type { RoomOption } from "@/components/add-class-dialog";
 import { TeacherPaycheckSection } from "@/components/teacher-paycheck-section";
 import { TeacherResumeSection } from "@/components/teacher-resume-section";
 import { FrontDeskHoursSection } from "@/components/front-desk-hours-section";
+import { LinkFrontDeskAccountSection } from "@/components/link-front-desk-account-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import {
@@ -156,16 +157,54 @@ export default async function TutorDetailPage({
     rate_cents: number;
     notes: string | null;
   }[] = [];
+  let linkedLogin: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  } | null = null;
+  let linkableLogins: {
+    id: string;
+    email: string;
+    full_name: string | null;
+  }[] = [];
+
   if (frontDesk) {
-    const { data: logs } = await supabase
-      .from("front_desk_hour_logs")
-      .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
-      .eq("teacher_id", teacherId)
-      .order("work_date", { ascending: false });
+    const [{ data: logs }, { data: linked }, { data: unlinked }] =
+      await Promise.all([
+        supabase
+          .from("front_desk_hour_logs")
+          .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
+          .eq("teacher_id", teacherId)
+          .order("work_date", { ascending: false }),
+        supabase
+          .from("staff_accounts")
+          .select("id, email, full_name")
+          .eq("teacher_id", teacherId)
+          .eq("role", "front_desk")
+          .maybeSingle(),
+        staff.role === "admin"
+          ? supabase
+              .from("staff_accounts")
+              .select("id, email, full_name")
+              .eq("role", "front_desk")
+              .is("teacher_id", null)
+              .eq("is_active", true)
+              .order("full_name")
+          : Promise.resolve({
+              data: [] as {
+                id: string;
+                email: string;
+                full_name: string | null;
+              }[],
+            }),
+      ]);
+
     hourLogs = (logs ?? []).map((log) => ({
       ...log,
       hours: Number(log.hours),
     }));
+    linkedLogin = linked ?? null;
+    linkableLogins = unlinked ?? [];
   }
 
   const [
@@ -408,6 +447,13 @@ export default async function TutorDetailPage({
           <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
             {t("common.frontDeskNoClasses")}
           </p>
+          {staff.role === "admin" ? (
+            <LinkFrontDeskAccountSection
+              teacherId={teacherId}
+              linkedAccount={linkedLogin}
+              availableAccounts={linkableLogins}
+            />
+          ) : null}
           <FrontDeskHoursSection
             teacherId={teacherId}
             hourlyRateCents={teacher.hourly_rate_cents}

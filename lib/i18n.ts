@@ -93,6 +93,14 @@ export type TranslationKey =
   | "common.myHoursTitle"
   | "common.myHoursSubtitle"
   | "common.frontDeskProfileMissing"
+  | "common.linkedLoginAccount"
+  | "common.linkedLoginAccountHelp"
+  | "common.hoursSyncHint"
+  | "common.chooseFrontDeskAccount"
+  | "common.linkAccount"
+  | "common.unlinkAccount"
+  | "common.noUnlinkedFrontDeskAccounts"
+  | "common.linkedTeacher"
   | "common.phones"
   | "common.noPhones"
   | "common.addPhone"
@@ -901,6 +909,17 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.myHoursSubtitle": "Log when you arrive and leave each day.",
     "common.frontDeskProfileMissing":
       "This account is not linked to a front desk profile. Ask an admin to fix it.",
+    "common.linkedLoginAccount": "Linked login account",
+    "common.linkedLoginAccountHelp":
+      "Connect a front desk login so hours they save appear on this teacher page.",
+    "common.hoursSyncHint":
+      "Hours logged in My hours show up in the calendar below.",
+    "common.chooseFrontDeskAccount": "Front desk login",
+    "common.linkAccount": "Link account",
+    "common.unlinkAccount": "Unlink",
+    "common.noUnlinkedFrontDeskAccounts":
+      "No unlinked front desk logins yet. Create one in Settings → Staff accounts with role Front desk, then link it here.",
+    "common.linkedTeacher": "Linked teacher",
     "common.phones": "Phone numbers",
     "common.noPhones": "No phone numbers on file.",
     "common.addPhone": "Add phone",
@@ -1772,6 +1791,16 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.myHoursSubtitle": "记录每天的上班和下班时间。",
     "common.frontDeskProfileMissing":
       "此账号尚未关联前台档案。请联系管理员处理。",
+    "common.linkedLoginAccount": "关联登录账号",
+    "common.linkedLoginAccountHelp":
+      "关联前台登录账号后，他们在“我的工时”里保存的记录会显示在此老师页面。",
+    "common.hoursSyncHint": "在“我的工时”记录的工时会显示在下方日历中。",
+    "common.chooseFrontDeskAccount": "前台登录账号",
+    "common.linkAccount": "关联账号",
+    "common.unlinkAccount": "取消关联",
+    "common.noUnlinkedFrontDeskAccounts":
+      "暂无未关联的前台登录账号。请先在设置 → 员工账号中创建角色为“前台”的账号，然后再回来关联。",
+    "common.linkedTeacher": "关联老师",
     "common.phones": "电话号码",
     "common.noPhones": "暂无电话号码记录。",
     "common.addPhone": "添加电话",
