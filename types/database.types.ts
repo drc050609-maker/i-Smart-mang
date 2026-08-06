@@ -1186,6 +1186,57 @@ export type Database = {
           },
         ]
       }
+      front_desk_paychecks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: number
+          month: number
+          statement_entry_id: number | null
+          teacher_id: number
+          total_amount_cents: number
+          total_minutes: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          month: number
+          statement_entry_id?: number | null
+          teacher_id: number
+          total_amount_cents: number
+          total_minutes: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          month?: number
+          statement_entry_id?: number | null
+          teacher_id?: number
+          total_amount_cents?: number
+          total_minutes?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "front_desk_paychecks_statement_entry_id_fkey"
+            columns: ["statement_entry_id"]
+            isOneToOne: false
+            referencedRelation: "statement_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "front_desk_paychecks_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_adjustments: {
         Row: {
           adjustment_cents: number
@@ -1251,6 +1302,7 @@ export type Database = {
           recurring_statement_entry_id: number | null
           student_purchase_id: number | null
           teacher_paycheck_id: number | null
+          front_desk_paycheck_id: number | null
         }
         Insert: {
           amount_cents: number
@@ -1266,6 +1318,7 @@ export type Database = {
           recurring_statement_entry_id?: number | null
           student_purchase_id?: number | null
           teacher_paycheck_id?: number | null
+          front_desk_paycheck_id?: number | null
         }
         Update: {
           amount_cents?: number
@@ -1281,6 +1334,7 @@ export type Database = {
           recurring_statement_entry_id?: number | null
           student_purchase_id?: number | null
           teacher_paycheck_id?: number | null
+          front_desk_paycheck_id?: number | null
         }
         Relationships: [
           {
@@ -1309,6 +1363,13 @@ export type Database = {
             columns: ["teacher_paycheck_id"]
             isOneToOne: false
             referencedRelation: "teacher_paychecks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statement_entries_front_desk_paycheck_id_fkey"
+            columns: ["front_desk_paycheck_id"]
+            isOneToOne: false
+            referencedRelation: "front_desk_paychecks"
             referencedColumns: ["id"]
           },
         ]
@@ -1961,6 +2022,15 @@ export type Database = {
         Args: {
           p_created_by?: string
           p_lines: Json
+          p_month: number
+          p_teacher_id: number
+          p_year: number
+        }
+        Returns: number
+      }
+      record_front_desk_paycheck: {
+        Args: {
+          p_created_by?: string
           p_month: number
           p_teacher_id: number
           p_year: number

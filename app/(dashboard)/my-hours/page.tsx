@@ -51,11 +51,19 @@ export default async function MyHoursPage() {
     );
   }
 
-  const { data: logs } = await supabase
-    .from("front_desk_hour_logs")
-    .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
-    .eq("teacher_id", teacher.id)
-    .order("work_date", { ascending: false });
+  const [{ data: logs }, { data: paychecks }] = await Promise.all([
+    supabase
+      .from("front_desk_hour_logs")
+      .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
+      .eq("teacher_id", teacher.id)
+      .order("work_date", { ascending: false }),
+    supabase
+      .from("front_desk_paychecks")
+      .select("id, year, month, total_minutes, total_amount_cents, created_at")
+      .eq("teacher_id", teacher.id)
+      .order("year", { ascending: false })
+      .order("month", { ascending: false }),
+  ]);
 
   const hourLogs = (logs ?? []).map((log) => ({
     ...log,
@@ -77,6 +85,7 @@ export default async function MyHoursPage() {
         teacherId={teacher.id}
         hourlyRateCents={teacher.hourly_rate_cents}
         logs={hourLogs}
+        recordedPaychecks={paychecks ?? []}
       />
     </div>
   );

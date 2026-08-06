@@ -158,6 +158,14 @@ export default async function TutorDetailPage({
     rate_cents: number;
     notes: string | null;
   }[] = [];
+  let recordedPaychecks: {
+    id: number;
+    year: number;
+    month: number;
+    total_minutes: number;
+    total_amount_cents: number;
+    created_at: string;
+  }[] = [];
   let linkedLogin: {
     id: string;
     email: string;
@@ -185,13 +193,19 @@ export default async function TutorDetailPage({
       unlinkedQuery = unlinkedQuery.eq("location", staff.location);
     }
 
-    const [{ data: logs }, { data: linked }, { data: unlinked }] =
+    const [{ data: logs }, { data: paychecks }, { data: linked }, { data: unlinked }] =
       await Promise.all([
         supabase
           .from("front_desk_hour_logs")
           .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
           .eq("teacher_id", teacherId)
           .order("work_date", { ascending: false }),
+        supabase
+          .from("front_desk_paychecks")
+          .select("id, year, month, total_minutes, total_amount_cents, created_at")
+          .eq("teacher_id", teacherId)
+          .order("year", { ascending: false })
+          .order("month", { ascending: false }),
         supabase
           .from("staff_accounts")
           .select("id, email, full_name")
@@ -213,6 +227,7 @@ export default async function TutorDetailPage({
       ...log,
       hours: Number(log.hours),
     }));
+    recordedPaychecks = paychecks ?? [];
     linkedLogin = linked ?? null;
     linkableLogins = unlinked ?? [];
   }
@@ -474,6 +489,7 @@ export default async function TutorDetailPage({
             teacherId={teacherId}
             hourlyRateCents={teacher.hourly_rate_cents}
             logs={hourLogs}
+            recordedPaychecks={recordedPaychecks}
           />
         </>
       ) : (

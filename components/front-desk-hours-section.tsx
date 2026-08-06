@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState, useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   Dialog,
@@ -14,6 +15,10 @@ import {
   updateFrontDeskHourLog,
   type FrontDeskHourLogState,
 } from "@/app/(dashboard)/tutors/actions";
+import {
+  recordFrontDeskPaycheck,
+  type FrontDeskPaycheckActionState,
+} from "@/app/(dashboard)/tutors/front-desk-paycheck-actions";
 import { useLanguage } from "@/components/language-provider";
 import { DeleteFrontDeskHourButton } from "@/components/delete-front-desk-hour-button";
 import { formatCentsAsCurrency } from "@/lib/money";
@@ -23,6 +28,10 @@ import {
   frontDeskDayPayCents,
   workedMinutesBetween,
 } from "@/lib/staff-position";
+import {
+  formatStatementMonth,
+  statementMonthHref,
+} from "@/lib/statements";
 import type { TranslationKey } from "@/lib/i18n";
 
 export type FrontDeskHourLog = {
@@ -33,6 +42,15 @@ export type FrontDeskHourLog = {
   hours: number;
   rate_cents: number;
   notes: string | null;
+};
+
+export type FrontDeskRecordedPaycheck = {
+  id: number;
+  year: number;
+  month: number;
+  total_minutes: number;
+  total_amount_cents: number;
+  created_at: string;
 };
 
 const WEEKDAY_KEYS: TranslationKey[] = [
@@ -177,15 +195,18 @@ function HoursFormFields({
 }
 
 const initialState: FrontDeskHourLogState = {};
+const initialPaycheckState: FrontDeskPaycheckActionState = {};
 
 export function FrontDeskHoursSection({
   teacherId,
   hourlyRateCents,
   logs,
+  recordedPaychecks = [],
 }: {
   teacherId: number;
   hourlyRateCents: number | null;
   logs: FrontDeskHourLog[];
+  recordedPaychecks?: FrontDeskRecordedPaycheck[];
 }) {
   const { language, t } = useLanguage();
   const today = useMemo(() => new Date(), []);
@@ -193,7 +214,10 @@ export function FrontDeskHoursSection({
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const submitFormRef = useRef<HTMLFormElement>(null);
   const idPrefix = useId();
   const [createState, createAction, createPending] = useActionState(
     createFrontDeskHourLog,
@@ -202,6 +226,10 @@ export function FrontDeskHoursSection({
   const [updateState, updateAction, updatePending] = useActionState(
     updateFrontDeskHourLog,
     initialState,
+  );
+  const [paycheckState, paycheckAction, paycheckPending] = useActionState(
+    recordFrontDeskPaycheck,
+    initialPaycheckState,
   );
 
   const logsByDate = useMemo(() => {
@@ -230,13 +258,38 @@ export function FrontDeskHoursSection({
     }
   }, [updateState.error, updateState.success]);
 
+  useEffect(() => {
+    setConfirmOpen(false);
+    setSubmitError(null);
+  }, [viewYear, viewMonth]);
+
+  useEffect(() => {
+    if (paycheckState.error) {
+      setSubmitError(paycheckState.error);
+    }
+    if (paycheckState.success) {
+      setSubmitError(null);
+      setConfirmOpen(false);
+    }
+  }, [paycheckState.error, paycheckState.success]);
+
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const firstWeekday = new Date(viewYear, viewMonth, 1).getDay();
+  const statementMonth = viewMonth + 1;
 
   const monthLogs = useMemo(() => {
     const prefix = `${viewYear}-${pad2(viewMonth + 1)}-`;
     return logs.filter((log) => log.work_date.startsWith(prefix));
   }, [logs, viewYear, viewMonth]);
+
+  const recordedPaycheck = useMemo(
+    () =>
+      recordedPaychecks.find(
+        (paycheck) =>
+          paycheck.year === viewYear && paycheck.month === statementMonth,
+      ) ?? null,
+    [recordedPaychecks, viewYear, statementMonth],
+  );
 
   const monthMinutes = monthLogs.reduce((sum, log) => {
     const minutes =
@@ -249,6 +302,23 @@ export function FrontDeskHoursSection({
     (sum, log) => sum + frontDeskDayPayCents(Number(log.hours), log.rate_cents),
     0,
   );
+  const isSubmitted = recordedPaycheck != null;
+  const canSubmit = !isSubmitted && monthPay > 0 && monthMinutes > 0;
+
+  function openConfirmDialog() {
+    if (!canSubmit) {
+      setSubmitError(t("common.noFrontDeskHoursToSubmit"));
+      return;
+    }
+    setSubmitError(null);
+    setConfirmOpen(true);
+  }
+
+  function closeConfirmDialog() {
+    if (!paycheckPending) {
+      setConfirmOpen(false);
+    }
+  }
 
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
@@ -283,21 +353,121 @@ export function FrontDeskHoursSection({
             {t("common.clickDayToLog")}
           </p>
         </div>
-        <div className="rounded-lg bg-gray-50 px-4 py-2 text-sm dark:bg-white/5">
-          <p className="font-medium text-gray-900 dark:text-white">
-            {t("common.monthTotal")}:{" "}
-            {t("common.durationHoursMinutes", {
-              hours: monthDuration.hours,
-              minutes: monthDuration.minutes,
-            })}
-          </p>
-          {monthLogs.length > 0 ? (
-            <p className="mt-0.5 text-gray-500 dark:text-gray-400">
-              {formatCentsAsCurrency(monthPay, language)}
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="rounded-lg bg-gray-50 px-4 py-2 text-sm dark:bg-white/5">
+            <p className="font-medium text-gray-900 dark:text-white">
+              {t("common.monthTotal")}:{" "}
+              {t("common.durationHoursMinutes", {
+                hours: monthDuration.hours,
+                minutes: monthDuration.minutes,
+              })}
             </p>
-          ) : null}
+            {monthLogs.length > 0 ? (
+              <p className="mt-0.5 text-gray-500 dark:text-gray-400">
+                {formatCentsAsCurrency(monthPay, language)}
+              </p>
+            ) : null}
+            {isSubmitted ? (
+              <p className="mt-1 text-xs text-emerald-700 dark:text-emerald-300">
+                {t("common.recordedAsExpenseFor", {
+                  month: formatStatementMonth(viewYear, statementMonth, language),
+                })}
+              </p>
+            ) : null}
+          </div>
+          {isSubmitted ? (
+            <Link
+              href={statementMonthHref(viewYear, statementMonth)}
+              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-indigo-600 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-indigo-300 dark:inset-ring-white/10 dark:hover:bg-white/20"
+            >
+              {t("common.viewInStatements")}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              onClick={openConfirmDialog}
+              disabled={!canSubmit}
+              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
+            >
+              {t("common.reviewFrontDeskPay")}
+            </button>
+          )}
         </div>
       </div>
+
+      {submitError && !confirmOpen ? (
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{submitError}</p>
+      ) : null}
+
+      <form ref={submitFormRef} action={paycheckAction} className="hidden">
+        <input type="hidden" name="teacherId" value={teacherId} />
+        <input type="hidden" name="year" value={viewYear} />
+        <input type="hidden" name="month" value={statementMonth} />
+      </form>
+
+      <Dialog open={confirmOpen} onClose={closeConfirmDialog} className="relative z-50">
+        <DialogBackdrop
+          transition
+          className="fixed inset-0 bg-gray-900/50 transition-opacity duration-200 ease-out data-closed:opacity-0"
+        />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <DialogPanel
+              transition
+              className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all duration-200 ease-out data-closed:translate-y-4 data-closed:opacity-0 sm:my-8 sm:w-full sm:max-w-md sm:p-6 data-closed:sm:translate-y-0 data-closed:sm:scale-95 dark:bg-gray-900 dark:outline dark:-outline-offset-1 dark:outline-white/10"
+            >
+              <DialogTitle
+                as="h3"
+                className="text-lg font-semibold text-gray-900 dark:text-white"
+              >
+                {t("common.confirmFrontDeskPayTitle")}
+              </DialogTitle>
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {t("common.confirmFrontDeskPayHelp")}
+              </p>
+              <div className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm dark:bg-white/5">
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {formatStatementMonth(viewYear, statementMonth, language)}
+                </p>
+                <p className="mt-1 text-gray-700 dark:text-gray-300">
+                  {t("common.durationHoursMinutes", {
+                    hours: monthDuration.hours,
+                    minutes: monthDuration.minutes,
+                  })}
+                </p>
+                <p className="mt-1 font-semibold text-gray-900 dark:text-white">
+                  {formatCentsAsCurrency(monthPay, language)}
+                </p>
+              </div>
+              {submitError ? (
+                <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+                  {submitError}
+                </p>
+              ) : null}
+              <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeConfirmDialog}
+                  disabled={paycheckPending}
+                  className="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  disabled={paycheckPending}
+                  onClick={() => submitFormRef.current?.requestSubmit()}
+                  className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
+                >
+                  {paycheckPending
+                    ? t("common.saving")
+                    : t("common.confirmAndSubmitFrontDeskPay")}
+                </button>
+              </div>
+            </DialogPanel>
+          </div>
+        </div>
+      </Dialog>
 
       <div className="mt-4 overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/10 dark:bg-white/5">
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3 dark:border-white/10">

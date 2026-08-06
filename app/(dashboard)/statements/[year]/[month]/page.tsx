@@ -48,7 +48,7 @@ export default async function StatementMonthPage({ params }: PageProps) {
   const { data, error } = await supabase
     .from("statement_entries")
     .select(
-      "id, entry_type, amount_cents, description, entry_date, class_payment_id, student_purchase_id, recurring_statement_entry_id, teacher_paycheck_id, financial_adjustment_id, corrects_entry_id",
+      "id, entry_type, amount_cents, description, entry_date, class_payment_id, student_purchase_id, recurring_statement_entry_id, teacher_paycheck_id, front_desk_paycheck_id, financial_adjustment_id, corrects_entry_id",
     )
     .gte("entry_date", start)
     .lte("entry_date", end)
