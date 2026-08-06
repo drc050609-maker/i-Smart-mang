@@ -17,6 +17,8 @@ import {
   workedMinutesBetween,
   type StaffPosition,
 } from "@/lib/staff-position";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
+import type { StaffAccount } from "@/lib/auth";
 
 export type CreatedTeacher = {
   id: number;
@@ -37,6 +39,17 @@ export type UpdateTeacherState = ActionState;
 function revalidateTeacher(teacherId: number) {
   revalidatePath("/tutors");
   revalidatePath(`/tutors/${teacherId}`);
+  revalidatePath("/my-hours");
+}
+
+function assertCanManageFrontDeskHours(
+  staff: StaffAccount,
+  teacherId: number,
+): string | null {
+  if (isFrontDeskStaffRole(staff.role) && staff.teacher_id !== teacherId) {
+    return "You can only log hours for your own front desk profile.";
+  }
+  return null;
 }
 
 function revalidateTeacherClasses(teacherId: number) {
@@ -619,6 +632,9 @@ export async function createFrontDeskHourLog(
   if ("error" in fields) return { error: fields.error };
 
   const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
   const client = getServiceClient();
   if ("error" in client) return { error: client.error };
 
@@ -669,7 +685,10 @@ export async function updateFrontDeskHourLog(
   const fields = parseHourLogFields(formData);
   if ("error" in fields) return { error: fields.error };
 
-  await requireStaff();
+  const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
   const client = getServiceClient();
   if ("error" in client) return { error: client.error };
 
@@ -705,7 +724,10 @@ export async function deleteFrontDeskHourLog(
     return { error: "Invalid hour log." };
   }
 
-  await requireStaff();
+  const staff = await requireStaff();
+  const accessError = assertCanManageFrontDeskHours(staff, teacherId);
+  if (accessError) return { error: accessError };
+
   const client = getServiceClient();
   if ("error" in client) return { error: client.error };
 

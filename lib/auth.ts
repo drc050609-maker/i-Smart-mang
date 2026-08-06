@@ -14,6 +14,7 @@ export type StaffAccount = {
   full_name: string | null;
   role: StaffRole;
   location: StaffLocation;
+  teacher_id: number | null;
   is_active: boolean;
   preferred_language: AppLanguage;
   created_at: string;
@@ -34,7 +35,7 @@ export const getCurrentStaff = cache(async (): Promise<StaffAccount | null> => {
   const { data: staff } = await supabase
     .from("staff_accounts")
     .select(
-      "id, email, full_name, role, location, is_active, preferred_language, created_at, created_by",
+      "id, email, full_name, role, location, teacher_id, is_active, preferred_language, created_at, created_by",
     )
     .eq("id", user.id)
     .maybeSingle();
@@ -66,6 +67,16 @@ export async function requireAdmin(): Promise<StaffAccount> {
 
   if (staff.role !== "admin") {
     redirect("/");
+  }
+
+  return staff;
+}
+
+export async function requireManagerOrAdmin(): Promise<StaffAccount> {
+  const staff = await requireStaff();
+
+  if (staff.role === "front_desk") {
+    redirect("/my-hours");
   }
 
   return staff;

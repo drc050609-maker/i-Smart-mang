@@ -1096,6 +1096,7 @@ export type Database = {
           location: Database["public"]["Enums"]["staff_location"]
           preferred_language: Database["public"]["Enums"]["staff_language"]
           role: Database["public"]["Enums"]["staff_role"]
+          teacher_id: number | null
         }
         Insert: {
           created_at?: string
@@ -1107,6 +1108,7 @@ export type Database = {
           location?: Database["public"]["Enums"]["staff_location"]
           preferred_language?: Database["public"]["Enums"]["staff_language"]
           role?: Database["public"]["Enums"]["staff_role"]
+          teacher_id?: number | null
         }
         Update: {
           created_at?: string
@@ -1118,8 +1120,17 @@ export type Database = {
           location?: Database["public"]["Enums"]["staff_location"]
           preferred_language?: Database["public"]["Enums"]["staff_language"]
           role?: Database["public"]["Enums"]["staff_role"]
+          teacher_id?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "staff_accounts_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       front_desk_hour_logs: {
         Row: {
@@ -2073,7 +2084,7 @@ export type Database = {
       staff_language: "en" | "zh"
       staff_location: "brooklyn" | "staten_island"
       staff_position: "teacher" | "front_desk"
-      staff_role: "admin" | "manager"
+      staff_role: "admin" | "manager" | "front_desk"
       statement_entry_type: "income" | "expense"
       financial_source_kind:
         | "class_payment"
@@ -2234,7 +2245,7 @@ export const Constants = {
       staff_language: ["en", "zh"],
       staff_location: ["brooklyn", "staten_island"],
       staff_position: ["teacher", "front_desk"],
-      staff_role: ["admin", "manager"],
+      staff_role: ["admin", "manager", "front_desk"],
       statement_entry_type: ["income", "expense"],
       financial_source_kind: [
         "class_payment",

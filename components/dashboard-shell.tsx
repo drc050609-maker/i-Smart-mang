@@ -23,6 +23,7 @@ import {
   CalendarIcon,
   ChartBarSquareIcon,
   ClipboardDocumentCheckIcon,
+  ClockIcon,
   CreditCardIcon,
   PhotoIcon,
   Cog6ToothIcon,
@@ -37,7 +38,11 @@ import { BrandLogo } from "@/components/brand-logo";
 import { StaffProfileFooter } from "@/components/staff-profile-footer";
 import { useLanguage } from "@/components/language-provider";
 import { getNavTranslationKey } from "@/lib/i18n";
-import type { StaffRole } from "@/lib/staff-role";
+import {
+  frontDeskHomePath,
+  isFrontDeskStaffRole,
+  type StaffRole,
+} from "@/lib/staff-role";
 import {
   formatStaffLocationLabel,
   type StaffLocation,
@@ -45,22 +50,79 @@ import {
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
-type NavItem = { name: string; href: string; icon: Icon; adminOnly?: boolean };
+type NavItem = {
+  name: string;
+  href: string;
+  icon: Icon;
+  adminOnly?: boolean;
+  frontDeskOnly?: boolean;
+  hideForFrontDesk?: boolean;
+};
 
 const navigation: NavItem[] = [
-  { name: "Dashboard", href: "/", icon: HomeIcon },
-  { name: "Leads", href: "/leads", icon: UserPlusIcon },
-  { name: "Students", href: "/students", icon: UsersIcon },
-  { name: "Classes", href: "/classes", icon: FolderIcon },
-  { name: "Attendance", href: "/attendance", icon: ClipboardDocumentCheckIcon },
-  { name: "Teachers", href: "/tutors", icon: AcademicCapIcon },
-  { name: "Tuitions", href: "/tuitions", icon: BanknotesIcon },
-  { name: "Payments", href: "/payments", icon: CreditCardIcon },
-  { name: "Statements", href: "/statements", icon: ChartBarSquareIcon },
+  { name: "Dashboard", href: "/", icon: HomeIcon, hideForFrontDesk: true },
+  { name: "Leads", href: "/leads", icon: UserPlusIcon, hideForFrontDesk: true },
+  {
+    name: "Students",
+    href: "/students",
+    icon: UsersIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "Classes",
+    href: "/classes",
+    icon: FolderIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "Attendance",
+    href: "/attendance",
+    icon: ClipboardDocumentCheckIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "Teachers",
+    href: "/tutors",
+    icon: AcademicCapIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "My hours",
+    href: "/my-hours",
+    icon: ClockIcon,
+    frontDeskOnly: true,
+  },
+  {
+    name: "Tuitions",
+    href: "/tuitions",
+    icon: BanknotesIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "Payments",
+    href: "/payments",
+    icon: CreditCardIcon,
+    hideForFrontDesk: true,
+  },
+  {
+    name: "Statements",
+    href: "/statements",
+    icon: ChartBarSquareIcon,
+    hideForFrontDesk: true,
+  },
   { name: "Schedule", href: "/schedule", icon: CalendarIcon },
   { name: "Events", href: "/events", icon: PhotoIcon, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
+
+function visibleNavigation(role: StaffRole) {
+  return navigation.filter((item) => {
+    if (item.adminOnly && role !== "admin") return false;
+    if (item.frontDeskOnly && role !== "front_desk") return false;
+    if (item.hideForFrontDesk && role === "front_desk") return false;
+    return true;
+  });
+}
 
 /** Default expanded width (~w-72). */
 const SIDEBAR_DEFAULT_WIDTH = 288;
@@ -89,9 +151,7 @@ function NavLinks({
   compact?: boolean;
 }) {
   const { t } = useLanguage();
-  const visibleNav = navigation.filter(
-    (item) => !item.adminOnly || role === "admin",
-  );
+  const visibleNav = visibleNavigation(role);
 
   return (
     <ul role="list" className="-mx-2 space-y-1">
@@ -137,18 +197,21 @@ function NavLinks({
 
 function BrandMark({
   location,
+  homeHref = "/",
   onNavigate,
   compact,
 }: {
   location: StaffLocation;
+  homeHref?: string;
   onNavigate?: () => void;
   compact?: boolean;
 }) {
   const { language } = useLanguage();
+  const href = homeHref || "/";
 
   return (
     <Link
-      href="/"
+      href={href}
       onClick={() => onNavigate?.()}
       className={classNames(
         "relative flex shrink-0 flex-col justify-center",
@@ -194,9 +257,11 @@ export function DashboardShell({
   const closeMobile = () => setSidebarOpen(false);
   const compact = sidebarWidth <= SIDEBAR_MIN_WIDTH + 24;
 
-  const visibleNav = navigation.filter(
-    (item) => !item.adminOnly || staff.role === "admin",
-  );
+  const visibleNav = visibleNavigation(staff.role);
+  const homeHref = isFrontDeskStaffRole(staff.role)
+    ? frontDeskHomePath()
+    : "/";
+  const safeHomeHref = homeHref || "/";
   const currentNavItem = visibleNav.find((item) =>
     navItemIsCurrent(item.href, pathname),
   );
@@ -271,7 +336,11 @@ export function DashboardShell({
             </TransitionChild>
 
             <div className="relative flex grow flex-col gap-y-5 overflow-y-auto bg-white px-6 pb-2 dark:bg-slate-900 dark:ring dark:ring-white/10">
-              <BrandMark location={activeCampus} onNavigate={closeMobile} />
+              <BrandMark
+                location={activeCampus}
+                homeHref={safeHomeHref}
+                onNavigate={closeMobile}
+              />
               <nav className="relative flex flex-1 flex-col">
                 <ul role="list" className="flex flex-1 flex-col gap-y-7">
                   <li>
@@ -300,7 +369,11 @@ export function DashboardShell({
       >
         <div className="relative flex grow flex-col gap-y-5 overflow-y-auto border-r border-violet-100/80 bg-white px-3 pt-4 dark:border-white/10 dark:bg-slate-900">
           <div className={compact ? "px-1" : "px-3"}>
-            <BrandMark location={activeCampus} compact={compact} />
+            <BrandMark
+              location={activeCampus}
+              homeHref={safeHomeHref}
+              compact={compact}
+            />
           </div>
 
           <nav className="flex flex-1 flex-col px-1 pb-4">

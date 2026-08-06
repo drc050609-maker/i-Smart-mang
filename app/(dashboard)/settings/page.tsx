@@ -8,57 +8,112 @@ import { StaffAccountsSection } from "@/components/staff-accounts-section";
 import { type StaffAccountRow } from "@/components/staff-accounts-table";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
-import { isStaffLocation } from "@/lib/staff-location";
+import { isStaffLocation, type StaffLocation } from "@/lib/staff-location";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 
 export default async function SettingsPage() {
   const currentStaff = await requireStaff();
   const isAdmin = currentStaff.role === "admin";
+  const isFrontDesk = isFrontDeskStaffRole(currentStaff.role);
   const t = createTranslator(currentStaff.preferred_language);
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);
 
   let staffRows: StaffAccountRow[] = [];
   let staffError: { message: string } | null = null;
+  let frontDeskTeachers: {
+    id: number;
+    first_name: string;
+    last_name: string | null;
+    location_slug: StaffLocation;
+    hourly_rate_cents: number | null;
+  }[] = [];
 
   if (isAdmin) {
     const { data: accounts, error } = await supabase
       .from("staff_accounts")
-      .select("id, email, full_name, role, location, is_active, created_at")
+      .select("id, email, full_name, role, location, is_active, created_at, teacher_id")
       .order("created_at", { ascending: false });
 
-    staffRows = (accounts ?? []) as StaffAccountRow[];
+    staffRows = (accounts ?? []).map((account) => ({
+      id: account.id,
+      email: account.email,
+      full_name: account.full_name,
+      role: account.role,
+      location: account.location,
+      is_active: account.is_active,
+      created_at: account.created_at,
+    })) as StaffAccountRow[];
     staffError = error;
+
+    const linkedTeacherIds = new Set(
+      (accounts ?? [])
+        .map((account) => account.teacher_id)
+        .filter((id): id is number => id != null),
+    );
+
+    const { data: teachers } = await supabase
+      .from("teachers")
+      .select("id, first_name, last_name, hourly_rate_cents, locations ( slug )")
+      .eq("position", "front_desk")
+      .eq("is_active", true)
+      .order("first_name");
+
+    frontDeskTeachers = (teachers ?? []).flatMap((teacher) => {
+      if (linkedTeacherIds.has(teacher.id)) {
+        return [];
+      }
+      const locationEmbed = Array.isArray(teacher.locations)
+        ? teacher.locations[0]
+        : teacher.locations;
+      const slug = locationEmbed?.slug;
+      if (!slug || !isStaffLocation(slug)) {
+        return [];
+      }
+      return [
+        {
+          id: teacher.id,
+          first_name: teacher.first_name,
+          last_name: teacher.last_name,
+          location_slug: slug,
+          hourly_rate_cents: teacher.hourly_rate_cents,
+        },
+      ];
+    });
   }
 
-  let campusesQuery = supabase
-    .from("locations")
-    .select("id, slug, name, trial_price_cents, trial_teacher_pay_cents")
-    .eq("is_active", true)
-    .order("name");
+  let campuses: CampusPricingRow[] = [];
+  if (!isFrontDesk) {
+    let campusesQuery = supabase
+      .from("locations")
+      .select("id, slug, name, trial_price_cents, trial_teacher_pay_cents")
+      .eq("is_active", true)
+      .order("name");
 
-  if (!isAdmin) {
-    campusesQuery = campusesQuery.eq("slug", currentStaff.location);
-  }
-
-  const { data: campusRows } = await campusesQuery;
-
-  const campuses: CampusPricingRow[] = (campusRows ?? []).flatMap((row) => {
-    if (!isStaffLocation(row.slug)) {
-      return [];
+    if (!isAdmin) {
+      campusesQuery = campusesQuery.eq("slug", currentStaff.location);
     }
 
-    return [
-      {
-        id: row.id,
-        slug: row.slug,
-        name: row.name,
-        trial_price_cents: row.trial_price_cents,
-        trial_teacher_pay_cents: row.trial_teacher_pay_cents,
-      },
-    ];
-  });
+    const { data: campusRows } = await campusesQuery;
+
+    campuses = (campusRows ?? []).flatMap((row) => {
+      if (!isStaffLocation(row.slug)) {
+        return [];
+      }
+
+      return [
+        {
+          id: row.id,
+          slug: row.slug,
+          name: row.name,
+          trial_price_cents: row.trial_price_cents,
+          trial_teacher_pay_cents: row.trial_teacher_pay_cents,
+        },
+      ];
+    });
+  }
 
   return (
     <div>
@@ -115,6 +170,7 @@ export default async function SettingsPage() {
               currentStaffRole={currentStaff.role}
               currentStaffLocation={currentStaff.location}
               canManageAccounts
+              frontDeskTeachers={frontDeskTeachers}
             />
           ) : null}
         </>

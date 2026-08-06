@@ -1,14 +1,14 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-
 import { getCurrentStaff } from "@/lib/auth";
 import { canCreateStaffAtLocation, isStaffRole } from "@/lib/staff-role";
 import { isStaffLocation } from "@/lib/staff-location";
 import { parseAppLanguage } from "@/lib/language";
+import { parseDollarsToCents } from "@/lib/money";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
+import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 
 export type ActionState = {
   error?: string;
@@ -48,6 +48,8 @@ export async function createStaffAccount(
   const fullName = formData.get("fullName")?.toString().trim() || null;
   const roleValue = formData.get("role")?.toString();
   const locationValue = formData.get("location")?.toString();
+  const teacherIdRaw = formData.get("teacherId")?.toString().trim() ?? "";
+  const hourlyRateRaw = formData.get("hourlyRate")?.toString().trim() ?? "";
 
   if (!email) {
     return { error: "Email is required." };
@@ -73,13 +75,113 @@ export async function createStaffAccount(
     }
 
     return {
-      error: "Only admins can create manager accounts.",
+      error: "Only admins can create staff accounts.",
     };
   }
 
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
+  }
+
+  let teacherId: number | null = null;
+  let createdNewTeacher = false;
+
+  if (roleValue === "front_desk") {
+    const { data: locationRow, error: locationError } = await client.supabase
+      .from("locations")
+      .select("id")
+      .eq("slug", locationValue)
+      .maybeSingle();
+
+    if (locationError) {
+      return { error: locationError.message };
+    }
+    if (!locationRow) {
+      return { error: "Campus location could not be resolved." };
+    }
+
+    if (teacherIdRaw && teacherIdRaw !== "new") {
+      const parsedTeacherId = Number(teacherIdRaw);
+      if (!Number.isInteger(parsedTeacherId) || parsedTeacherId <= 0) {
+        return { error: "Choose a valid front desk profile." };
+      }
+
+      const { data: teacher, error: teacherError } = await client.supabase
+        .from("teachers")
+        .select("id, position, location_id")
+        .eq("id", parsedTeacherId)
+        .maybeSingle();
+
+      if (teacherError) {
+        return { error: teacherError.message };
+      }
+      if (
+        !teacher ||
+        teacher.position !== "front_desk" ||
+        teacher.location_id !== locationRow.id
+      ) {
+        return {
+          error: "That front desk profile is not available for this campus.",
+        };
+      }
+
+      const { data: linked } = await client.supabase
+        .from("staff_accounts")
+        .select("id")
+        .eq("teacher_id", parsedTeacherId)
+        .maybeSingle();
+
+      if (linked) {
+        return { error: "That front desk profile already has a login account." };
+      }
+
+      teacherId = parsedTeacherId;
+    } else {
+      if (!fullName) {
+        return {
+          error: "Name is required when creating a new front desk profile.",
+        };
+      }
+
+      const rateParsed = parseDollarsToCents(hourlyRateRaw || null, {
+        allowZero: true,
+        fieldLabel: "Hourly rate",
+      });
+      if (!rateParsed.ok) {
+        return { error: rateParsed.error };
+      }
+
+      const nameParts = fullName.split(/\s+/).filter(Boolean);
+      const firstName = nameParts[0] ?? fullName;
+      const lastName =
+        nameParts.length > 1 ? nameParts.slice(1).join(" ") : null;
+
+      const { data: createdTeacher, error: createTeacherError } =
+        await client.supabase
+          .from("teachers")
+          .insert({
+            first_name: firstName,
+            last_name: lastName,
+            location_id: locationRow.id,
+            position: "front_desk",
+            hourly_rate_cents: rateParsed.cents,
+            is_active: true,
+          })
+          .select("id")
+          .single();
+
+      if (createTeacherError || !createdTeacher) {
+        return {
+          error:
+            createTeacherError?.message ??
+            "Could not create the front desk profile.",
+        };
+      }
+
+      teacherId = createdTeacher.id;
+      createdNewTeacher = true;
+    }
   }
 
   const { data: authUser, error: authError } =
@@ -103,15 +205,20 @@ export async function createStaffAccount(
     full_name: fullName,
     role: roleValue,
     location: locationValue,
+    teacher_id: teacherId,
     created_by: actor.id,
   });
 
   if (staffError) {
     await client.supabase.auth.admin.deleteUser(authUser.user.id);
+    if (createdNewTeacher && teacherId) {
+      await client.supabase.from("teachers").delete().eq("id", teacherId);
+    }
     return { error: staffError.message };
   }
 
   revalidateStaffSettings();
+  revalidatePath("/tutors");
   return { success: true };
 }
 
@@ -246,8 +353,8 @@ export async function adminSetStaffPassword(
     return { error: "That staff account was not found." };
   }
 
-  if (target.role !== "manager") {
-    return { error: "Admins can only reset manager passwords." };
+  if (target.role !== "manager" && target.role !== "front_desk") {
+    return { error: "Admins can only reset manager or front desk passwords." };
   }
 
   const { error: updateError } =
