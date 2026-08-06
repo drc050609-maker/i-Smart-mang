@@ -1579,6 +1579,7 @@ export type Database = {
           is_active: boolean
           "last name": string | null
           location_id: number | null
+          notes: string | null
           starting_class_credits: number
         }
         Insert: {
@@ -1589,6 +1590,7 @@ export type Database = {
           is_active?: boolean
           "last name"?: string | null
           location_id?: number | null
+          notes?: string | null
           starting_class_credits?: number
         }
         Update: {
@@ -1599,6 +1601,7 @@ export type Database = {
           is_active?: boolean
           "last name"?: string | null
           location_id?: number | null
+          notes?: string | null
           starting_class_credits?: number
         }
         Relationships: [

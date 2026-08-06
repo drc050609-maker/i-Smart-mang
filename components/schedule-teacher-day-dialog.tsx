@@ -12,6 +12,7 @@ import Link from "next/link";
 
 import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/actions";
 import { useLanguage } from "@/components/language-provider";
+import { StudentNoteStar } from "@/components/student-note-star";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
@@ -48,7 +49,14 @@ function resolveInstanceStudents(
   students: ScheduleStudent[],
 ) {
   const studentById = new Map(students.map((student) => [student.id, student]));
-  const slotStudents = sortStudents(instance.students);
+
+  function withCampusNotes(student: ScheduleStudent): ScheduleStudent {
+    const campus = studentById.get(student.id);
+    if (!campus?.notes?.trim()) return student;
+    return { ...student, notes: campus.notes };
+  }
+
+  const slotStudents = sortStudents(instance.students).map(withCampusNotes);
   if (slotStudents.length > 0) {
     return slotStudents;
   }
@@ -348,13 +356,17 @@ export function ScheduleTeacherDayDialog({
                               ) : (
                                 <ul className="space-y-0.5">
                                   {instanceStudents.map((student) => (
-                                    <li key={student.id}>
+                                    <li
+                                      key={student.id}
+                                      className="flex items-center gap-1"
+                                    >
                                       <Link
                                         href={`/students/${student.id}`}
                                         className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                                       >
                                         {formatStudentName(student)}
                                       </Link>
+                                      <StudentNoteStar students={[student]} />
                                     </li>
                                   ))}
                                 </ul>

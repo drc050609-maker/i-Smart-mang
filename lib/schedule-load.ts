@@ -34,6 +34,7 @@ type ScheduleStudentEmbed = {
   id: number;
   "first name": string;
   "last name": string | null;
+  notes: string | null;
 };
 
 type ScheduleRow = {
@@ -53,6 +54,7 @@ type EnrollmentStudentEmbed = {
   id: number;
   "first name": string;
   "last name": string | null;
+  notes: string | null;
 };
 
 type EnrollmentRow = {
@@ -160,7 +162,7 @@ async function fetchEnrollmentsForClassIds(
             `
           "class id",
           "student id",
-          students ( id, "first name", "last name" ),
+          students ( id, "first name", "last name", notes ),
           classes!inner ( location_id )
         `,
           )
@@ -237,7 +239,7 @@ export async function loadScheduleCalendarEvents(
       schedule_date,
       schedule_start_time,
       schedule_end_time,
-      students ( id, "first name", "last name" ),
+      students ( id, "first name", "last name", notes ),
       classes!inner (
         id,
         subject,
@@ -298,6 +300,7 @@ export async function loadScheduleCalendarEvents(
       id: student.id,
       "first name": student["first name"],
       "last name": student["last name"],
+      notes: student.notes,
     });
     enrollmentsByClass.set(classId, existing);
   }
@@ -316,6 +319,7 @@ export async function loadScheduleCalendarEvents(
               id: scheduleStudent.id,
               "first name": scheduleStudent["first name"],
               "last name": scheduleStudent["last name"],
+              notes: scheduleStudent.notes,
             }
           : null,
         is_recurring: scheduleRow.is_recurring,

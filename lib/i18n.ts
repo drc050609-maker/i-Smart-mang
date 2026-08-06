@@ -177,6 +177,10 @@ export type TranslationKey =
   | "common.viewClass"
   | "common.when"
   | "common.notes"
+  | "common.editNotes"
+  | "common.studentNotesPlaceholder"
+  | "common.viewStudentNotes"
+  | "common.noStudentNotes"
   | "common.optional"
   | "common.description"
   | "common.year"
@@ -999,6 +1003,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.viewClass": "View class →",
     "common.when": "When",
     "common.notes": "Notes",
+    "common.editNotes": "Edit notes",
+    "common.studentNotesPlaceholder": "Write notes about this student…",
+    "common.viewStudentNotes": "View student notes",
+    "common.noStudentNotes": "No notes yet.",
     "common.optional": "(optional)",
     "common.description": "Description",
     "common.year": "Year",
@@ -1882,6 +1890,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.viewClass": "查看课程 →",
     "common.when": "时间",
     "common.notes": "备注",
+    "common.editNotes": "编辑备注",
+    "common.studentNotesPlaceholder": "填写关于此学生的备注…",
+    "common.viewStudentNotes": "查看学生备注",
+    "common.noStudentNotes": "暂无备注。",
     "common.optional": "（可选）",
     "common.description": "描述",
     "common.year": "年份",

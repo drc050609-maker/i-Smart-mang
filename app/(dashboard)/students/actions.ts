@@ -214,6 +214,8 @@ export type UpdateStudentDobState = ActionState;
 
 export type UpdateStudentNameState = ActionState;
 
+export type UpdateStudentNotesState = ActionState;
+
 function revalidateStudent(studentId: number) {
   revalidatePath("/students");
   revalidatePath(`/students/${studentId}`);
@@ -558,6 +560,36 @@ export async function updateStudentDob(
   }
 
   revalidateStudent(studentId);
+  return { success: true };
+}
+
+export async function updateStudentNotes(
+  _prevState: UpdateStudentNotesState,
+  formData: FormData,
+): Promise<UpdateStudentNotesState> {
+  const studentId = Number(formData.get("studentId"));
+  const notes = formData.get("notes")?.toString().trim() || null;
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error: studentError } = await client.supabase
+    .from("students")
+    .update({ notes })
+    .eq("id", studentId);
+
+  if (studentError) {
+    return { error: studentError.message };
+  }
+
+  revalidateStudent(studentId);
+  revalidatePath("/schedule");
   return { success: true };
 }
 

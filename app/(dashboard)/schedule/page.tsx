@@ -80,7 +80,7 @@ export default async function SchedulePage() {
     fetchAllRows<ScheduleStudent>((from, to) =>
       supabase
         .from("students")
-        .select('id, "first name", "last name"')
+        .select('id, "first name", "last name", notes')
         .eq("is_active", true)
         .eq("location_id", locationId)
         .order("first name")
