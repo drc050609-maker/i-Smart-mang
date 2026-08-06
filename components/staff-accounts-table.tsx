@@ -26,6 +26,8 @@ export type StaffAccountRow = {
   location: StaffLocation;
   is_active: boolean;
   created_at: string;
+  teacher_id: number | null;
+  linked_teacher_name: string | null;
 };
 
 function formatCreatedAt(value: string, language: AppLanguage) {
@@ -303,6 +305,13 @@ export function StaffAccountsTable({
                       <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                         <div className="flex flex-col items-start gap-2">
                           <span>{formatDisplayName(account)}</span>
+                          {account.role === "front_desk" ? (
+                            <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
+                              {account.linked_teacher_name
+                                ? `${t("common.linkedTeacher")}: ${account.linked_teacher_name}`
+                                : t("common.frontDeskProfileMissing")}
+                            </span>
+                          ) : null}
                           {canManageAccounts &&
                           (account.role === "manager" ||
                             account.role === "front_desk") ? (

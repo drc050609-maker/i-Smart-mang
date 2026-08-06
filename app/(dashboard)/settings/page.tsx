@@ -45,14 +45,40 @@ export default async function SettingsPage() {
       location: account.location,
       is_active: account.is_active,
       created_at: account.created_at,
+      teacher_id: account.teacher_id,
+      linked_teacher_name: null,
     })) as StaffAccountRow[];
     staffError = error;
 
-    const linkedTeacherIds = new Set(
-      (accounts ?? [])
-        .map((account) => account.teacher_id)
-        .filter((id): id is number => id != null),
-    );
+    const linkedTeacherIds = [
+      ...new Set(
+        (accounts ?? [])
+          .map((account) => account.teacher_id)
+          .filter((id): id is number => id != null),
+      ),
+    ];
+
+    if (linkedTeacherIds.length > 0) {
+      const { data: linkedTeachers } = await supabase
+        .from("teachers")
+        .select("id, first_name, last_name")
+        .in("id", linkedTeacherIds);
+
+      const nameById = new Map(
+        (linkedTeachers ?? []).map((teacher) => [
+          teacher.id,
+          [teacher.first_name, teacher.last_name].filter(Boolean).join(" "),
+        ]),
+      );
+
+      staffRows = staffRows.map((row) => ({
+        ...row,
+        linked_teacher_name:
+          row.teacher_id != null ? (nameById.get(row.teacher_id) ?? null) : null,
+      }));
+    }
+
+    const linkedTeacherIdSet = new Set(linkedTeacherIds);
 
     const { data: teachers } = await supabase
       .from("teachers")
@@ -62,7 +88,7 @@ export default async function SettingsPage() {
       .order("first_name");
 
     frontDeskTeachers = (teachers ?? []).flatMap((teacher) => {
-      if (linkedTeacherIds.has(teacher.id)) {
+      if (linkedTeacherIdSet.has(teacher.id)) {
         return [];
       }
       const locationEmbed = Array.isArray(teacher.locations)

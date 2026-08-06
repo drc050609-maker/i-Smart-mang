@@ -455,3 +455,129 @@ export async function updateStaffLanguage(
   revalidatePath("/", "layout");
   return { success: true };
 }
+
+export async function linkFrontDeskAccountToTeacher(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await getCurrentStaff();
+  if (!actor || actor.role !== "admin") {
+    return { error: "Only admins can link front desk accounts." };
+  }
+
+  const staffId = formData.get("staffId")?.toString().trim();
+  const teacherId = Number(formData.get("teacherId"));
+
+  if (!staffId) {
+    return { error: "Choose a front desk account." };
+  }
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid front desk profile." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: teacher, error: teacherError } = await client.supabase
+    .from("teachers")
+    .select("id, position")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (teacherError) {
+    return { error: teacherError.message };
+  }
+  if (!teacher || teacher.position !== "front_desk") {
+    return { error: "That teacher is not a front desk profile." };
+  }
+
+  const { data: account, error: accountError } = await client.supabase
+    .from("staff_accounts")
+    .select("id, role, teacher_id")
+    .eq("id", staffId)
+    .maybeSingle();
+
+  if (accountError) {
+    return { error: accountError.message };
+  }
+  if (!account || account.role !== "front_desk") {
+    return { error: "Choose a front desk login account." };
+  }
+
+  if (account.teacher_id != null && account.teacher_id !== teacherId) {
+    return {
+      error:
+        "That login is already linked to another front desk profile. Unlink it first.",
+    };
+  }
+
+  const { data: existingLink } = await client.supabase
+    .from("staff_accounts")
+    .select("id")
+    .eq("teacher_id", teacherId)
+    .neq("id", staffId)
+    .maybeSingle();
+
+  if (existingLink) {
+    return {
+      error: "This front desk profile already has a linked login account.",
+    };
+  }
+
+  const { error } = await client.supabase
+    .from("staff_accounts")
+    .update({ teacher_id: teacherId })
+    .eq("id", staffId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath(`/tutors/${teacherId}`);
+  revalidatePath("/my-hours");
+  return { success: true };
+}
+
+export async function unlinkFrontDeskAccountFromTeacher(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const actor = await getCurrentStaff();
+  if (!actor || actor.role !== "admin") {
+    return { error: "Only admins can unlink front desk accounts." };
+  }
+
+  const staffId = formData.get("staffId")?.toString().trim();
+  const teacherId = Number(formData.get("teacherId"));
+
+  if (!staffId) {
+    return { error: "Invalid staff account." };
+  }
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid front desk profile." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error } = await client.supabase
+    .from("staff_accounts")
+    .update({ teacher_id: null })
+    .eq("id", staffId)
+    .eq("teacher_id", teacherId)
+    .eq("role", "front_desk");
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidatePath("/settings");
+  revalidatePath(`/tutors/${teacherId}`);
+  revalidatePath("/my-hours");
+  return { success: true };
+}
