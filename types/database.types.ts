@@ -1121,6 +1121,54 @@ export type Database = {
         }
         Relationships: []
       }
+      front_desk_hour_logs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          hours: number
+          id: number
+          notes: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          hours: number
+          id?: number
+          notes?: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          hours?: number
+          id?: number
+          notes?: string | null
+          rate_cents?: number
+          teacher_id?: number
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "front_desk_hour_logs_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "front_desk_hour_logs_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_adjustments: {
         Row: {
           adjustment_cents: number
@@ -1691,36 +1739,42 @@ export type Database = {
         Row: {
           dob: string | null
           first_name: string
+          hourly_rate_cents: number | null
           id: number
           is_active: boolean
           last_name: string | null
           location_id: number | null
           notes: string | null
           phone_number: string | null
+          position: Database["public"]["Enums"]["staff_position"]
           resume_file_name: string | null
           resume_path: string | null
         }
         Insert: {
           dob?: string | null
           first_name: string
+          hourly_rate_cents?: number | null
           id?: number
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
           notes?: string | null
           phone_number?: string | null
+          position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
         }
         Update: {
           dob?: string | null
           first_name?: string
+          hourly_rate_cents?: number | null
           id?: number
           is_active?: boolean
           last_name?: string | null
           location_id?: number | null
           notes?: string | null
           phone_number?: string | null
+          position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
         }
@@ -2012,6 +2066,7 @@ export type Database = {
       session_record_status: "used" | "absent"
       staff_language: "en" | "zh"
       staff_location: "brooklyn" | "staten_island"
+      staff_position: "teacher" | "front_desk"
       staff_role: "admin" | "manager"
       statement_entry_type: "income" | "expense"
       financial_source_kind:
@@ -2172,6 +2227,7 @@ export const Constants = {
       session_record_status: ["used", "absent"],
       staff_language: ["en", "zh"],
       staff_location: ["brooklyn", "staten_island"],
+      staff_position: ["teacher", "front_desk"],
       staff_role: ["admin", "manager"],
       statement_entry_type: ["income", "expense"],
       financial_source_kind: [

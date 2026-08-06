@@ -65,6 +65,21 @@ export type TranslationKey =
   | "common.id"
   | "common.email"
   | "common.phone"
+  | "staffPosition.teacher"
+  | "staffPosition.frontDesk"
+  | "common.position"
+  | "common.hourlyRate"
+  | "common.hourlyRatePlaceholder"
+  | "common.hoursWorked"
+  | "common.workDate"
+  | "common.logHours"
+  | "common.editHours"
+  | "common.saveHours"
+  | "common.noHourLogs"
+  | "common.deleteHourLogConfirm"
+  | "common.dayPay"
+  | "common.hoursPaySummary"
+  | "common.frontDeskNoClasses"
   | "common.phones"
   | "common.noPhones"
   | "common.addPhone"
@@ -839,6 +854,23 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "ID",
     "common.email": "Email",
     "common.phone": "Phone",
+    "staffPosition.teacher": "Teacher",
+    "staffPosition.frontDesk": "Front desk",
+    "common.position": "Position",
+    "common.hourlyRate": "Hourly rate",
+    "common.hourlyRatePlaceholder": "e.g. 18.00",
+    "common.hoursWorked": "Hours worked",
+    "common.workDate": "Work date",
+    "common.logHours": "Log hours",
+    "common.editHours": "Edit hours",
+    "common.saveHours": "Save hours",
+    "common.noHourLogs": "No hours logged yet.",
+    "common.deleteHourLogConfirm":
+      "This will permanently delete this day’s hour log.",
+    "common.dayPay": "Pay",
+    "common.hoursPaySummary": "{hours} hrs · {pay}",
+    "common.frontDeskNoClasses":
+      "Front desk staff do not teach classes. Log daily hours below.",
     "common.phones": "Phone numbers",
     "common.noPhones": "No phone numbers on file.",
     "common.addPhone": "Add phone",
@@ -1678,6 +1710,21 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "编号",
     "common.email": "邮箱",
     "common.phone": "电话",
+    "staffPosition.teacher": "老师",
+    "staffPosition.frontDesk": "前台",
+    "common.position": "职位",
+    "common.hourlyRate": "时薪",
+    "common.hourlyRatePlaceholder": "例如 18.00",
+    "common.hoursWorked": "工作时长",
+    "common.workDate": "工作日期",
+    "common.logHours": "记录工时",
+    "common.editHours": "编辑工时",
+    "common.saveHours": "保存工时",
+    "common.noHourLogs": "暂无工时记录。",
+    "common.deleteHourLogConfirm": "这将永久删除该日工时记录。",
+    "common.dayPay": "工资",
+    "common.hoursPaySummary": "{hours} 小时 · {pay}",
+    "common.frontDeskNoClasses": "前台人员不授课。请在下方记录每日工时。",
     "common.phones": "电话号码",
     "common.noPhones": "暂无电话号码记录。",
     "common.addPhone": "添加电话",

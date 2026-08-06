@@ -106,6 +106,7 @@ export default async function ClassesPage() {
       .from("teachers")
       .select("id, first_name, last_name")
       .eq("is_active", true)
+      .eq("position", "teacher")
       .eq("location_id", locationId)
       .order("first_name"),
     supabase

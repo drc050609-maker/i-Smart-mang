@@ -19,6 +19,7 @@ export default async function TrialPage() {
       .from("teachers")
       .select("id, first_name, last_name")
       .eq("is_active", true)
+      .eq("position", "teacher")
       .order("first_name");
 
     if (error) {

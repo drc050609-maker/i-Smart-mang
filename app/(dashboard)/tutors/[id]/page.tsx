@@ -8,6 +8,7 @@ import { EditEnrollmentGradeDialog } from "@/components/edit-enrollment-grade-di
 import type { RoomOption } from "@/components/add-class-dialog";
 import { TeacherPaycheckSection } from "@/components/teacher-paycheck-section";
 import { TeacherResumeSection } from "@/components/teacher-resume-section";
+import { FrontDeskHoursSection } from "@/components/front-desk-hours-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import {
@@ -27,6 +28,8 @@ import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 import { compareStudentNames, formatStudentName } from "@/lib/person-name";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
+import { formatCentsAsCurrency } from "@/lib/money";
+import { isFrontDesk, staffPositionLabelKey } from "@/lib/staff-position";
 import { TEACHER_RESUME_BUCKET } from "@/lib/teacher-resume";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
@@ -113,7 +116,7 @@ export default async function TutorDetailPage({
   const { data: teacher, error: teacherError } = await supabase
     .from("teachers")
     .select(
-      "id, first_name, last_name, dob, phone_number, is_active, location_id, resume_path, resume_file_name",
+      "id, first_name, last_name, dob, phone_number, is_active, location_id, resume_path, resume_file_name, position, hourly_rate_cents",
     )
     .eq("id", teacherId)
     .maybeSingle();
@@ -142,20 +145,42 @@ export default async function TutorDetailPage({
   }
 
   const locationId = teacher.location_id;
+  const frontDesk = isFrontDesk(teacher.position);
+
+  let hourLogs: {
+    id: number;
+    work_date: string;
+    hours: number;
+    rate_cents: number;
+    notes: string | null;
+  }[] = [];
+  if (frontDesk) {
+    const { data: logs } = await supabase
+      .from("front_desk_hour_logs")
+      .select("id, work_date, hours, rate_cents, notes")
+      .eq("teacher_id", teacherId)
+      .order("work_date", { ascending: false });
+    hourLogs = (logs ?? []).map((log) => ({
+      ...log,
+      hours: Number(log.hours),
+    }));
+  }
 
   const [
     { data: classTeacherLinks },
     { data: campusClassSubjects },
     { data: rooms },
   ] = await Promise.all([
-    supabase
-      .from("class_teachers")
-      .select("class_id")
-      .eq("teacher_id", teacherId),
-    locationId
+    frontDesk
+      ? Promise.resolve({ data: [] as { class_id: number }[] })
+      : supabase
+          .from("class_teachers")
+          .select("class_id")
+          .eq("teacher_id", teacherId),
+    locationId && !frontDesk
       ? supabase.from("classes").select("subject").eq("location_id", locationId)
       : Promise.resolve({ data: [] as { subject: string }[] }),
-    locationId
+    locationId && !frontDesk
       ? supabase
           .from("rooms")
           .select("id, room_number, class_size")
@@ -260,31 +285,33 @@ export default async function TutorDetailPage({
 
   let paycheckPeriods: TeacherPaycheckPeriodData[] = [];
   let defaultPayRates: TeacherGroupPayRates = {};
-  try {
-    const { data: savedPaycheckPeriods } = await supabase
-      .from("teacher_paychecks")
-      .select("year, month")
-      .eq("teacher_id", teacherId);
+  if (!frontDesk) {
+    try {
+      const { data: savedPaycheckPeriods } = await supabase
+        .from("teacher_paychecks")
+        .select("year, month")
+        .eq("teacher_id", teacherId);
 
-    const [periods, classPayRates] = await Promise.all([
-      loadTeacherPaycheckPeriods(
-        supabase,
-        teacherId,
-        listTeacherPaycheckPeriodOptions(
-          new Date(),
-          (savedPaycheckPeriods ?? []).map((row) => ({
-            year: row.year,
-            month: row.month,
-          })),
+      const [periods, classPayRates] = await Promise.all([
+        loadTeacherPaycheckPeriods(
+          supabase,
+          teacherId,
+          listTeacherPaycheckPeriodOptions(
+            new Date(),
+            (savedPaycheckPeriods ?? []).map((row) => ({
+              year: row.year,
+              month: row.month,
+            })),
+          ),
         ),
-      ),
-      loadTeacherClassPayRates(supabase, teacherId),
-    ]);
-    paycheckPeriods = periods;
-    const allClassLines = periods.flatMap((period) => period.classLines);
-    defaultPayRates = classPayRatesToGroupRates(allClassLines, classPayRates);
-  } catch (error) {
-    console.error("Could not load teacher paycheck data:", error);
+        loadTeacherClassPayRates(supabase, teacherId),
+      ]);
+      paycheckPeriods = periods;
+      const allClassLines = periods.flatMap((period) => period.classLines);
+      defaultPayRates = classPayRatesToGroupRates(allClassLines, classPayRates);
+    } catch (error) {
+      console.error("Could not load teacher paycheck data:", error);
+    }
   }
   return (
     <div>
@@ -305,6 +332,29 @@ export default async function TutorDetailPage({
           <EditTeacherDialog teacher={teacher} />
         </div>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t("common.position")}
+            </dt>
+            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+              {t(staffPositionLabelKey(teacher.position))}
+            </dd>
+          </div>
+          {frontDesk ? (
+            <div>
+              <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                {t("common.hourlyRate")}
+              </dt>
+              <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                {teacher.hourly_rate_cents != null
+                  ? formatCentsAsCurrency(
+                      teacher.hourly_rate_cents,
+                      staff.preferred_language,
+                    )
+                  : t("common.notAvailable")}
+              </dd>
+            </div>
+          ) : null}
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
               {t("common.dateOfBirth")}
@@ -351,6 +401,19 @@ export default async function TutorDetailPage({
         resumeUrl={resumeUrl}
       />
 
+      {frontDesk ? (
+        <>
+          <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
+            {t("common.frontDeskNoClasses")}
+          </p>
+          <FrontDeskHoursSection
+            teacherId={teacherId}
+            hourlyRateCents={teacher.hourly_rate_cents}
+            logs={hourLogs}
+          />
+        </>
+      ) : (
+      <>
       <section className="mt-8">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
@@ -537,6 +600,8 @@ export default async function TutorDetailPage({
         periods={paycheckPeriods}
         defaultPayRates={defaultPayRates}
       />
+      </>
+      )}
     </div>
   );
 }
