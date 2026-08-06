@@ -309,6 +309,7 @@ export type TranslationKey =
   | "common.fromPayment"
   | "common.fromPurchase"
   | "common.fromPaycheck"
+  | "common.fromFrontDeskPay"
   | "common.fromRecurring"
   | "common.addIncome"
   | "common.addExpense"
@@ -557,6 +558,12 @@ export type TranslationKey =
   | "common.confirmPaycheckTitle"
   | "common.confirmPaycheckHelp"
   | "common.confirmAndRecordPaycheck"
+  | "common.reviewFrontDeskPay"
+  | "common.confirmFrontDeskPayTitle"
+  | "common.confirmFrontDeskPayHelp"
+  | "common.confirmAndSubmitFrontDeskPay"
+  | "common.frontDeskPayAlreadyRecorded"
+  | "common.noFrontDeskHoursToSubmit"
   | "common.noPostsYet"
   | "common.photos"
   | "common.videos"
@@ -1154,6 +1161,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.fromPayment": "From payment",
     "common.fromPurchase": "From purchase",
     "common.fromPaycheck": "Teacher paycheck",
+    "common.fromFrontDeskPay": "Front desk pay",
     "common.fromRecurring": "Recurring",
     "common.addIncome": "Add income",
     "common.addExpense": "Add expense",
@@ -1413,6 +1421,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirmPaycheckTitle": "Confirm paycheck",
     "common.confirmPaycheckHelp": "This will record the paycheck and add it to the monthly statement.",
     "common.confirmAndRecordPaycheck": "Confirm & record paycheck",
+    "common.reviewFrontDeskPay": "Confirm & submit to statements",
+    "common.confirmFrontDeskPayTitle": "Submit hours to statements",
+    "common.confirmFrontDeskPayHelp":
+      "This will add this month’s front desk hours and pay as an expense on the statements page.",
+    "common.confirmAndSubmitFrontDeskPay": "Confirm & submit",
+    "common.frontDeskPayAlreadyRecorded": "Already submitted to statements for this month.",
+    "common.noFrontDeskHoursToSubmit": "Log hours for this month before submitting.",
     "common.noPostsYet": "No posts yet.",
     "common.photos": "photo",
     "common.videos": "video",
@@ -2039,6 +2054,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.fromPayment": "来自付款",
     "common.fromPurchase": "来自购买",
     "common.fromPaycheck": "老师工资",
+    "common.fromFrontDeskPay": "前台工资",
     "common.fromRecurring": "定期",
     "common.addIncome": "添加收入",
     "common.addExpense": "添加支出",
@@ -2294,6 +2310,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirmPaycheckTitle": "确认工资",
     "common.confirmPaycheckHelp": "这将记录工资并添加到月度财务报表。",
     "common.confirmAndRecordPaycheck": "确认并记录工资",
+    "common.reviewFrontDeskPay": "确认并提交到财务报表",
+    "common.confirmFrontDeskPayTitle": "将工时提交到财务报表",
+    "common.confirmFrontDeskPayHelp":
+      "这将把本月前台工时与工资作为支出添加到财务报表。",
+    "common.confirmAndSubmitFrontDeskPay": "确认并提交",
+    "common.frontDeskPayAlreadyRecorded": "本月已提交到财务报表。",
+    "common.noFrontDeskHoursToSubmit": "请先记录本月工时再提交。",
     "common.noPostsYet": "暂无帖子。",
     "common.photos": "照片",
     "common.videos": "视频",

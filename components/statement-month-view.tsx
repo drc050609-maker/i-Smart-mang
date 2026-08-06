@@ -24,6 +24,7 @@ export type StatementEntryRow = {
   student_purchase_id: number | null;
   recurring_statement_entry_id: number | null;
   teacher_paycheck_id: number | null;
+  front_desk_paycheck_id?: number | null;
   financial_adjustment_id?: number | null;
   corrects_entry_id?: number | null;
 };
@@ -61,6 +62,7 @@ function EntryList({
           !entry.class_payment_id &&
           !entry.student_purchase_id &&
           !entry.teacher_paycheck_id &&
+          !entry.front_desk_paycheck_id &&
           !entry.recurring_statement_entry_id &&
           !entry.financial_adjustment_id &&
           !entry.corrects_entry_id;
@@ -82,11 +84,13 @@ function EntryList({
                     ? ` · ${t("common.fromPurchase")}`
                     : entry.teacher_paycheck_id
                       ? ` · ${t("common.fromPaycheck")}`
-                      : entry.recurring_statement_entry_id
-                        ? ` · ${t("common.fromRecurring")}`
-                        : entry.financial_adjustment_id
-                          ? ` · ${t("common.fromCorrection")}`
-                          : null}
+                      : entry.front_desk_paycheck_id
+                        ? ` · ${t("common.fromFrontDeskPay")}`
+                        : entry.recurring_statement_entry_id
+                          ? ` · ${t("common.fromRecurring")}`
+                          : entry.financial_adjustment_id
+                            ? ` · ${t("common.fromCorrection")}`
+                            : null}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-2">
