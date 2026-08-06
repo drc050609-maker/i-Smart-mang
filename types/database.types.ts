@@ -1123,6 +1123,8 @@ export type Database = {
       }
       front_desk_hour_logs: {
         Row: {
+          clock_in: string
+          clock_out: string
           created_at: string
           created_by: string | null
           hours: number
@@ -1133,6 +1135,8 @@ export type Database = {
           work_date: string
         }
         Insert: {
+          clock_in: string
+          clock_out: string
           created_at?: string
           created_by?: string | null
           hours: number
@@ -1143,6 +1147,8 @@ export type Database = {
           work_date: string
         }
         Update: {
+          clock_in?: string
+          clock_out?: string
           created_at?: string
           created_by?: string | null
           hours?: number

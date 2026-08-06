@@ -72,6 +72,11 @@ export type TranslationKey =
   | "common.hourlyRatePlaceholder"
   | "common.hoursWorked"
   | "common.workDate"
+  | "common.clockIn"
+  | "common.clockOut"
+  | "common.durationHoursMinutes"
+  | "common.monthTotal"
+  | "common.clickDayToLog"
   | "common.logHours"
   | "common.editHours"
   | "common.saveHours"
@@ -861,6 +866,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.hourlyRatePlaceholder": "e.g. 18.00",
     "common.hoursWorked": "Hours worked",
     "common.workDate": "Work date",
+    "common.clockIn": "Clock in",
+    "common.clockOut": "Clock out",
+    "common.durationHoursMinutes": "{hours}h {minutes}m",
+    "common.monthTotal": "Month total",
+    "common.clickDayToLog": "Click a day to log when you arrived and left.",
     "common.logHours": "Log hours",
     "common.editHours": "Edit hours",
     "common.saveHours": "Save hours",
@@ -1717,6 +1727,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.hourlyRatePlaceholder": "例如 18.00",
     "common.hoursWorked": "工作时长",
     "common.workDate": "工作日期",
+    "common.clockIn": "上班时间",
+    "common.clockOut": "下班时间",
+    "common.durationHoursMinutes": "{hours}小时 {minutes}分钟",
+    "common.monthTotal": "本月合计",
+    "common.clickDayToLog": "点击某一天记录上班和下班时间。",
     "common.logHours": "记录工时",
     "common.editHours": "编辑工时",
     "common.saveHours": "保存工时",

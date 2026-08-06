@@ -150,6 +150,8 @@ export default async function TutorDetailPage({
   let hourLogs: {
     id: number;
     work_date: string;
+    clock_in: string;
+    clock_out: string;
     hours: number;
     rate_cents: number;
     notes: string | null;
@@ -157,7 +159,7 @@ export default async function TutorDetailPage({
   if (frontDesk) {
     const { data: logs } = await supabase
       .from("front_desk_hour_logs")
-      .select("id, work_date, hours, rate_cents, notes")
+      .select("id, work_date, clock_in, clock_out, hours, rate_cents, notes")
       .eq("teacher_id", teacherId)
       .order("work_date", { ascending: false });
     hourLogs = (logs ?? []).map((log) => ({

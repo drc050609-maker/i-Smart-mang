@@ -11,7 +11,12 @@ import {
   TEACHER_RESUME_BUCKET,
 } from "@/lib/teacher-resume";
 import { parseDollarsToCents } from "@/lib/money";
-import { isStaffPosition, type StaffPosition } from "@/lib/staff-position";
+import {
+  isStaffPosition,
+  minutesToHoursDecimal,
+  workedMinutesBetween,
+  type StaffPosition,
+} from "@/lib/staff-position";
 
 export type CreatedTeacher = {
   id: number;
@@ -541,9 +546,28 @@ export async function removeTeacherResume(
 
 export type FrontDeskHourLogState = ActionState;
 
+function normalizeClockTime(value: string) {
+  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
+  if (!match) return null;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    hours < 0 ||
+    hours > 23 ||
+    minutes < 0 ||
+    minutes > 59
+  ) {
+    return null;
+  }
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+}
+
 function parseHourLogFields(formData: FormData) {
   const workDate = formData.get("workDate")?.toString().trim() ?? "";
-  const hoursRaw = formData.get("hours")?.toString().trim() ?? "";
+  const clockInRaw = formData.get("clockIn")?.toString().trim() ?? "";
+  const clockOutRaw = formData.get("clockOut")?.toString().trim() ?? "";
   const notes = formData.get("notes")?.toString().trim() || null;
   const rateParsed = parseDollarsToCents(formData.get("hourlyRate"), {
     allowZero: true,
@@ -554,9 +578,18 @@ function parseHourLogFields(formData: FormData) {
     return { error: "Work date is required." } as const;
   }
 
-  const hours = Number(hoursRaw);
-  if (!Number.isFinite(hours) || hours <= 0 || hours > 24) {
-    return { error: "Hours must be between 0.25 and 24." } as const;
+  const clockIn = normalizeClockTime(clockInRaw);
+  const clockOut = normalizeClockTime(clockOutRaw);
+  if (!clockIn || !clockOut) {
+    return { error: "Clock in and clock out times are required." } as const;
+  }
+
+  const totalMinutes = workedMinutesBetween(clockIn, clockOut);
+  if (totalMinutes == null || totalMinutes <= 0) {
+    return { error: "Clock out must be after clock in." } as const;
+  }
+  if (totalMinutes > 24 * 60) {
+    return { error: "Worked time cannot exceed 24 hours." } as const;
   }
 
   if (!rateParsed.ok) {
@@ -565,7 +598,9 @@ function parseHourLogFields(formData: FormData) {
 
   return {
     workDate,
-    hours: Math.round(hours * 100) / 100,
+    clockIn,
+    clockOut,
+    hours: minutesToHoursDecimal(totalMinutes),
     rateCents: rateParsed.cents,
     notes,
   };
@@ -602,6 +637,8 @@ export async function createFrontDeskHourLog(
     {
       teacher_id: teacherId,
       work_date: fields.workDate,
+      clock_in: fields.clockIn,
+      clock_out: fields.clockOut,
       hours: fields.hours,
       rate_cents: fields.rateCents,
       notes: fields.notes,
@@ -640,6 +677,8 @@ export async function updateFrontDeskHourLog(
     .from("front_desk_hour_logs")
     .update({
       work_date: fields.workDate,
+      clock_in: fields.clockIn,
+      clock_out: fields.clockOut,
       hours: fields.hours,
       rate_cents: fields.rateCents,
       notes: fields.notes,

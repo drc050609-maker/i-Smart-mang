@@ -9,9 +9,11 @@ import { deleteFrontDeskHourLog } from "@/app/(dashboard)/tutors/actions";
 export function DeleteFrontDeskHourButton({
   teacherId,
   logId,
+  onDeleted,
 }: {
   teacherId: number;
   logId: number;
+  onDeleted?: () => void;
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
@@ -22,8 +24,11 @@ export function DeleteFrontDeskHourButton({
   );
 
   useEffect(() => {
-    if (state.success) setOpen(false);
-  }, [state.success]);
+    if (state.success) {
+      setOpen(false);
+      onDeleted?.();
+    }
+  }, [state.success, onDeleted]);
 
   return (
     <>
