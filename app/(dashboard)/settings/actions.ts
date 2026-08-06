@@ -461,8 +461,8 @@ export async function linkFrontDeskAccountToTeacher(
   formData: FormData,
 ): Promise<ActionState> {
   const actor = await getCurrentStaff();
-  if (!actor || actor.role !== "admin") {
-    return { error: "Only admins can link front desk accounts." };
+  if (!actor || (actor.role !== "admin" && actor.role !== "manager")) {
+    return { error: "Only admins and managers can link front desk accounts." };
   }
 
   const staffId = formData.get("staffId")?.toString().trim();
@@ -482,7 +482,7 @@ export async function linkFrontDeskAccountToTeacher(
 
   const { data: teacher, error: teacherError } = await client.supabase
     .from("teachers")
-    .select("id, position")
+    .select("id, position, location_id, locations ( slug )")
     .eq("id", teacherId)
     .maybeSingle();
 
@@ -493,9 +493,22 @@ export async function linkFrontDeskAccountToTeacher(
     return { error: "That teacher is not a front desk profile." };
   }
 
+  const locationEmbed = Array.isArray(teacher.locations)
+    ? teacher.locations[0]
+    : teacher.locations;
+  const teacherLocationSlug = locationEmbed?.slug;
+
+  if (
+    actor.role === "manager" &&
+    teacherLocationSlug &&
+    teacherLocationSlug !== actor.location
+  ) {
+    return { error: "You can only link accounts for your campus." };
+  }
+
   const { data: account, error: accountError } = await client.supabase
     .from("staff_accounts")
-    .select("id, role, teacher_id")
+    .select("id, role, teacher_id, location")
     .eq("id", staffId)
     .maybeSingle();
 
@@ -504,6 +517,10 @@ export async function linkFrontDeskAccountToTeacher(
   }
   if (!account || account.role !== "front_desk") {
     return { error: "Choose a front desk login account." };
+  }
+
+  if (actor.role === "manager" && account.location !== actor.location) {
+    return { error: "You can only link accounts for your campus." };
   }
 
   if (account.teacher_id != null && account.teacher_id !== teacherId) {
@@ -546,8 +563,8 @@ export async function unlinkFrontDeskAccountFromTeacher(
   formData: FormData,
 ): Promise<ActionState> {
   const actor = await getCurrentStaff();
-  if (!actor || actor.role !== "admin") {
-    return { error: "Only admins can unlink front desk accounts." };
+  if (!actor || (actor.role !== "admin" && actor.role !== "manager")) {
+    return { error: "Only admins and managers can unlink front desk accounts." };
   }
 
   const staffId = formData.get("staffId")?.toString().trim();
@@ -563,6 +580,31 @@ export async function unlinkFrontDeskAccountFromTeacher(
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
+  }
+
+  if (actor.role === "manager") {
+    const { data: teacher } = await client.supabase
+      .from("teachers")
+      .select("id, locations ( slug )")
+      .eq("id", teacherId)
+      .maybeSingle();
+
+    const locationEmbed = Array.isArray(teacher?.locations)
+      ? teacher?.locations[0]
+      : teacher?.locations;
+    if (locationEmbed?.slug && locationEmbed.slug !== actor.location) {
+      return { error: "You can only unlink accounts for your campus." };
+    }
+
+    const { data: account } = await client.supabase
+      .from("staff_accounts")
+      .select("id, location")
+      .eq("id", staffId)
+      .maybeSingle();
+
+    if (account && account.location !== actor.location) {
+      return { error: "You can only unlink accounts for your campus." };
+    }
   }
 
   const { error } = await client.supabase

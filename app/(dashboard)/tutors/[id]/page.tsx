@@ -169,6 +169,21 @@ export default async function TutorDetailPage({
   }[] = [];
 
   if (frontDesk) {
+    const canManageFrontDeskLinks =
+      staff.role === "admin" || staff.role === "manager";
+
+    let unlinkedQuery = supabase
+      .from("staff_accounts")
+      .select("id, email, full_name")
+      .eq("role", "front_desk")
+      .is("teacher_id", null)
+      .eq("is_active", true)
+      .order("full_name");
+
+    if (staff.role === "manager") {
+      unlinkedQuery = unlinkedQuery.eq("location", staff.location);
+    }
+
     const [{ data: logs }, { data: linked }, { data: unlinked }] =
       await Promise.all([
         supabase
@@ -182,14 +197,8 @@ export default async function TutorDetailPage({
           .eq("teacher_id", teacherId)
           .eq("role", "front_desk")
           .maybeSingle(),
-        staff.role === "admin"
-          ? supabase
-              .from("staff_accounts")
-              .select("id, email, full_name")
-              .eq("role", "front_desk")
-              .is("teacher_id", null)
-              .eq("is_active", true)
-              .order("full_name")
+        canManageFrontDeskLinks
+          ? unlinkedQuery
           : Promise.resolve({
               data: [] as {
                 id: string;
@@ -447,7 +456,7 @@ export default async function TutorDetailPage({
           <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
             {t("common.frontDeskNoClasses")}
           </p>
-          {staff.role === "admin" ? (
+          {(staff.role === "admin" || staff.role === "manager") ? (
             <LinkFrontDeskAccountSection
               teacherId={teacherId}
               linkedAccount={linkedLogin}
