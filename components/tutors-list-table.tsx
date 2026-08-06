@@ -9,6 +9,10 @@ import {
   type ActiveTab,
 } from "@/components/active-inactive-tabs";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
+import {
+  SelectChevron,
+  selectFieldClassName,
+} from "@/components/select-chevron";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import type { TranslationKey } from "@/lib/i18n";
@@ -18,7 +22,10 @@ import {
   formatTeacherName,
   sortTeachers,
 } from "@/lib/person-name";
-import { staffPositionLabelKey } from "@/lib/staff-position";
+import {
+  staffPositionLabelKey,
+  type StaffPosition,
+} from "@/lib/staff-position";
 
 type ClassEmbed = {
   id: number;
@@ -34,6 +41,8 @@ type TutorRow = {
   position: "teacher" | "front_desk";
   classes: ClassEmbed[];
 };
+
+type PositionFilter = "all" | StaffPosition;
 
 function formatDob(dob: string | null, language: AppLanguage, notAvailable: string) {
   if (!dob) return notAvailable;
@@ -90,19 +99,37 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
   const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<ActiveTab>("active");
+  const [positionFilter, setPositionFilter] = useState<PositionFilter>("all");
 
-  const activeCount = useMemo(
-    () => tutors.filter((teacher) => teacher.is_active).length,
+  const positionTutors = useMemo(
+    () =>
+      positionFilter === "all"
+        ? tutors
+        : tutors.filter((teacher) => teacher.position === positionFilter),
+    [tutors, positionFilter],
+  );
+
+  const teacherCount = useMemo(
+    () => tutors.filter((teacher) => teacher.position === "teacher").length,
     [tutors],
   );
-  const inactiveCount = tutors.length - activeCount;
+  const frontDeskCount = useMemo(
+    () => tutors.filter((teacher) => teacher.position === "front_desk").length,
+    [tutors],
+  );
+
+  const activeCount = useMemo(
+    () => positionTutors.filter((teacher) => teacher.is_active).length,
+    [positionTutors],
+  );
+  const inactiveCount = positionTutors.length - activeCount;
 
   const tabTutors = useMemo(
     () =>
-      tutors.filter((teacher) =>
+      positionTutors.filter((teacher) =>
         activeTab === "active" ? teacher.is_active : !teacher.is_active,
       ),
-    [tutors, activeTab],
+    [positionTutors, activeTab],
   );
   const sortedTutors = useMemo(() => sortTeachers(tabTutors), [tabTutors]);
   const filteredTutors = useMemo(
@@ -113,6 +140,37 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
   return (
     <div className="mt-6 space-y-4">
       <div className="flex flex-wrap items-end gap-4">
+        <div className="min-w-40 max-w-xs flex-1">
+          <label
+            htmlFor="tutors-position-filter"
+            className="block text-sm/6 font-medium text-gray-900 dark:text-white"
+          >
+            {t("common.position")}
+          </label>
+          <div className="relative mt-2">
+            <select
+              id="tutors-position-filter"
+              value={positionFilter}
+              onChange={(event) =>
+                setPositionFilter(event.target.value as PositionFilter)
+              }
+              aria-label={t("common.position")}
+              className={selectFieldClassName}
+            >
+              <option value="all">
+                {t("common.all")} ({tutors.length})
+              </option>
+              <option value="teacher">
+                {t("staffPosition.teacher")} ({teacherCount})
+              </option>
+              <option value="front_desk">
+                {t("staffPosition.frontDesk")} ({frontDeskCount})
+              </option>
+            </select>
+            <SelectChevron />
+          </div>
+        </div>
+
         <ActiveInactiveTabs
           activeTab={activeTab}
           onChange={setActiveTab}
