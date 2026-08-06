@@ -87,9 +87,23 @@ export async function processDueClassSessionsIfNeeded(
   }
   lastProcessAttemptAt = now;
 
+  // Brooklyn was reset to a clean credit/history slate — do not backfill past
+  // sessions (which would re-inflate used credits / classes taken).
+  let lookbackDays = AUTO_PROCESS_LOOKBACK_DAYS;
+  if (locationId != null) {
+    const { data: campus } = await supabase
+      .from("locations")
+      .select("slug")
+      .eq("id", locationId)
+      .maybeSingle();
+    if (campus?.slug === "brooklyn") {
+      lookbackDays = 0;
+    }
+  }
+
   return processDueClassSessions(supabase, userId, {
     locationId: locationId ?? null,
-    lookbackDays: AUTO_PROCESS_LOOKBACK_DAYS,
+    lookbackDays,
     maxSessions: MAX_SESSIONS_PER_RUN,
   });
 }
