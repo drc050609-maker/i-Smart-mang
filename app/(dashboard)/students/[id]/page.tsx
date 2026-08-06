@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { DeleteStudentButton } from "@/components/delete-student-button";
 import { EditStudentDobDialog } from "@/components/edit-student-dob-dialog";
 import { EditStudentNameDialog } from "@/components/edit-student-name-dialog";
+import { EditStudentNotesDialog } from "@/components/edit-student-notes-dialog";
 import { StudentAddressesSection } from "@/components/student-addresses-section";
 import { AddStudentAddressDialog } from "@/components/add-student-address-dialog";
 import { StudentPhonesSection } from "@/components/student-phones-section";
@@ -123,7 +124,7 @@ export default async function StudentDetailPage({
   const { data: student, error: studentError } = await supabase
     .from("students")
     .select(
-      'id, "first name", "last name", dob, experience, is_active, location_id, starting_class_credits',
+      'id, "first name", "last name", dob, experience, is_active, location_id, starting_class_credits, notes',
     )
     .eq("id", studentId)
     .maybeSingle();
@@ -360,6 +361,17 @@ export default async function StudentDetailPage({
             </dd>
           </div>
         </dl>
+        <div className="mt-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
+              {t("common.notes")}
+            </p>
+            <EditStudentNotesDialog studentId={studentId} notes={detail.notes} />
+          </div>
+          <p className="mt-1 whitespace-pre-wrap text-sm text-gray-900 dark:text-white">
+            {detail.notes?.trim() ? detail.notes : t("common.noStudentNotes")}
+          </p>
+        </div>
       </div>
 
       <section className="mt-8">

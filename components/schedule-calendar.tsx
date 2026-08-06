@@ -32,6 +32,7 @@ import {
 } from "@/components/schedule-reschedule-dialog";
 import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { ScheduleTeacherDayDialog } from "@/components/schedule-teacher-day-dialog";
+import { StudentNoteStar } from "@/components/student-note-star";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
@@ -55,6 +56,7 @@ import {
   getWeekDays,
   groupInstancesByDay,
   HOUR_HEIGHT_PX,
+  jsWeekdayToMondayIndex,
   layoutDayEventColumns,
   maxLayoutColumnCount,
   dayColumnWidthPx,
@@ -130,6 +132,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   isDragging,
   showFullName = false,
   colorByTeacherId,
+  studentsById,
   onPointerDownRef,
 }: {
   instance: ScheduleEventInstance;
@@ -139,6 +142,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   isDragging: boolean;
   showFullName?: boolean;
   colorByTeacherId?: Map<number, EventColorSet>;
+  studentsById?: Map<number, ScheduleStudent>;
   onPointerDownRef: MutableRefObject<
     | ((
         instance: ScheduleEventInstance,
@@ -157,8 +161,13 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     instance.lesson_type === "group"
       ? t("enum.lessonType.group")
       : subjectLabel;
+  const labeledStudents = instance.students.map((student) => {
+    const campus = studentsById?.get(student.id);
+    if (!campus?.notes?.trim()) return student;
+    return { ...student, notes: campus.notes };
+  });
   const studentLabel = formatScheduleEventStudentLabel(
-    instance.students,
+    labeledStudents,
     unassignedLabel,
   );
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
@@ -201,11 +210,18 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     >
       <p
         className={classNames(
-          "text-[11px] font-semibold leading-tight",
+          "flex items-start gap-0.5 text-[11px] font-semibold leading-tight",
           showFullName ? "break-words" : "truncate",
         )}
       >
-        {studentLabel}
+        <span className={showFullName ? "min-w-0 break-words" : "min-w-0 truncate"}>
+          {studentLabel}
+        </span>
+        <StudentNoteStar
+          students={labeledStudents}
+          className="mt-px"
+          iconClassName="size-3"
+        />
       </p>
       {showSecondary ? (
         <p className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
@@ -328,11 +344,16 @@ export function ScheduleCalendar({
     [teachers, events],
   );
 
+  const studentsById = useMemo(
+    () => new Map(students.map((student) => [student.id, student])),
+    [students],
+  );
+
   const weekStart = useMemo(() => startOfWeek(focusDate), [focusDate]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
   const displayDays = useMemo(() => {
     if (viewMode === "day") {
-      const dayIndex = focusDate.getDay();
+      const dayIndex = jsWeekdayToMondayIndex(focusDate.getDay());
       return [{ date: weekDays[dayIndex]!, dayIndex }];
     }
     return weekDays.map((date, dayIndex) => ({ date, dayIndex }));
@@ -444,7 +465,7 @@ export function ScheduleCalendar({
   const hourRangeEvents = useMemo(() => {
     const instancesForRange =
       viewMode === "day"
-        ? (instancesByDay[focusDate.getDay()] ?? [])
+        ? (instancesByDay[jsWeekdayToMondayIndex(focusDate.getDay())] ?? [])
         : weekInstances;
 
     return instancesForRange.map((instance) => ({
@@ -512,7 +533,9 @@ export function ScheduleCalendar({
 
   const visibleInstanceCount = useMemo(() => {
     if (viewMode === "day") {
-      return (instancesByDay[focusDate.getDay()] ?? []).length;
+      return (
+        instancesByDay[jsWeekdayToMondayIndex(focusDate.getDay())] ?? []
+      ).length;
     }
     return weekInstances.length;
   }, [viewMode, instancesByDay, focusDate, weekInstances]);
@@ -1137,6 +1160,7 @@ export function ScheduleCalendar({
                               isDragging={false}
                               showFullName={viewMode === "day"}
                               colorByTeacherId={teacherColorById}
+                              studentsById={studentsById}
                               onPointerDownRef={eventPointerDownRef}
                             />
                           ))}
@@ -1153,6 +1177,7 @@ export function ScheduleCalendar({
                               isDragging={draggingKey === instance.instanceKey}
                               showFullName={viewMode === "day"}
                               colorByTeacherId={teacherColorById}
+                              studentsById={studentsById}
                               onPointerDownRef={eventPointerDownRef}
                             />
                           ))}

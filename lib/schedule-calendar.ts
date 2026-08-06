@@ -14,6 +14,7 @@ export type ScheduleStudent = {
   id: number;
   "first name": string;
   "last name": string | null;
+  notes?: string | null;
 };
 
 export type ScheduleEvent = {
@@ -104,6 +105,16 @@ export function formatDateYMD(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+/** Convert JS `Date#getDay()` (0=Sun…6=Sat) to Monday-first column index (0=Mon…6=Sun). */
+export function jsWeekdayToMondayIndex(jsWeekday: number) {
+  return (jsWeekday + 6) % 7;
+}
+
+/** Convert Monday-first column index (0=Mon…6=Sun) to JS weekday (0=Sun…6=Sat). */
+export function mondayIndexToJsWeekday(mondayIndex: number) {
+  return (mondayIndex + 1) % 7;
+}
+
 export function ymdToDayIndex(weekDays: Date[], ymd: string) {
   return weekDays.findIndex((day) => formatDateYMD(day) === ymd);
 }
@@ -150,11 +161,12 @@ export function buildWeekEventInstances(
 
   for (const event of events) {
     if (event.is_recurring) {
-      const dayIndex = event.schedule_day_of_week;
-      if (dayIndex == null || dayIndex < 0 || dayIndex > 6) {
+      const jsWeekday = event.schedule_day_of_week;
+      if (jsWeekday == null || jsWeekday < 0 || jsWeekday > 6) {
         continue;
       }
 
+      const dayIndex = jsWeekdayToMondayIndex(jsWeekday);
       const occurrenceDate = weekDates[dayIndex]!;
       const exception = exceptionByKey.get(
         `${event.scheduleId}:${occurrenceDate}`,
@@ -244,7 +256,7 @@ export function buildWeekEventInstances(
   return instances;
 }
 
-/** Bucket week instances into 7 day arrays (index = Sunday–Saturday). */
+/** Bucket week instances into 7 day arrays (index = Monday–Sunday). */
 export function groupInstancesByDay(
   instances: ScheduleEventInstance[],
 ): ScheduleEventInstance[][] {
@@ -258,10 +270,13 @@ export function groupInstancesByDay(
   return byDay;
 }
 
+/** Start of the calendar week (Monday). */
 export function startOfWeek(date: Date) {
   const weekStart = new Date(date);
   weekStart.setHours(0, 0, 0, 0);
-  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const jsWeekday = weekStart.getDay();
+  const daysSinceMonday = jsWeekdayToMondayIndex(jsWeekday);
+  weekStart.setDate(weekStart.getDate() - daysSinceMonday);
   return weekStart;
 }
 
@@ -357,7 +372,10 @@ export function eventShowsOnDay(
   weekDays: Date[],
 ) {
   if (event.is_recurring) {
-    return event.schedule_day_of_week === dayIndex;
+    return (
+      event.schedule_day_of_week != null &&
+      jsWeekdayToMondayIndex(event.schedule_day_of_week) === dayIndex
+    );
   }
 
   if (!event.schedule_date) {

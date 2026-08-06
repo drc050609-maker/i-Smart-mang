@@ -15,6 +15,7 @@ import {
 } from "@/app/(dashboard)/schedule/actions";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { useLanguage } from "@/components/language-provider";
+import { StudentNoteStar } from "@/components/student-note-star";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
@@ -68,7 +69,11 @@ export function ScheduleClassDetailDialog({
   // Prefer the slot-linked student(s). For group/unassigned slots, fall back to
   // student_ids resolved against the active student list (class roster).
   const studentById = new Map(students.map((student) => [student.id, student]));
-  const slotStudents = sortStudents(instance.students);
+  const slotStudents = sortStudents(instance.students).map((student) => {
+    const campus = studentById.get(student.id);
+    if (!campus?.notes?.trim()) return student;
+    return { ...student, notes: campus.notes };
+  });
   const rosterStudents = sortStudents(
     instance.student_ids
       .map((id) => studentById.get(id))
@@ -185,13 +190,14 @@ export function ScheduleClassDetailDialog({
             {displayStudents.length > 0 ? (
               <ul className="mt-4 max-h-40 space-y-1 overflow-y-auto rounded-md border border-gray-200 px-3 py-2 dark:border-white/10">
                 {displayStudents.map((student) => (
-                  <li key={student.id}>
+                  <li key={student.id} className="flex items-center gap-1">
                     <Link
                       href={`/students/${student.id}`}
                       className="text-sm text-violet-700 hover:text-violet-600 dark:text-violet-300 dark:hover:text-violet-200"
                     >
                       {formatStudentName(student)}
                     </Link>
+                    <StudentNoteStar students={[student]} />
                   </li>
                 ))}
               </ul>
