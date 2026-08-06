@@ -9,10 +9,6 @@ import {
   type ActiveTab,
 } from "@/components/active-inactive-tabs";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
-import {
-  SelectChevron,
-  selectFieldClassName,
-} from "@/components/select-chevron";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import type { TranslationKey } from "@/lib/i18n";
@@ -26,6 +22,10 @@ import {
   staffPositionLabelKey,
   type StaffPosition,
 } from "@/lib/staff-position";
+
+function classNames(...classes: Array<string | false | null | undefined>) {
+  return classes.filter(Boolean).join(" ");
+}
 
 type ClassEmbed = {
   id: number;
@@ -137,40 +137,62 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
     [sortedTutors, query],
   );
 
+  const positionOptions: Array<{
+    value: PositionFilter;
+    label: string;
+    count: number;
+  }> = [
+    { value: "all", label: t("common.all"), count: tutors.length },
+    {
+      value: "teacher",
+      label: t("staffPosition.teacher"),
+      count: teacherCount,
+    },
+    {
+      value: "front_desk",
+      label: t("staffPosition.frontDesk"),
+      count: frontDeskCount,
+    },
+  ];
+
   return (
     <div className="mt-6 space-y-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-40 max-w-xs flex-1">
-          <label
-            htmlFor="tutors-position-filter"
-            className="block text-sm/6 font-medium text-gray-900 dark:text-white"
-          >
-            {t("common.position")}
-          </label>
-          <div className="relative mt-2">
-            <select
-              id="tutors-position-filter"
-              value={positionFilter}
-              onChange={(event) =>
-                setPositionFilter(event.target.value as PositionFilter)
-              }
-              aria-label={t("common.position")}
-              className={selectFieldClassName}
-            >
-              <option value="all">
-                {t("common.all")} ({tutors.length})
-              </option>
-              <option value="teacher">
-                {t("staffPosition.teacher")} ({teacherCount})
-              </option>
-              <option value="front_desk">
-                {t("staffPosition.frontDesk")} ({frontDeskCount})
-              </option>
-            </select>
-            <SelectChevron />
-          </div>
+      <div>
+        <p className="text-sm/6 font-medium text-gray-900 dark:text-white">
+          {t("common.position")}
+        </p>
+        <div
+          className="mt-2 inline-flex rounded-md shadow-xs inset-ring inset-ring-gray-300 dark:inset-ring-white/10"
+          role="group"
+          aria-label={t("common.position")}
+        >
+          {positionOptions.map((option, index) => {
+            const selected = positionFilter === option.value;
+            const isFirst = index === 0;
+            const isLast = index === positionOptions.length - 1;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                onClick={() => setPositionFilter(option.value)}
+                aria-pressed={selected}
+                className={classNames(
+                  selected
+                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/20",
+                  isFirst && "rounded-l-md",
+                  isLast && "rounded-r-md",
+                  "px-3 py-1.5 text-sm font-semibold",
+                )}
+              >
+                {option.label} ({option.count})
+              </button>
+            );
+          })}
         </div>
+      </div>
 
+      <div className="flex flex-wrap items-end gap-4">
         <ActiveInactiveTabs
           activeTab={activeTab}
           onChange={setActiveTab}
