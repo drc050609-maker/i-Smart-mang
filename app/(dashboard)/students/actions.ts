@@ -11,6 +11,7 @@ import {
   DEFAULT_STARTING_CLASS_CREDITS,
   parseStartingClassCredits,
 } from "@/lib/class-session-credits";
+import { isPhoneOwnerRole } from "@/lib/phone-owner";
 
 export type CreatedStudent = {
   id: number;
@@ -370,6 +371,161 @@ export async function deleteStudentAddress(
 
   if (addressError) {
     return { error: addressError.message };
+  }
+
+  revalidateStudent(studentId);
+  return { success: true };
+}
+
+export type CreateStudentPhoneContactState = ActionState;
+export type UpdateStudentPhoneContactState = ActionState;
+
+function parsePhoneFields(formData: FormData) {
+  return {
+    phoneNumber: formData.get("phoneNumber")?.toString().trim() ?? "",
+    ownerRole: formData.get("ownerRole")?.toString().trim() ?? "",
+    ownerName: formData.get("ownerName")?.toString().trim() || null,
+    isPrimary: formData.get("isPrimary") === "true",
+  };
+}
+
+export async function createStudentPhoneContact(
+  _prevState: CreateStudentPhoneContactState,
+  formData: FormData,
+): Promise<CreateStudentPhoneContactState> {
+  const studentId = Number(formData.get("studentId"));
+  const { phoneNumber, ownerRole, ownerName, isPrimary } =
+    parsePhoneFields(formData);
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!phoneNumber) {
+    return { error: "Phone number is required." };
+  }
+
+  if (!isPhoneOwnerRole(ownerRole)) {
+    return { error: "Select whose phone this is." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  if (isPrimary) {
+    await client.supabase
+      .from("student_phone_contacts")
+      .update({ is_primary: false })
+      .eq("student_id", studentId)
+      .eq("is_primary", true);
+  }
+
+  const { error: phoneError } = await client.supabase
+    .from("student_phone_contacts")
+    .insert({
+      student_id: studentId,
+      phone_number: phoneNumber,
+      owner_role: ownerRole,
+      owner_name: ownerName,
+      is_primary: isPrimary,
+    });
+
+  if (phoneError) {
+    return { error: phoneError.message };
+  }
+
+  revalidateStudent(studentId);
+  return { success: true };
+}
+
+export async function updateStudentPhoneContact(
+  _prevState: UpdateStudentPhoneContactState,
+  formData: FormData,
+): Promise<UpdateStudentPhoneContactState> {
+  const studentId = Number(formData.get("studentId"));
+  const phoneId = Number(formData.get("phoneId"));
+  const { phoneNumber, ownerRole, ownerName, isPrimary } =
+    parsePhoneFields(formData);
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!Number.isInteger(phoneId) || phoneId <= 0) {
+    return { error: "Invalid phone contact." };
+  }
+
+  if (!phoneNumber) {
+    return { error: "Phone number is required." };
+  }
+
+  if (!isPhoneOwnerRole(ownerRole)) {
+    return { error: "Select whose phone this is." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  if (isPrimary) {
+    await client.supabase
+      .from("student_phone_contacts")
+      .update({ is_primary: false })
+      .eq("student_id", studentId)
+      .eq("is_primary", true)
+      .neq("id", phoneId);
+  }
+
+  const { error: phoneError } = await client.supabase
+    .from("student_phone_contacts")
+    .update({
+      phone_number: phoneNumber,
+      owner_role: ownerRole,
+      owner_name: ownerName,
+      is_primary: isPrimary,
+    })
+    .eq("id", phoneId)
+    .eq("student_id", studentId);
+
+  if (phoneError) {
+    return { error: phoneError.message };
+  }
+
+  revalidateStudent(studentId);
+  return { success: true };
+}
+
+export async function deleteStudentPhoneContact(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const studentId = Number(formData.get("studentId"));
+  const phoneId = Number(formData.get("phoneId"));
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!Number.isInteger(phoneId) || phoneId <= 0) {
+    return { error: "Invalid phone contact." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error: phoneError } = await client.supabase
+    .from("student_phone_contacts")
+    .delete()
+    .eq("id", phoneId)
+    .eq("student_id", studentId);
+
+  if (phoneError) {
+    return { error: phoneError.message };
   }
 
   revalidateStudent(studentId);

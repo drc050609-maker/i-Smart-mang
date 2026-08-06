@@ -65,6 +65,26 @@ export type TranslationKey =
   | "common.id"
   | "common.email"
   | "common.phone"
+  | "common.phones"
+  | "common.noPhones"
+  | "common.addPhone"
+  | "common.editPhone"
+  | "common.savePhone"
+  | "common.deletePhoneConfirm"
+  | "common.phoneOwner"
+  | "common.ownerName"
+  | "common.ownerNamePlaceholder"
+  | "common.primaryPhone"
+  | "phoneOwner.self"
+  | "phoneOwner.mother"
+  | "phoneOwner.father"
+  | "phoneOwner.grandmother"
+  | "phoneOwner.grandfather"
+  | "phoneOwner.guardian"
+  | "phoneOwner.aunt"
+  | "phoneOwner.uncle"
+  | "phoneOwner.sibling"
+  | "phoneOwner.other"
   | "common.teacher"
   | "common.resume"
   | "common.resumeHelp"
@@ -819,6 +839,27 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "ID",
     "common.email": "Email",
     "common.phone": "Phone",
+    "common.phones": "Phone numbers",
+    "common.noPhones": "No phone numbers on file.",
+    "common.addPhone": "Add phone",
+    "common.editPhone": "Edit phone",
+    "common.savePhone": "Save phone",
+    "common.deletePhoneConfirm":
+      "This will permanently delete this phone number.",
+    "common.phoneOwner": "Whose phone",
+    "common.ownerName": "Contact name",
+    "common.ownerNamePlaceholder": "Optional name",
+    "common.primaryPhone": "Primary",
+    "phoneOwner.self": "Self",
+    "phoneOwner.mother": "Mother",
+    "phoneOwner.father": "Father",
+    "phoneOwner.grandmother": "Grandmother",
+    "phoneOwner.grandfather": "Grandfather",
+    "phoneOwner.guardian": "Guardian",
+    "phoneOwner.aunt": "Aunt",
+    "phoneOwner.uncle": "Uncle",
+    "phoneOwner.sibling": "Sibling",
+    "phoneOwner.other": "Other",
     "common.teacher": "Teacher",
     "common.resume": "Resume",
     "common.resumeHelp": "Upload a PDF resume for this teacher (max 10 MB).",
@@ -1637,6 +1678,26 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.id": "编号",
     "common.email": "邮箱",
     "common.phone": "电话",
+    "common.phones": "电话号码",
+    "common.noPhones": "暂无电话号码记录。",
+    "common.addPhone": "添加电话",
+    "common.editPhone": "编辑电话",
+    "common.savePhone": "保存电话",
+    "common.deletePhoneConfirm": "这将永久删除此电话号码。",
+    "common.phoneOwner": "号码归属",
+    "common.ownerName": "联系人姓名",
+    "common.ownerNamePlaceholder": "可选姓名",
+    "common.primaryPhone": "主要",
+    "phoneOwner.self": "本人",
+    "phoneOwner.mother": "母亲",
+    "phoneOwner.father": "父亲",
+    "phoneOwner.grandmother": "祖母/外祖母",
+    "phoneOwner.grandfather": "祖父/外祖父",
+    "phoneOwner.guardian": "监护人",
+    "phoneOwner.aunt": "阿姨/姑姑",
+    "phoneOwner.uncle": "叔叔/舅舅",
+    "phoneOwner.sibling": "兄弟姐妹",
+    "phoneOwner.other": "其他",
     "common.teacher": "老师",
     "common.resume": "简历",
     "common.resumeHelp": "为这位老师上传 PDF 简历（最大 10 MB）。",

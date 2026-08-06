@@ -1464,6 +1464,47 @@ export type Database = {
           },
         ]
       }
+      student_phone_contacts: {
+        Row: {
+          created_at: string
+          id: number
+          is_primary: boolean
+          owner_name: string | null
+          owner_role: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order: number
+          student_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order?: number
+          student_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number?: string
+          sort_order?: number
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_phone_contacts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           dob: string | null
@@ -1956,6 +1997,17 @@ export type Database = {
       member_type: "student" | "teacher"
       payment_plan: "single" | "package_20" | "package_50"
       payment_status: "completed" | "refunded" | "exchanged"
+      phone_owner_role:
+        | "self"
+        | "mother"
+        | "father"
+        | "grandmother"
+        | "grandfather"
+        | "guardian"
+        | "aunt"
+        | "uncle"
+        | "sibling"
+        | "other"
       session_record_source: "automatic" | "manual"
       session_record_status: "used" | "absent"
       staff_language: "en" | "zh"
@@ -2104,6 +2156,18 @@ export const Constants = {
       member_type: ["student", "teacher"],
       payment_plan: ["single", "package_20", "package_50"],
       payment_status: ["completed", "refunded", "exchanged"],
+      phone_owner_role: [
+        "self",
+        "mother",
+        "father",
+        "grandmother",
+        "grandfather",
+        "guardian",
+        "aunt",
+        "uncle",
+        "sibling",
+        "other",
+      ],
       session_record_source: ["automatic", "manual"],
       session_record_status: ["used", "absent"],
       staff_language: ["en", "zh"],
