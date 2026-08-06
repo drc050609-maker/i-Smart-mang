@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect, RedirectType } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
+import type { StaffAccount } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
@@ -18,7 +20,6 @@ import {
   type StaffPosition,
 } from "@/lib/staff-position";
 import { isFrontDeskStaffRole } from "@/lib/staff-role";
-import type { StaffAccount } from "@/lib/auth";
 
 export type CreatedTeacher = {
   id: number;
@@ -318,6 +319,78 @@ export async function updateTeacherActive(
   revalidatePath("/classes", "layout");
   revalidatePath("/schedule");
   return { success: true };
+}
+
+export async function deleteTeacher(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const teacherId = Number(formData.get("teacherId"));
+
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid tutor." };
+  }
+
+  const staff = await requireStaff();
+  if (isFrontDeskStaffRole(staff.role)) {
+    return { error: "Front desk accounts cannot delete teachers." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: existing, error: loadError } = await client.supabase
+    .from("teachers")
+    .select("id, resume_path")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (loadError) {
+    return { error: loadError.message };
+  }
+  if (!existing) {
+    return { error: "Tutor not found." };
+  }
+
+  const unassignError = await removeTeacherFromAllClasses(
+    client.supabase,
+    teacherId,
+  );
+  if (unassignError) {
+    return { error: unassignError };
+  }
+
+  const { error: clearPrimaryError } = await client.supabase
+    .from("classes")
+    .update({ teacher_id: null })
+    .eq("teacher_id", teacherId);
+
+  if (clearPrimaryError) {
+    return { error: clearPrimaryError.message };
+  }
+
+  if (existing.resume_path) {
+    await client.supabase.storage
+      .from(TEACHER_RESUME_BUCKET)
+      .remove([existing.resume_path]);
+  }
+
+  const { error: deleteError } = await client.supabase
+    .from("teachers")
+    .delete()
+    .eq("id", teacherId);
+
+  if (deleteError) {
+    return { error: deleteError.message };
+  }
+
+  revalidatePath("/tutors");
+  revalidatePath("/classes", "layout");
+  revalidatePath("/schedule");
+  revalidatePath("/settings");
+  redirect("/tutors", RedirectType.replace);
 }
 
 async function removeTeacherFromAllClasses(

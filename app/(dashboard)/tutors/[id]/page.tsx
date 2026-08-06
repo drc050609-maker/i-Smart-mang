@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
 
 import { EditTeacherDialog } from "@/components/edit-teacher-dialog";
+import { DeleteTeacherButton } from "@/components/delete-teacher-button";
 import { EditTeacherClassesDialog } from "@/components/edit-teacher-classes-dialog";
 import { EditEnrollmentGradeDialog } from "@/components/edit-enrollment-grade-dialog";
 import type { RoomOption } from "@/components/add-class-dialog";
@@ -379,7 +380,13 @@ export default async function TutorDetailPage({
           <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
             {formatTeacherName(teacher)}
           </h1>
-          <EditTeacherDialog teacher={teacher} />
+          <div className="flex flex-wrap items-center gap-3">
+            <EditTeacherDialog teacher={teacher} />
+            <DeleteTeacherButton
+              teacherId={teacherId}
+              teacherName={formatTeacherName(teacher)}
+            />
+          </div>
         </div>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <div>
