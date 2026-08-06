@@ -436,6 +436,8 @@ export type TranslationKey =
   | "common.removeClass"
   | "common.deleteStudent"
   | "common.deleteStudentConfirm"
+  | "common.deleteTeacher"
+  | "common.deleteTeacherConfirm"
   | "common.deleteClass"
   | "common.deleteClassConfirm"
   | "common.deleteAddress"
@@ -1279,6 +1281,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.removeClass": "Remove class?",
     "common.deleteStudent": "Delete student",
     "common.deleteStudentConfirm": "This will permanently delete {name} and all related records.",
+    "common.deleteTeacher": "Delete teacher",
+    "common.deleteTeacherConfirm":
+      "This will permanently delete {name}, their class assignments, hour logs, and paycheck records.",
     "common.deleteClass": "Delete class",
     "common.deleteClassConfirm": "This will permanently delete this class and all related records.",
     "common.deleteAddress": "Delete address",
@@ -2156,6 +2161,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.removeClass": "移除课程？",
     "common.deleteStudent": "删除学生",
     "common.deleteStudentConfirm": "这将永久删除 {name} 及所有相关记录。",
+    "common.deleteTeacher": "删除老师",
+    "common.deleteTeacherConfirm":
+      "这将永久删除 {name}，以及其课程分配、工时记录和工资记录。",
     "common.deleteClass": "删除课程",
     "common.deleteClassConfirm": "这将永久删除此课程及所有相关记录。",
     "common.deleteAddress": "删除地址",
