@@ -9,10 +9,13 @@ import { correctManualStatementEntryAmount } from "@/app/(dashboard)/finance-act
 import {
   formatStatementAmountCents,
   formatStatementEntryDate,
+  formatStatementMonth,
   getStatementExpenseCategory,
+  statementExpenseCategoryLabel,
   type StatementEntryType,
   type StatementExpenseCategory,
 } from "@/lib/statements";
+import { openStatementMonthPdf } from "@/lib/statement-month-pdf";
 
 export type StatementEntryRow = {
   id: number;
@@ -133,8 +136,9 @@ export function StatementMonthView({
   month: number;
   entries: StatementEntryRow[];
 }) {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
   const [expenseFilter, setExpenseFilter] = useState<ExpenseFilter>("all");
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   const incomeEntries = useMemo(
     () => entries.filter((entry) => entry.entry_type === "income"),
@@ -187,6 +191,60 @@ export function StatementMonthView({
     return t("common.noExpenses");
   }
 
+  function handleDownloadPdf() {
+    setPdfError(null);
+
+    const title = formatStatementMonth(year, month, language);
+    const byDateAsc = (a: StatementEntryRow, b: StatementEntryRow) =>
+      a.entry_date.localeCompare(b.entry_date) || a.id - b.id;
+
+    const incomeRows = [...incomeEntries].sort(byDateAsc).map((entry) => ({
+      date: formatStatementEntryDate(entry.entry_date, language),
+      description: entry.description,
+      amount: formatStatementAmountCents(entry.amount_cents),
+    }));
+
+    const expenseRows = [...expenseEntries].sort(byDateAsc).map((entry) => {
+      const category = getStatementExpenseCategory(entry);
+      return {
+        date: formatStatementEntryDate(entry.entry_date, language),
+        description: entry.description,
+        amount: formatStatementAmountCents(entry.amount_cents),
+        category: statementExpenseCategoryLabel(category, language),
+      };
+    });
+
+    const opened = openStatementMonthPdf(
+      {
+        title,
+        totalIncome: t("common.totalIncome"),
+        fixedExpenses: t("common.fixedExpenses"),
+        variableExpenses: t("common.variableExpenses"),
+        net: t("common.net"),
+        income: t("common.income"),
+        expenses: t("common.expenses"),
+        date: t("common.date"),
+        description: t("common.description"),
+        amount: t("common.amount"),
+        category: t("common.category"),
+        noIncome: t("common.noIncome"),
+        noExpenses: t("common.noExpenses"),
+        printHint: t("common.pdfPrintHint"),
+        incomeTotal: formatStatementAmountCents(incomeTotal),
+        expenseTotal: formatStatementAmountCents(expenseTotal),
+        fixedTotal: formatStatementAmountCents(fixedExpenseTotal),
+        variableTotal: formatStatementAmountCents(variableExpenseTotal),
+        netTotal: formatStatementAmountCents(netTotal),
+      },
+      incomeRows,
+      expenseRows,
+    );
+
+    if (!opened) {
+      setPdfError(t("common.pdfPopupBlocked"));
+    }
+  }
+
   return (
     <div className="mt-8 space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -231,8 +289,21 @@ export function StatementMonthView({
           </div>
         </div>
 
-        <AddStatementEntryDialog year={year} month={month} />
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/15"
+          >
+            {t("common.downloadPdf")}
+          </button>
+          <AddStatementEntryDialog year={year} month={month} />
+        </div>
       </div>
+
+      {pdfError ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{pdfError}</p>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
