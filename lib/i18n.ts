@@ -178,10 +178,19 @@ export type TranslationKey =
   | "common.viewClass"
   | "common.when"
   | "common.notes"
+  | "common.note"
   | "common.editNotes"
   | "common.studentNotesPlaceholder"
   | "common.viewStudentNotes"
   | "common.noStudentNotes"
+  | "common.receipts"
+  | "common.receiptsHelp"
+  | "common.receiptPhoto"
+  | "common.receiptNotePlaceholder"
+  | "common.saveReceipt"
+  | "common.allReceipts"
+  | "common.noReceiptsYet"
+  | "common.viewReceipt"
   | "common.optional"
   | "common.description"
   | "common.year"
@@ -1015,10 +1024,20 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.viewClass": "View class →",
     "common.when": "When",
     "common.notes": "Notes",
+    "common.note": "Note",
     "common.editNotes": "Edit notes",
     "common.studentNotesPlaceholder": "Write notes about this student…",
     "common.viewStudentNotes": "View student notes",
     "common.noStudentNotes": "No notes yet.",
+    "common.receipts": "Receipts",
+    "common.receiptsHelp":
+      "Upload receipt photos for this student (JPEG, PNG, WebP, GIF, or HEIC · max 10 MB).",
+    "common.receiptPhoto": "Receipt photo",
+    "common.receiptNotePlaceholder": "e.g. March tuition payment",
+    "common.saveReceipt": "Save receipt",
+    "common.allReceipts": "All receipts",
+    "common.noReceiptsYet": "No receipts uploaded yet.",
+    "common.viewReceipt": "View",
     "common.optional": "(optional)",
     "common.description": "Description",
     "common.year": "Year",
@@ -1916,10 +1935,20 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.viewClass": "查看课程 →",
     "common.when": "时间",
     "common.notes": "备注",
+    "common.note": "备注",
     "common.editNotes": "编辑备注",
     "common.studentNotesPlaceholder": "填写关于此学生的备注…",
     "common.viewStudentNotes": "查看学生备注",
     "common.noStudentNotes": "暂无备注。",
+    "common.receipts": "收据",
+    "common.receiptsHelp":
+      "为学生上传收据照片（JPEG、PNG、WebP、GIF 或 HEIC · 最大 10 MB）。",
+    "common.receiptPhoto": "收据照片",
+    "common.receiptNotePlaceholder": "例如：3月学费付款",
+    "common.saveReceipt": "保存收据",
+    "common.allReceipts": "全部收据",
+    "common.noReceiptsYet": "暂无收据。",
+    "common.viewReceipt": "查看",
     "common.optional": "（可选）",
     "common.description": "描述",
     "common.year": "年份",
