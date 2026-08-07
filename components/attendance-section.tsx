@@ -191,33 +191,74 @@ function ClassGroupCard({
   const { language, t } = useLanguage();
   const attendanceOptions = getAttendanceStatusOptions(language);
   const markedCount = group.students.filter((s) => s.status !== null).length;
+  const singleStudent =
+    group.students.length === 1 ? group.students[0] : null;
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {formatClassSubject(group.classSubject, language)}
+            {singleStudent
+              ? formatStudentName({
+                  "first name": singleStudent.firstName,
+                  "last name": singleStudent.lastName,
+                })
+              : formatClassSubject(group.classSubject, language)}
           </h2>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {formatTime(group.startTime, language)} – {formatTime(group.endTime, language)}
+            {singleStudent
+              ? formatClassSubject(group.classSubject, language)
+              : null}
+            {singleStudent ? " · " : null}
+            {formatTime(group.startTime, language)} –{" "}
+            {formatTime(group.endTime, language)}
             {group.teacherName ? ` · ${group.teacherName}` : ""}
             {group.locationName ? ` · ${group.locationName}` : ""}
           </p>
-          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-            {t("common.studentsMarked", {
-              students: group.students.length,
-              marked: markedCount,
-            })}
-          </p>
+          {!singleStudent ? (
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {t("common.studentsMarked", {
+                students: group.students.length,
+                marked: markedCount,
+              })}
+            </p>
+          ) : singleStudent.status ? (
+            <p className="mt-1">
+              <span
+                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(singleStudent.status)}`}
+              >
+                {formatAttendanceStatus(singleStudent.status, language)}
+              </span>
+            </p>
+          ) : (
+            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
+              {t("common.notMarked")}
+            </p>
+          )}
         </div>
+        {singleStudent ? (
+          <div className="flex flex-wrap justify-end gap-1.5">
+            {attendanceOptions.map((option) => (
+              <AttendanceMarkButton
+                key={option.value}
+                studentId={singleStudent.studentId}
+                classId={group.classId}
+                scheduleId={group.scheduleId}
+                sessionDate={sessionDate}
+                status={option.value}
+                label={option.label}
+              />
+            ))}
+          </div>
+        ) : null}
       </div>
 
       {group.students.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           {t("common.noEnrolledStudents")}
         </p>
-      ) : (
+      ) : singleStudent ? null : (
         <div className="mt-4 flow-root">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
             <thead>

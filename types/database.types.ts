@@ -2078,6 +2078,12 @@ export type Database = {
         }
         Returns: number
       }
+      delete_statement_entry: {
+        Args: {
+          p_entry_id: number
+        }
+        Returns: undefined
+      }
       set_staff_preferred_language: {
         Args: { p_language: Database["public"]["Enums"]["staff_language"] }
         Returns: undefined

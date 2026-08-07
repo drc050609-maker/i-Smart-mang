@@ -327,6 +327,10 @@ export type TranslationKey =
   | "common.addEntry"
   | "common.recurringEntries"
   | "common.deleteRecurringEntry"
+  | "common.deleteStatementEntryConfirm"
+  | "common.deleteTeacherPaycheckStatementConfirm"
+  | "common.deleteFrontDeskPayStatementConfirm"
+  | "common.deleteRecurringStatementInstanceConfirm"
   | "common.dayOfMonth"
   | "common.totalIncome"
   | "common.mark"
@@ -349,6 +353,8 @@ export type TranslationKey =
   | "common.downloadPdf"
   | "common.pdfPrintHint"
   | "common.pdfPopupBlocked"
+  | "common.frontDeskTimesheet"
+  | "common.noHoursLoggedThisMonth"
   | "common.hideTeacherFilters"
   | "common.showTeacherFilters"
   | "common.clearFilter"
@@ -1193,6 +1199,14 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addEntry": "Add entry",
     "common.recurringEntries": "Recurring entries",
     "common.deleteRecurringEntry": "Delete recurring entry",
+    "common.deleteStatementEntryConfirm":
+      "This will permanently remove this statement entry.",
+    "common.deleteTeacherPaycheckStatementConfirm":
+      "This will remove the teacher paycheck from the statement and clear their per-class pay rates so you can re-enter them.",
+    "common.deleteFrontDeskPayStatementConfirm":
+      "This will remove the front desk pay from the statement so hours can be submitted again.",
+    "common.deleteRecurringStatementInstanceConfirm":
+      "This will remove this month’s recurring entry. The recurring template will stay active.",
     "common.dayOfMonth": "Day of month",
     "common.totalIncome": "Total income",
     "common.mark": "Mark",
@@ -1215,9 +1229,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Pick a teacher and date to see every class and student that day.",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint":
-      "In the print dialog, choose “Save as PDF” to download a copy for the teacher.",
+      "In the print dialog, choose “Save as PDF” to download a copy.",
     "common.pdfPopupBlocked":
       "Unable to open the PDF window. Allow pop-ups for this site and try again.",
+    "common.frontDeskTimesheet": "Front desk timesheet",
+    "common.noHoursLoggedThisMonth": "No hours logged for this month.",
     "common.hideTeacherFilters": "Hide teachers",
     "common.showTeacherFilters": "Show teachers",
     "common.clearFilter": "Clear filter",
@@ -1671,7 +1687,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Pick a date to view classes, or optionally filter by student.",
     "common.classesOnDate": "Classes on {date}",
     "common.attendanceAllClassesHelp":
-      "All scheduled classes for this date. Mark attendance for each student below.",
+      "Only lessons scheduled for this date. Private lessons show the student for that time slot.",
     "common.noClassesOnDate": "No classes scheduled for this date.",
     "common.viewStudentClassesOnly":
       "Select a student above to view their classes only.",
@@ -2102,6 +2118,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addEntry": "添加条目",
     "common.recurringEntries": "定期条目",
     "common.deleteRecurringEntry": "删除定期条目",
+    "common.deleteStatementEntryConfirm": "这将永久删除此财务报表条目。",
+    "common.deleteTeacherPaycheckStatementConfirm":
+      "这将从财务报表中移除老师工资，并清除该老师的课时费率，以便重新录入。",
+    "common.deleteFrontDeskPayStatementConfirm":
+      "这将从财务报表中移除前台工资，以便可以重新提交工时。",
+    "common.deleteRecurringStatementInstanceConfirm":
+      "这将删除本月的定期条目。定期模板仍会保留。",
     "common.dayOfMonth": "每月日期",
     "common.totalIncome": "总收入",
     "common.mark": "标记",
@@ -2123,8 +2146,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.teacherDayListHelp":
       "选择老师和日期，查看当天所有课程与学生。",
     "common.downloadPdf": "PDF",
-    "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”，即可下载发给老师的课表。",
+    "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”即可下载。",
     "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",
+    "common.frontDeskTimesheet": "前台工时表",
+    "common.noHoursLoggedThisMonth": "本月暂无工时记录。",
     "common.hideTeacherFilters": "隐藏老师筛选",
     "common.showTeacherFilters": "显示老师筛选",
     "common.clearFilter": "清除筛选",
@@ -2569,7 +2594,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.attendancePickDateHelp": "选择日期查看课程，也可按学生筛选。",
     "common.classesOnDate": "{date} 的课程",
     "common.attendanceAllClassesHelp":
-      "此日期的所有已安排课程。请在下方为每位学生标记考勤。",
+      "仅显示此日期已安排的课程。私教课只显示该时段对应的学生。",
     "common.noClassesOnDate": "此日期没有安排课程。",
     "common.viewStudentClassesOnly": "在上方选择学生以仅查看其课程。",
     "common.classCountOnDate": "{date} 共 {count} 节课",

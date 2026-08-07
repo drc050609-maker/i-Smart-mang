@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { AddStatementEntryDialog } from "@/components/add-statement-entry-dialog";
+import { DeleteStatementEntryButton } from "@/components/delete-statement-entry-button";
 import { EditAmountDialog } from "@/components/edit-amount-dialog";
 import { useLanguage } from "@/components/language-provider";
 import { correctManualStatementEntryAmount } from "@/app/(dashboard)/finance-actions";
@@ -43,9 +44,13 @@ function sumCents(entries: StatementEntryRow[]) {
 
 function EntryList({
   entries,
+  year,
+  month,
   emptyMessage,
 }: {
   entries: StatementEntryRow[];
+  year: number;
+  month: number;
   emptyMessage: string;
 }) {
   const { language, t } = useLanguage();
@@ -69,6 +74,23 @@ function EntryList({
           !entry.recurring_statement_entry_id &&
           !entry.financial_adjustment_id &&
           !entry.corrects_entry_id;
+
+        const canDelete =
+          !entry.class_payment_id &&
+          !entry.student_purchase_id &&
+          !(
+            entry.financial_adjustment_id &&
+            !entry.teacher_paycheck_id &&
+            !entry.front_desk_paycheck_id
+          );
+
+        const deleteKind = entry.teacher_paycheck_id
+          ? "teacher_paycheck"
+          : entry.front_desk_paycheck_id
+            ? "front_desk_paycheck"
+            : entry.recurring_statement_entry_id
+              ? "recurring"
+              : "manual";
 
         return (
           <li
@@ -108,6 +130,14 @@ function EntryList({
                   currentAmountCents={entry.amount_cents}
                   action={correctManualStatementEntryAmount}
                   hiddenFields={{ entryId: entry.id }}
+                />
+              ) : null}
+              {canDelete ? (
+                <DeleteStatementEntryButton
+                  entryId={entry.id}
+                  year={year}
+                  month={month}
+                  kind={deleteKind}
                 />
               ) : null}
             </div>
@@ -317,6 +347,8 @@ export function StatementMonthView({
           </div>
           <EntryList
             entries={incomeEntries}
+            year={year}
+            month={month}
             emptyMessage={t("common.noIncome")}
           />
         </section>
@@ -349,6 +381,8 @@ export function StatementMonthView({
           </div>
           <EntryList
             entries={visibleExpenseEntries}
+            year={year}
+            month={month}
             emptyMessage={expenseEmptyMessage(expenseFilter)}
           />
         </section>

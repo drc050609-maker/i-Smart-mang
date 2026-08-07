@@ -278,3 +278,85 @@ export async function addStatementEntry(
 
   return { success: true };
 }
+
+export async function deleteStatementEntry(
+  _prevState: StatementActionState,
+  formData: FormData,
+): Promise<StatementActionState> {
+  const entryId = Number(formData.get("entryId"));
+  const year = Number(formData.get("year"));
+  const month = Number(formData.get("month"));
+
+  if (!Number.isInteger(entryId) || entryId <= 0) {
+    return { error: "Invalid statement entry." };
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be signed in to delete a statement entry." };
+  }
+
+  const { data: entry, error: loadError } = await supabase
+    .from("statement_entries")
+    .select("id, teacher_paycheck_id, front_desk_paycheck_id")
+    .eq("id", entryId)
+    .maybeSingle();
+
+  if (loadError) {
+    return { error: loadError.message };
+  }
+
+  if (!entry) {
+    return { error: "Statement entry not found." };
+  }
+
+  let teacherId: number | null = null;
+  if (entry.teacher_paycheck_id != null) {
+    const { data: paycheck } = await supabase
+      .from("teacher_paychecks")
+      .select("teacher_id")
+      .eq("id", entry.teacher_paycheck_id)
+      .maybeSingle();
+    teacherId = paycheck?.teacher_id ?? null;
+  } else if (entry.front_desk_paycheck_id != null) {
+    const { data: paycheck } = await supabase
+      .from("front_desk_paychecks")
+      .select("teacher_id")
+      .eq("id", entry.front_desk_paycheck_id)
+      .maybeSingle();
+    teacherId = paycheck?.teacher_id ?? null;
+  }
+
+  const { error } = await supabase.rpc("delete_statement_entry", {
+    p_entry_id: entryId,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  if (
+    Number.isInteger(year) &&
+    year >= 2000 &&
+    year <= 2100 &&
+    isValidStatementMonth(month)
+  ) {
+    for (const path of revalidateStatementMonthPaths(year, month)) {
+      revalidatePath(path);
+    }
+  } else {
+    revalidatePath("/statements");
+  }
+
+  if (teacherId != null) {
+    revalidatePath(`/tutors/${teacherId}`);
+    revalidatePath("/my-hours");
+  }
+
+  return { success: true };
+}
