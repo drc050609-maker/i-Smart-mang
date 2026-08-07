@@ -16,6 +16,9 @@ export type TeacherPaycheckPdfLabels = {
   subtotal: string;
   total: string;
   totalAmount: string;
+  receivedAck: string;
+  signature: string;
+  date: string;
   printHint: string;
 };
 
@@ -96,6 +99,28 @@ function buildTeacherPaycheckHtml(
       padding-top: 12px;
       font-weight: 700;
     }
+    .signature-block {
+      margin-top: 40px;
+      page-break-inside: avoid;
+    }
+    .signature-ack {
+      margin: 0 0 28px;
+      font-size: 11pt;
+    }
+    .signature-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 32px;
+    }
+    .signature-field .line {
+      border-bottom: 1px solid #111827;
+      height: 36px;
+    }
+    .signature-field .label {
+      margin-top: 6px;
+      color: #4b5563;
+      font-size: 10pt;
+    }
     .hint {
       margin-top: 24px;
       color: #6b7280;
@@ -128,6 +153,19 @@ function buildTeacherPaycheckHtml(
       </tr>
     </tfoot>
   </table>
+  <div class="signature-block">
+    <p class="signature-ack">${escapeHtml(labels.receivedAck)}</p>
+    <div class="signature-row">
+      <div class="signature-field">
+        <div class="line"></div>
+        <div class="label">${escapeHtml(labels.signature)}</div>
+      </div>
+      <div class="signature-field">
+        <div class="line"></div>
+        <div class="label">${escapeHtml(labels.date)}</div>
+      </div>
+    </div>
+  </div>
   <p class="hint">${escapeHtml(labels.printHint)}</p>
 </body>
 </html>`;

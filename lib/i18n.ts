@@ -355,6 +355,8 @@ export type TranslationKey =
   | "common.pdfPopupBlocked"
   | "common.frontDeskTimesheet"
   | "common.noHoursLoggedThisMonth"
+  | "common.paycheckReceivedAck"
+  | "common.signature"
   | "common.hideTeacherFilters"
   | "common.showTeacherFilters"
   | "common.clearFilter"
@@ -1234,6 +1236,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Unable to open the PDF window. Allow pop-ups for this site and try again.",
     "common.frontDeskTimesheet": "Front desk timesheet",
     "common.noHoursLoggedThisMonth": "No hours logged for this month.",
+    "common.paycheckReceivedAck":
+      "I confirm that I have received this paycheck.",
+    "common.signature": "Signature",
     "common.hideTeacherFilters": "Hide teachers",
     "common.showTeacherFilters": "Show teachers",
     "common.clearFilter": "Clear filter",
@@ -2150,6 +2155,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",
     "common.frontDeskTimesheet": "前台工时表",
     "common.noHoursLoggedThisMonth": "本月暂无工时记录。",
+    "common.paycheckReceivedAck": "本人确认已收到此工资。",
+    "common.signature": "签名",
     "common.hideTeacherFilters": "隐藏老师筛选",
     "common.showTeacherFilters": "显示老师筛选",
     "common.clearFilter": "清除筛选",
