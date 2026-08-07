@@ -20,12 +20,16 @@ export function isFrontDeskStaffRole(role: StaffRole) {
   return role === "front_desk";
 }
 
-/** Can open My hours (front desk logins, or any staff linked to a front desk profile). */
+/** Can open My hours (front desk logins, admins, or any staff linked to a front desk profile). */
 export function canAccessMyHours(
   role: StaffRole,
   teacherId: number | null | undefined,
 ) {
-  return isFrontDeskStaffRole(role) || teacherId != null;
+  return (
+    role === "admin" ||
+    isFrontDeskStaffRole(role) ||
+    (teacherId != null && teacherId > 0)
+  );
 }
 
 export function formatStaffRole(role: StaffRole, language: AppLanguage = "en") {

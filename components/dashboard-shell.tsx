@@ -88,12 +88,6 @@ const navigation: NavItem[] = [
     hideForFrontDesk: true,
   },
   {
-    name: "My hours",
-    href: "/my-hours",
-    icon: ClockIcon,
-    frontDeskOnly: true,
-  },
-  {
     name: "Tuitions",
     href: "/tuitions",
     icon: BanknotesIcon,
@@ -112,6 +106,12 @@ const navigation: NavItem[] = [
     hideForFrontDesk: true,
   },
   { name: "Schedule", href: "/schedule", icon: CalendarIcon },
+  {
+    name: "My hours",
+    href: "/my-hours",
+    icon: ClockIcon,
+    frontDeskOnly: true,
+  },
   { name: "Events", href: "/events", icon: PhotoIcon, adminOnly: true },
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
