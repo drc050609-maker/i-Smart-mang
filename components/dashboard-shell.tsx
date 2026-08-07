@@ -40,6 +40,7 @@ import { useLanguage } from "@/components/language-provider";
 import { getNavTranslationKey } from "@/lib/i18n";
 import {
   frontDeskHomePath,
+  canAccessMyHours,
   isFrontDeskStaffRole,
   type StaffRole,
 } from "@/lib/staff-role";
@@ -115,10 +116,10 @@ const navigation: NavItem[] = [
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
 
-function visibleNavigation(role: StaffRole) {
+function visibleNavigation(role: StaffRole, teacherId: number | null) {
   return navigation.filter((item) => {
     if (item.adminOnly && role !== "admin") return false;
-    if (item.frontDeskOnly && role !== "front_desk") return false;
+    if (item.frontDeskOnly && !canAccessMyHours(role, teacherId)) return false;
     if (item.hideForFrontDesk && role === "front_desk") return false;
     return true;
   });
@@ -143,15 +144,17 @@ function NavLinks({
   pathname,
   onNavigate,
   role,
+  teacherId,
   compact,
 }: {
   pathname: string;
   onNavigate?: () => void;
   role: StaffRole;
+  teacherId: number | null;
   compact?: boolean;
 }) {
   const { t } = useLanguage();
-  const visibleNav = visibleNavigation(role);
+  const visibleNav = visibleNavigation(role, teacherId);
 
   return (
     <ul role="list" className="-mx-2 space-y-1">
@@ -245,6 +248,7 @@ export function DashboardShell({
     email: string;
     role: StaffRole;
     location: StaffLocation;
+    teacherId: number | null;
   };
   activeCampus: StaffLocation;
 }) {
@@ -257,7 +261,7 @@ export function DashboardShell({
   const closeMobile = () => setSidebarOpen(false);
   const compact = sidebarWidth <= SIDEBAR_MIN_WIDTH + 24;
 
-  const visibleNav = visibleNavigation(staff.role);
+  const visibleNav = visibleNavigation(staff.role, staff.teacherId);
   const homeHref = isFrontDeskStaffRole(staff.role)
     ? frontDeskHomePath()
     : "/";
@@ -348,6 +352,7 @@ export function DashboardShell({
                       pathname={pathname}
                       onNavigate={closeMobile}
                       role={staff.role}
+                      teacherId={staff.teacherId}
                     />
                   </li>
                 </ul>
@@ -382,6 +387,7 @@ export function DashboardShell({
                 <NavLinks
                   pathname={pathname}
                   role={staff.role}
+                  teacherId={staff.teacherId}
                   compact={compact}
                 />
               </li>

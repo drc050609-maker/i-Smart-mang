@@ -46,6 +46,7 @@ export default async function DashboardLayout({
           email: staff.email,
           role: staff.role,
           location: staff.location,
+          teacherId: staff.teacher_id,
         }}
         activeCampus={activeCampus}
       >
