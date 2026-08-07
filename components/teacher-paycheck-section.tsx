@@ -31,9 +31,16 @@ import {
   type TeacherGroupPayRates,
   type TeacherPaycheckPeriodData,
 } from "@/lib/teacher-paycheck";
+import {
+  openTeacherPaycheckPdf,
+  type TeacherPaycheckPdfLine,
+} from "@/lib/teacher-paycheck-pdf";
 
 const inputClassName =
   "block w-24 rounded-md bg-white px-3 py-1.5 text-right text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
+
+const pdfButtonClassName =
+  "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/15";
 
 const initialState: PaycheckActionState = {};
 
@@ -78,12 +85,14 @@ function buildLineSummaries(
 
 function PaycheckPeriodCard({
   teacherId,
+  teacherName,
   period,
   rates,
   onRateChange,
   onRateBlur,
 }: {
   teacherId: number;
+  teacherName: string;
   period: TeacherPaycheckPeriodData;
   rates: Record<string, string>;
   onRateChange: (groupKey: string, value: string) => void;
@@ -100,6 +109,7 @@ function PaycheckPeriodCard({
     initialState,
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -109,6 +119,7 @@ function PaycheckPeriodCard({
   useEffect(() => {
     setConfirmOpen(false);
     setFormError(null);
+    setPdfError(null);
   }, [period.year, period.month]);
 
   useEffect(() => {
@@ -180,6 +191,72 @@ function PaycheckPeriodCard({
     }
   }
 
+  function handleDownloadPdf() {
+    setPdfError(null);
+
+    const monthLabel = formatStatementMonth(period.year, period.month, language);
+    const pdfLines: TeacherPaycheckPdfLine[] = period.classLines.map((line) => {
+      const savedLine = savedPaycheck?.lines.find(
+        (saved) => saved.groupKey === line.groupKey,
+      );
+      const sessionCount = isRecorded
+        ? (savedLine?.sessionCount ?? line.sessionCount)
+        : line.sessionCount;
+      const rateCents = isRecorded
+        ? (savedLine?.rateCents ?? 0)
+        : (() => {
+            const rate = Number(rates[line.groupKey] ?? "");
+            return Number.isFinite(rate) && rate >= 0
+              ? Math.round(rate * 100)
+              : 0;
+          })();
+      const subtotalCents = isRecorded
+        ? (savedLine?.lineTotalCents ?? 0)
+        : sessionCount * rateCents;
+
+      return {
+        classLabel: formatSubjectWithGradeTier(
+          line.subject,
+          line.gradeTier,
+          language,
+        ),
+        sessions: String(sessionCount),
+        rate: formatStatementAmountCents(rateCents),
+        subtotal: formatStatementAmountCents(subtotalCents),
+      };
+    });
+
+    const totalCents = isRecorded
+      ? savedPaycheck.effectiveAmountCents
+      : liveTotalCents;
+
+    const opened = openTeacherPaycheckPdf(
+      {
+        title: `${teacherName} — ${t("common.teacherPaycheck")}`,
+        subtitle: isRecorded
+          ? `${monthLabel} · ${t("common.recordedAt", {
+              date: formatRecordedAt(savedPaycheck.createdAt, language),
+            })}`
+          : monthLabel,
+        classLabel: t("common.class"),
+        sessions: t("common.classesColumn"),
+        rate: t("common.ratePerClass"),
+        subtotal: t("common.subtotal"),
+        total: t("common.totalPaycheck"),
+        totalAmount: formatStatementAmountCents(totalCents),
+        receivedAck: t("common.paycheckReceivedAck"),
+        signature: t("common.signature"),
+        date: t("common.date"),
+        printHint: t("common.pdfPrintHint"),
+      },
+      pdfLines,
+    );
+
+    if (!opened) {
+      setPdfError(t("common.pdfPopupBlocked"));
+    }
+  }
+
   if (period.classLines.length === 0) {
     return (
       <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
@@ -199,7 +276,14 @@ function PaycheckPeriodCard({
             : t("common.classesThisPeriod", { count: liveTotalSessions })}
         </p>
         {isRecorded ? (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              className={pdfButtonClassName}
+            >
+              {t("common.downloadPdf")}
+            </button>
             <EditAmountDialog
               title={t("common.editPaycheckAmount")}
               description={t("common.correctionKeepsHistory")}
@@ -218,6 +302,10 @@ function PaycheckPeriodCard({
           </div>
         ) : null}
       </div>
+
+      {pdfError ? (
+        <p className="mt-2 text-sm text-red-600 dark:text-red-400">{pdfError}</p>
+      ) : null}
 
       <div className="mt-4 overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
@@ -358,14 +446,24 @@ function PaycheckPeriodCard({
             <p className="mb-3 text-sm text-red-600 dark:text-red-400">{formError}</p>
           ) : null}
 
-          <button
-            type="button"
-            onClick={openConfirmDialog}
-            disabled={liveTotalCents <= 0}
-            className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
-          >
-            {t("common.reviewPaycheck")}
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={openConfirmDialog}
+              disabled={liveTotalCents <= 0}
+              className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
+            >
+              {t("common.reviewPaycheck")}
+            </button>
+            <button
+              type="button"
+              onClick={handleDownloadPdf}
+              disabled={liveTotalCents <= 0}
+              className={`${pdfButtonClassName} disabled:cursor-not-allowed disabled:opacity-50`}
+            >
+              {t("common.downloadPdf")}
+            </button>
+          </div>
 
           <form ref={formRef} action={formAction} className="hidden">
             <input type="hidden" name="teacherId" value={teacherId} />
@@ -502,6 +600,14 @@ function PaycheckPeriodCard({
                     </button>
                     <button
                       type="button"
+                      onClick={handleDownloadPdf}
+                      disabled={isPending}
+                      className="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+                    >
+                      {t("common.downloadPdf")}
+                    </button>
+                    <button
+                      type="button"
                       disabled={isPending}
                       onClick={() => formRef.current?.requestSubmit()}
                       className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -523,10 +629,12 @@ function PaycheckPeriodCard({
 
 export function TeacherPaycheckSection({
   teacherId,
+  teacherName,
   periods,
   defaultPayRates,
 }: {
   teacherId: number;
+  teacherName: string;
   periods: TeacherPaycheckPeriodData[];
   defaultPayRates: TeacherGroupPayRates;
 }) {
@@ -630,6 +738,7 @@ export function TeacherPaycheckSection({
         <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-white/10">
           <PaycheckPeriodCard
             teacherId={teacherId}
+            teacherName={teacherName}
             period={selectedPeriod}
             rates={rates}
             onRateChange={handleRateChange}

@@ -487,6 +487,7 @@ export default async function TutorDetailPage({
           ) : null}
           <FrontDeskHoursSection
             teacherId={teacherId}
+            teacherName={formatTeacherName(teacher)}
             hourlyRateCents={teacher.hourly_rate_cents}
             logs={hourLogs}
             recordedPaychecks={recordedPaychecks}
@@ -677,6 +678,7 @@ export default async function TutorDetailPage({
 
       <TeacherPaycheckSection
         teacherId={teacherId}
+        teacherName={formatTeacherName(teacher)}
         periods={paycheckPeriods}
         defaultPayRates={defaultPayRates}
       />

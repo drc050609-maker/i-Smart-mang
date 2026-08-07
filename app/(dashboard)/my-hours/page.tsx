@@ -83,6 +83,7 @@ export default async function MyHoursPage() {
 
       <FrontDeskHoursSection
         teacherId={teacher.id}
+        teacherName={formatTeacherName(teacher)}
         hourlyRateCents={teacher.hourly_rate_cents}
         logs={hourLogs}
         recordedPaychecks={paychecks ?? []}

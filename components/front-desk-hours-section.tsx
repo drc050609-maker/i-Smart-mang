@@ -32,6 +32,11 @@ import {
   formatStatementMonth,
   statementMonthHref,
 } from "@/lib/statements";
+import {
+  openFrontDeskTimesheetPdf,
+  type FrontDeskTimesheetPdfLine,
+} from "@/lib/front-desk-timesheet-pdf";
+import { appLanguageLocale } from "@/lib/language";
 import type { TranslationKey } from "@/lib/i18n";
 
 export type FrontDeskHourLog = {
@@ -69,6 +74,9 @@ const inputClassName =
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
 
+const pdfButtonClassName =
+  "rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/15";
+
 function pad2(n: number) {
   return String(n).padStart(2, "0");
 }
@@ -82,6 +90,27 @@ function monthLabel(year: number, monthIndex: number, language: string) {
     language === "zh" ? "zh-CN" : "en-US",
     { month: "long", year: "numeric" },
   );
+}
+
+function formatLogDate(dateStr: string, language: "en" | "zh") {
+  return new Date(`${dateStr}T00:00:00`).toLocaleDateString(
+    appLanguageLocale(language),
+    {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    },
+  );
+}
+
+function formatRecordedAt(iso: string, language: "en" | "zh") {
+  return new Date(iso).toLocaleString(appLanguageLocale(language), {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
 }
 
 function HoursFormFields({
@@ -199,11 +228,13 @@ const initialPaycheckState: FrontDeskPaycheckActionState = {};
 
 export function FrontDeskHoursSection({
   teacherId,
+  teacherName,
   hourlyRateCents,
   logs,
   recordedPaychecks = [],
 }: {
   teacherId: number;
+  teacherName: string;
   hourlyRateCents: number | null;
   logs: FrontDeskHourLog[];
   recordedPaychecks?: FrontDeskRecordedPaycheck[];
@@ -215,6 +246,7 @@ export function FrontDeskHoursSection({
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const submitFormRef = useRef<HTMLFormElement>(null);
@@ -261,6 +293,7 @@ export function FrontDeskHoursSection({
   useEffect(() => {
     setConfirmOpen(false);
     setSubmitError(null);
+    setPdfError(null);
   }, [viewYear, viewMonth]);
 
   useEffect(() => {
@@ -320,6 +353,75 @@ export function FrontDeskHoursSection({
     }
   }
 
+  function handleDownloadPdf() {
+    setPdfError(null);
+
+    const monthName = formatStatementMonth(viewYear, statementMonth, language);
+    const sortedLogs = [...monthLogs].sort((a, b) =>
+      a.work_date.localeCompare(b.work_date),
+    );
+
+    const pdfLines: FrontDeskTimesheetPdfLine[] = sortedLogs.map((log) => {
+      const minutes =
+        workedMinutesBetween(log.clock_in, log.clock_out) ??
+        Math.round(Number(log.hours) * 60);
+      const duration = formatWorkedDuration(minutes);
+      const payCents = frontDeskDayPayCents(Number(log.hours), log.rate_cents);
+
+      return {
+        date: formatLogDate(log.work_date, language),
+        clockIn: formatClockTime(log.clock_in),
+        clockOut: formatClockTime(log.clock_out),
+        duration: t("common.durationHoursMinutes", {
+          hours: duration.hours,
+          minutes: duration.minutes,
+        }),
+        rate: formatCentsAsCurrency(log.rate_cents, language),
+        pay: formatCentsAsCurrency(payCents, language),
+        notes: log.notes?.trim() || "—",
+      };
+    });
+
+    const totalPayCents =
+      recordedPaycheck != null ? recordedPaycheck.total_amount_cents : monthPay;
+
+    const opened = openFrontDeskTimesheetPdf(
+      {
+        title: `${teacherName} — ${t("common.frontDeskTimesheet")}`,
+        subtitle:
+          recordedPaycheck != null
+            ? `${monthName} · ${t("common.recordedAt", {
+                date: formatRecordedAt(recordedPaycheck.created_at, language),
+              })}`
+            : monthName,
+        date: t("common.date"),
+        clockIn: t("common.clockIn"),
+        clockOut: t("common.clockOut"),
+        duration: t("common.hoursWorked"),
+        rate: t("common.hourlyRate"),
+        pay: t("common.amount"),
+        notes: t("common.notes"),
+        totalHours: t("common.monthTotal"),
+        totalHoursValue: t("common.durationHoursMinutes", {
+          hours: monthDuration.hours,
+          minutes: monthDuration.minutes,
+        }),
+        totalPay: t("common.amount"),
+        totalPayValue: formatCentsAsCurrency(totalPayCents, language),
+        empty: t("common.noHoursLoggedThisMonth"),
+        receivedAck: t("common.paycheckReceivedAck"),
+        signature: t("common.signature"),
+        signatureDate: t("common.date"),
+        printHint: t("common.pdfPrintHint"),
+      },
+      pdfLines,
+    );
+
+    if (!opened) {
+      setPdfError(t("common.pdfPopupBlocked"));
+    }
+  }
+
   function shiftMonth(delta: number) {
     const next = new Date(viewYear, viewMonth + delta, 1);
     setViewYear(next.getFullYear());
@@ -375,6 +477,14 @@ export function FrontDeskHoursSection({
               </p>
             ) : null}
           </div>
+          <button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={monthLogs.length === 0}
+            className={pdfButtonClassName}
+          >
+            {t("common.downloadPdf")}
+          </button>
           {isSubmitted ? (
             <Link
               href={statementMonthHref(viewYear, statementMonth)}
@@ -394,6 +504,10 @@ export function FrontDeskHoursSection({
           )}
         </div>
       </div>
+
+      {pdfError ? (
+        <p className="mt-3 text-sm text-red-600 dark:text-red-400">{pdfError}</p>
+      ) : null}
 
       {submitError && !confirmOpen ? (
         <p className="mt-3 text-sm text-red-600 dark:text-red-400">{submitError}</p>
@@ -452,6 +566,14 @@ export function FrontDeskHoursSection({
                   className="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
                 >
                   {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={paycheckPending || monthLogs.length === 0}
+                  className="inline-flex justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/5 dark:hover:bg-white/20"
+                >
+                  {t("common.downloadPdf")}
                 </button>
                 <button
                   type="button"

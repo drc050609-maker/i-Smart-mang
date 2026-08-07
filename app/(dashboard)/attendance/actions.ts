@@ -73,7 +73,7 @@ async function loadAttendanceSlotsForDate(
     supabase
       .from("class_schedules")
       .select(
-        "id, class_id, is_recurring, schedule_day_of_week, schedule_date, classes ( id, is_active )",
+        "id, class_id, student_id, is_recurring, schedule_day_of_week, schedule_date, classes ( id, is_active )",
       ),
     supabase
       .from("enrollments")
@@ -93,6 +93,7 @@ async function loadAttendanceSlotsForDate(
   type ScheduleRow = {
     id: number;
     class_id: number;
+    student_id: number | null;
     is_recurring: boolean;
     schedule_day_of_week: number | null;
     schedule_date: string | null;
@@ -150,7 +151,14 @@ async function loadAttendanceSlotsForDate(
       : schedule.classes;
     if (!classEmbed?.is_active) continue;
 
-    const studentIds = enrollmentsByClass.get(schedule.class_id) ?? [];
+    const enrolledIds = enrollmentsByClass.get(schedule.class_id) ?? [];
+    const studentIds =
+      schedule.student_id != null
+        ? enrolledIds.includes(schedule.student_id)
+          ? [schedule.student_id]
+          : []
+        : enrolledIds;
+
     for (const studentId of studentIds) {
       slots.push({
         studentId,

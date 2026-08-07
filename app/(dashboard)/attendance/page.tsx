@@ -35,6 +35,7 @@ type ClassEmbed = {
 type ScheduleRow = {
   id: number;
   class_id: number;
+  student_id: number | null;
   is_recurring: boolean;
   schedule_day_of_week: number | null;
   schedule_date: string | null;
@@ -127,6 +128,7 @@ export default async function AttendancePage({
         `
         id,
         class_id,
+        student_id,
         is_recurring,
         schedule_day_of_week,
         schedule_date,
@@ -175,15 +177,11 @@ export default async function AttendancePage({
     ((students as StudentRow[] | null) ?? []).map((student) => [student.id, student]),
   );
 
-  const classesByStudent = new Map<number, Set<number>>();
   const enrollmentsByClass = new Map<number, number[]>();
   for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
     const classId = enrollment["class id"];
     const studentId = enrollment["student id"];
     if (studentId === null) continue;
-    const classIds = classesByStudent.get(studentId) ?? new Set<number>();
-    classIds.add(classId);
-    classesByStudent.set(studentId, classIds);
     const studentIds = enrollmentsByClass.get(classId) ?? [];
     studentIds.push(studentId);
     enrollmentsByClass.set(classId, studentIds);
@@ -204,6 +202,43 @@ export default async function AttendancePage({
     );
   }
 
+  function studentsForSchedule(schedule: {
+    classId: number;
+    scheduleStudentId: number | null;
+  }) {
+    const enrolledIds = enrollmentsByClass.get(schedule.classId) ?? [];
+
+    // Private / per-student slots only include that student.
+    // Group slots (no student_id) include the full active roster.
+    const studentIds =
+      schedule.scheduleStudentId != null
+        ? enrolledIds.includes(schedule.scheduleStudentId)
+          ? [schedule.scheduleStudentId]
+          : studentById.has(schedule.scheduleStudentId)
+            ? [schedule.scheduleStudentId]
+            : []
+        : enrolledIds;
+
+    return studentIds
+      .map((studentId) => {
+        const student = studentById.get(studentId);
+        if (!student) return null;
+
+        return {
+          studentId,
+          firstName: student["first name"],
+          lastName: student["last name"],
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null)
+      .sort((a, b) =>
+        compareStudentNames(
+          { "first name": a.firstName, "last name": a.lastName },
+          { "first name": b.firstName, "last name": b.lastName },
+        ),
+      );
+  }
+
   const sessionsForDate = ((schedules as ScheduleRow[] | null) ?? [])
     .filter((schedule) => scheduleMatchesDate(schedule, sessionDate))
     .map((schedule) => {
@@ -216,6 +251,7 @@ export default async function AttendancePage({
       return {
         scheduleId: schedule.id,
         classId: classRow.id,
+        scheduleStudentId: schedule.student_id,
         classSubject: classRow.subject,
         teacherName: teacher ? formatTeacherName(teacher) : null,
         locationName: location?.name ?? null,
@@ -227,64 +263,77 @@ export default async function AttendancePage({
 
   const classGroups: AttendanceClassGroup[] = sessionsForDate
     .map((session) => {
-      const studentIds = enrollmentsByClass.get(session.classId) ?? [];
-      const students: AttendanceStudentRow[] = studentIds
-        .map((studentId) => {
-          const student = studentById.get(studentId);
-          if (!student) return null;
+      const students: AttendanceStudentRow[] = studentsForSchedule(session).map(
+        (student) => ({
+          ...student,
+          status:
+            attendanceByKey.get(
+              attendanceKey(
+                student.studentId,
+                session.classId,
+                session.scheduleId,
+              ),
+            ) ?? null,
+        }),
+      );
 
-          return {
-            studentId,
-            firstName: student["first name"],
-            lastName: student["last name"],
-            status:
-              attendanceByKey.get(
-                attendanceKey(studentId, session.classId, session.scheduleId),
-              ) ?? null,
-          };
-        })
-        .filter((row): row is NonNullable<typeof row> => row !== null)
-        .sort((a, b) =>
-          compareStudentNames(
-            { "first name": a.firstName, "last name": a.lastName },
-            { "first name": b.firstName, "last name": b.lastName },
-          ),
-        );
+      // Skip empty private slots (inactive / missing student).
+      if (students.length === 0) return null;
 
-      return { ...session, students };
+      return {
+        scheduleId: session.scheduleId,
+        classId: session.classId,
+        classSubject: session.classSubject,
+        teacherName: session.teacherName,
+        locationName: session.locationName,
+        startTime: session.startTime,
+        endTime: session.endTime,
+        students,
+      };
     })
+    .filter((group): group is NonNullable<typeof group> => group !== null)
     .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   const studentDaysMap = new Map<number, AttendanceStudentDay>();
 
-  for (const [studentId, classIds] of classesByStudent) {
-    const student = studentById.get(studentId);
-    if (!student) continue;
+  for (const session of sessionsForDate) {
+    const scheduledStudents = studentsForSchedule(session);
 
-    const sessions: AttendanceClassSession[] = [];
-
-    for (const session of sessionsForDate) {
-      if (!classIds.has(session.classId)) continue;
-
-      sessions.push({
-        ...session,
+    for (const student of scheduledStudents) {
+      const existing = studentDaysMap.get(student.studentId);
+      const sessionRow: AttendanceClassSession = {
+        scheduleId: session.scheduleId,
+        classId: session.classId,
+        classSubject: session.classSubject,
+        teacherName: session.teacherName,
+        locationName: session.locationName,
+        startTime: session.startTime,
+        endTime: session.endTime,
         status:
           attendanceByKey.get(
-            attendanceKey(studentId, session.classId, session.scheduleId),
+            attendanceKey(
+              student.studentId,
+              session.classId,
+              session.scheduleId,
+            ),
           ) ?? null,
-      });
+      };
+
+      if (existing) {
+        existing.sessions.push(sessionRow);
+      } else {
+        studentDaysMap.set(student.studentId, {
+          studentId: student.studentId,
+          firstName: student.firstName,
+          lastName: student.lastName,
+          sessions: [sessionRow],
+        });
+      }
     }
+  }
 
-    if (sessions.length === 0) continue;
-
-    sessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
-
-    studentDaysMap.set(studentId, {
-      studentId,
-      firstName: student["first name"],
-      lastName: student["last name"],
-      sessions,
-    });
+  for (const day of studentDaysMap.values()) {
+    day.sessions.sort((a, b) => a.startTime.localeCompare(b.startTime));
   }
 
   const studentDays = [...studentDaysMap.values()].sort((a, b) =>
