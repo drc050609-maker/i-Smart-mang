@@ -4,7 +4,7 @@ import { FrontDeskHoursSection } from "@/components/front-desk-hours-section";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { formatTeacherName } from "@/lib/person-name";
-import { isFrontDeskStaffRole } from "@/lib/staff-role";
+import { canAccessMyHours } from "@/lib/staff-role";
 import { createClient } from "@/utils/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -12,8 +12,8 @@ export default async function MyHoursPage() {
   const staff = await requireStaff();
   const t = createTranslator(staff.preferred_language);
 
-  if (!isFrontDeskStaffRole(staff.role)) {
-    redirect(staff.teacher_id ? `/tutors/${staff.teacher_id}` : "/tutors");
+  if (!canAccessMyHours(staff.role, staff.teacher_id)) {
+    redirect("/tutors");
   }
 
   if (!staff.teacher_id) {
