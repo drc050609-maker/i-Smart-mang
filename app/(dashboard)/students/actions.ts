@@ -12,6 +12,11 @@ import {
   parseStartingClassCredits,
 } from "@/lib/class-session-credits";
 import { isPhoneOwnerRole } from "@/lib/phone-owner";
+import {
+  isStudentReceiptMimeType,
+  MAX_STUDENT_RECEIPT_FILE_BYTES,
+  STUDENT_RECEIPT_BUCKET,
+} from "@/lib/student-receipt";
 
 export type CreatedStudent = {
   id: number;
@@ -710,6 +715,25 @@ export async function deleteStudent(
     ),
   ];
 
+  const { data: receipts, error: receiptsLookupError } = await client.supabase
+    .from("student_receipts")
+    .select("storage_path")
+    .eq("student_id", studentId);
+
+  if (receiptsLookupError) {
+    return { error: receiptsLookupError.message };
+  }
+
+  const receiptPaths = (receipts ?? [])
+    .map((row) => row.storage_path)
+    .filter((path): path is string => typeof path === "string" && path.length > 0);
+
+  if (receiptPaths.length > 0) {
+    await client.supabase.storage
+      .from(STUDENT_RECEIPT_BUCKET)
+      .remove(receiptPaths);
+  }
+
   const { error: enrollmentError } = await client.supabase
     .from("enrollments")
     .delete()
@@ -796,5 +820,142 @@ export async function updateStudentActive(
 
   revalidateStudent(studentId);
   revalidatePath("/classes", "layout");
+  return { success: true };
+}
+
+function sanitizeFileName(fileName: string) {
+  return fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120);
+}
+
+export async function uploadStudentReceipt(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const studentId = Number(formData.get("studentId"));
+  const note = formData.get("note")?.toString().trim() || null;
+  const file = formData.get("receipt");
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!(file instanceof File) || file.size === 0) {
+    return { error: "Choose a receipt photo to upload." };
+  }
+
+  if (!isStudentReceiptMimeType(file.type)) {
+    return { error: "Receipt must be an image (JPEG, PNG, WebP, GIF, or HEIC)." };
+  }
+
+  if (file.size > MAX_STUDENT_RECEIPT_FILE_BYTES) {
+    return { error: "Receipt photo is too large. Max size is 10 MB." };
+  }
+
+  const staff = await requireStaff();
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: student, error: studentError } = await client.supabase
+    .from("students")
+    .select("id")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (studentError) {
+    return { error: studentError.message };
+  }
+  if (!student) {
+    return { error: "Student not found." };
+  }
+
+  const storagePath = `${studentId}/${crypto.randomUUID()}-${sanitizeFileName(file.name)}`;
+  const fileBuffer = Buffer.from(await file.arrayBuffer());
+
+  const { error: uploadError } = await client.supabase.storage
+    .from(STUDENT_RECEIPT_BUCKET)
+    .upload(storagePath, fileBuffer, {
+      contentType: file.type || "image/jpeg",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    return { error: uploadError.message };
+  }
+
+  const { error: insertError } = await client.supabase
+    .from("student_receipts")
+    .insert({
+      student_id: studentId,
+      storage_path: storagePath,
+      file_name: file.name.slice(0, 200),
+      mime_type: file.type || null,
+      note,
+      uploaded_by: staff.id,
+    });
+
+  if (insertError) {
+    await client.supabase.storage
+      .from(STUDENT_RECEIPT_BUCKET)
+      .remove([storagePath]);
+    return { error: insertError.message };
+  }
+
+  revalidateStudent(studentId);
+  return { success: true };
+}
+
+export async function deleteStudentReceipt(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const studentId = Number(formData.get("studentId"));
+  const receiptId = Number(formData.get("receiptId"));
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+  if (!Number.isInteger(receiptId) || receiptId <= 0) {
+    return { error: "Invalid receipt." };
+  }
+
+  await requireStaff();
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: existing, error: loadError } = await client.supabase
+    .from("student_receipts")
+    .select("id, storage_path")
+    .eq("id", receiptId)
+    .eq("student_id", studentId)
+    .maybeSingle();
+
+  if (loadError) {
+    return { error: loadError.message };
+  }
+  if (!existing) {
+    return { error: "Receipt not found." };
+  }
+
+  const { error: deleteError } = await client.supabase
+    .from("student_receipts")
+    .delete()
+    .eq("id", receiptId)
+    .eq("student_id", studentId);
+
+  if (deleteError) {
+    return { error: deleteError.message };
+  }
+
+  if (existing.storage_path) {
+    await client.supabase.storage
+      .from(STUDENT_RECEIPT_BUCKET)
+      .remove([existing.storage_path]);
+  }
+
+  revalidateStudent(studentId);
   return { success: true };
 }

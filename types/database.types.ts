@@ -1631,6 +1631,47 @@ export type Database = {
           },
         ]
       }
+      student_receipts: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: number
+          mime_type: string | null
+          note: string | null
+          storage_path: string
+          student_id: number
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: number
+          mime_type?: string | null
+          note?: string | null
+          storage_path: string
+          student_id: number
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: number
+          mime_type?: string | null
+          note?: string | null
+          storage_path?: string
+          student_id?: number
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_receipts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           dob: string | null

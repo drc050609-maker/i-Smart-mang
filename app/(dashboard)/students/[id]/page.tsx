@@ -10,6 +10,7 @@ import { StudentAddressesSection } from "@/components/student-addresses-section"
 import { AddStudentAddressDialog } from "@/components/add-student-address-dialog";
 import { StudentPhonesSection } from "@/components/student-phones-section";
 import { AddStudentPhoneDialog } from "@/components/add-student-phone-dialog";
+import { StudentReceiptsDialog } from "@/components/student-receipts-dialog";
 import { AddStudentClassesDialog } from "@/components/add-student-classes-dialog";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
 import type { ClassOption } from "@/components/class-multi-combobox";
@@ -38,6 +39,12 @@ import {
   formatSessionDate,
   type StudentClassBalance,
 } from "@/lib/class-session-credits";
+import {
+  STUDENT_RECEIPT_BUCKET,
+  type StudentReceiptRow,
+  type StudentReceiptView,
+} from "@/lib/student-receipt";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 
 import type { Database } from "@/types/database.types";
 
@@ -140,6 +147,7 @@ export default async function StudentDetailPage({
   const [
     { data: addresses, error: addressError },
     { data: phones, error: phonesError },
+    { data: receipts, error: receiptsError },
     { data: enrollments, error: enrollmentError },
     { data: allClasses, error: allClassesError },
     { data: balances, error: balancesError },
@@ -158,6 +166,11 @@ export default async function StudentDetailPage({
       .order("is_primary", { ascending: false })
       .order("sort_order")
       .order("id"),
+    supabase
+      .from("student_receipts")
+      .select("id, student_id, storage_path, file_name, mime_type, note, created_at")
+      .eq("student_id", studentId)
+      .order("created_at", { ascending: false }),
     supabase
       .from("enrollments")
       .select(
@@ -222,6 +235,33 @@ export default async function StudentDetailPage({
   };
   const addressRows = (addresses as Address[] | null) ?? [];
   const phoneRows = (phones as PhoneContact[] | null) ?? [];
+  const receiptRows = (receipts as StudentReceiptRow[] | null) ?? [];
+
+  let receiptViews: StudentReceiptView[] = receiptRows.map((receipt) => ({
+    ...receipt,
+    url: null,
+  }));
+
+  if (receiptRows.length > 0) {
+    try {
+      const service = createSupabaseServiceClient();
+      receiptViews = await Promise.all(
+        receiptRows.map(async (receipt) => {
+          const { data: signed, error: signedError } = await service.storage
+            .from(STUDENT_RECEIPT_BUCKET)
+            .createSignedUrl(receipt.storage_path, 60 * 60);
+          return {
+            ...receipt,
+            url:
+              !signedError && signed?.signedUrl ? signed.signedUrl : null,
+          };
+        }),
+      );
+    } catch (error) {
+      console.error("Could not create receipt signed URLs:", error);
+    }
+  }
+
   const enrollmentRows = [...((enrollments as EnrollmentEmbed[] | null) ?? [])].sort(
     (a, b) => {
       const classA = classFromEnrollment(a);
@@ -372,6 +412,15 @@ export default async function StudentDetailPage({
             {detail.notes?.trim() ? detail.notes : t("common.noStudentNotes")}
           </p>
         </div>
+
+        {receiptsError ? (
+          <p className="mt-4 text-sm text-red-600 dark:text-red-400">
+            {t("common.error.loadFailed", {
+              entity: t("common.receipts"),
+              message: receiptsError.message,
+            })}
+          </p>
+        ) : null}
       </div>
 
       <section className="mt-8">
@@ -554,12 +603,20 @@ export default async function StudentDetailPage({
       </section>
 
       <section className="mt-8">
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-          {t("common.classCredits")}
-        </h2>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.enrollToTrack")}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {t("common.classCredits")}
+            </h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {t("common.enrollToTrack")}
+            </p>
+          </div>
+          <StudentReceiptsDialog
+            studentId={studentId}
+            receipts={receiptViews}
+          />
+        </div>
 
         {balancesError || schedulesError || allStudentsError ? (
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
