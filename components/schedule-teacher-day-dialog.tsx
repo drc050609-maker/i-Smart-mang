@@ -36,6 +36,10 @@ import {
   sortStudents,
   sortTeachers,
 } from "@/lib/person-name";
+import {
+  openTeacherDayListPdf,
+  type TeacherDayListPdfRow,
+} from "@/lib/teacher-day-list-pdf";
 
 function parseDateYMD(ymd: string) {
   const [year, month, day] = ymd.split("-").map(Number);
@@ -105,6 +109,7 @@ export function ScheduleTeacherDayDialog({
   >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -186,8 +191,65 @@ export function ScheduleTeacherDayDialog({
       ? null
       : (sortedTeachers.find((teacher) => teacher.id === teacherId) ?? null);
 
+  const pdfRows = useMemo((): TeacherDayListPdfRow[] => {
+    const rows: TeacherDayListPdfRow[] = [];
+
+    for (const instance of dayInstances) {
+      const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
+      const instrument = formatClassSubject(instance.subject, language);
+      const instanceStudents = resolveInstanceStudents(instance, students);
+
+      if (instanceStudents.length === 0) {
+        rows.push({
+          time: timeLabel,
+          student: t("common.noStudentsEnrolled"),
+          instrument,
+        });
+        continue;
+      }
+
+      for (const student of instanceStudents) {
+        rows.push({
+          time: timeLabel,
+          student: formatStudentName(student),
+          instrument,
+        });
+      }
+    }
+
+    return rows;
+  }, [dayInstances, students, language, t]);
+
   function shiftDate(days: number) {
     setDateYmd(formatDateYMD(addDays(parseDateYMD(dateYmd), days)));
+    setPdfError(null);
+  }
+
+  function handleDownloadPdf() {
+    if (!selectedTeacher || loading || teacherId === "") {
+      return;
+    }
+
+    setPdfError(null);
+
+    const teacherName = formatTeacherName(selectedTeacher);
+    const dayTitle = formatDayTitle(parseDateYMD(dateYmd), language);
+    const opened = openTeacherDayListPdf(
+      {
+        title: teacherName,
+        subtitle: dayTitle,
+        time: t("common.time"),
+        student: t("common.student"),
+        instrument: t("common.subject"),
+        empty: t("common.noClassesScheduled", { name: teacherName }),
+        printHint: t("common.pdfPrintHint"),
+      },
+      pdfRows,
+    );
+
+    if (!opened) {
+      setPdfError(t("common.pdfPopupBlocked"));
+    }
   }
 
   return (
@@ -205,13 +267,25 @@ export function ScheduleTeacherDayDialog({
                   {t("common.teacherDayListHelp")}
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
-              >
-                {t("common.close")}
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleDownloadPdf}
+                  disabled={
+                    loading || teacherId === "" || selectedTeacher == null
+                  }
+                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                >
+                  {t("common.downloadPdf")}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+                >
+                  {t("common.close")}
+                </button>
+              </div>
             </div>
 
             <div className="mt-5 flex flex-wrap items-end gap-3">
@@ -224,6 +298,7 @@ export function ScheduleTeacherDayDialog({
                   onChange={(event) => {
                     const value = event.target.value;
                     setTeacherId(value === "" ? "" : Number(value));
+                    setPdfError(null);
                   }}
                   className="rounded-md bg-white px-3 py-1.5 text-sm text-gray-900 shadow-xs inset-ring inset-ring-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/10 dark:text-white dark:inset-ring-white/10 dark:focus:outline-indigo-500"
                 >
@@ -252,7 +327,10 @@ export function ScheduleTeacherDayDialog({
                   <input
                     type="date"
                     value={dateYmd}
-                    onChange={(event) => setDateYmd(event.target.value)}
+                    onChange={(event) => {
+                      setDateYmd(event.target.value);
+                      setPdfError(null);
+                    }}
                     className="rounded-md bg-white px-2.5 py-1.5 text-sm text-gray-900 shadow-xs inset-ring inset-ring-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/10 dark:text-white dark:inset-ring-white/10 dark:focus:outline-indigo-500"
                   />
                   <button
@@ -279,6 +357,12 @@ export function ScheduleTeacherDayDialog({
                   entity: t("nav.schedule"),
                   message: error,
                 })}
+              </p>
+            ) : null}
+
+            {pdfError ? (
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+                {pdfError}
               </p>
             ) : null}
 

@@ -142,6 +142,7 @@ export type TranslationKey =
   | "common.time"
   | "common.scheduleStudentOptional"
   | "common.amount"
+  | "common.category"
   | "common.plan"
   | "common.total"
   | "common.remaining"
@@ -336,6 +337,9 @@ export type TranslationKey =
   | "common.dayView"
   | "common.teacherDayList"
   | "common.teacherDayListHelp"
+  | "common.downloadPdf"
+  | "common.pdfPrintHint"
+  | "common.pdfPopupBlocked"
   | "common.hideTeacherFilters"
   | "common.showTeacherFilters"
   | "common.clearFilter"
@@ -975,6 +979,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.time": "Time",
     "common.scheduleStudentOptional": "Student (optional)",
     "common.amount": "Amount",
+    "common.category": "Category",
     "common.plan": "Plan",
     "common.total": "Total",
     "common.remaining": "Remaining",
@@ -1189,6 +1194,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.teacherDayList": "Teacher day list",
     "common.teacherDayListHelp":
       "Pick a teacher and date to see every class and student that day.",
+    "common.downloadPdf": "PDF",
+    "common.pdfPrintHint":
+      "In the print dialog, choose “Save as PDF” to download a copy for the teacher.",
+    "common.pdfPopupBlocked":
+      "Unable to open the PDF window. Allow pop-ups for this site and try again.",
     "common.hideTeacherFilters": "Hide teachers",
     "common.showTeacherFilters": "Show teachers",
     "common.clearFilter": "Clear filter",
@@ -1870,6 +1880,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.time": "时间",
     "common.scheduleStudentOptional": "学生（可选）",
     "common.amount": "金额",
+    "common.category": "类别",
     "common.plan": "方案",
     "common.total": "总计",
     "common.remaining": "剩余",
@@ -2082,6 +2093,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.teacherDayList": "老师当日课表",
     "common.teacherDayListHelp":
       "选择老师和日期，查看当天所有课程与学生。",
+    "common.downloadPdf": "PDF",
+    "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”，即可下载发给老师的课表。",
+    "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",
     "common.hideTeacherFilters": "隐藏老师筛选",
     "common.showTeacherFilters": "显示老师筛选",
     "common.clearFilter": "清除筛选",
