@@ -304,14 +304,23 @@ export async function updateTeacherActive(
     return { error: teacherError.message };
   }
 
-  // Inactive teachers should not remain on classes or appear in assign pickers.
-  if (!isActive) {
-    const unassignError = await removeTeacherFromAllClasses(
+  // Deactivate: free classes on the schedule (open/unassigned) but remember
+  // the links. Reactivate: reclaim only classes that still have no teacher.
+  if (isActive) {
+    const restoreError = await restoreTeacherClassAssignments(
       client.supabase,
       teacherId,
     );
-    if (unassignError) {
-      return { error: unassignError };
+    if (restoreError) {
+      return { error: restoreError };
+    }
+  } else {
+    const releaseError = await softReleaseTeacherClassAssignments(
+      client.supabase,
+      teacherId,
+    );
+    if (releaseError) {
+      return { error: releaseError };
     }
   }
 
@@ -393,7 +402,7 @@ export async function deleteTeacher(
   redirect("/tutors", RedirectType.replace);
 }
 
-async function removeTeacherFromAllClasses(
+async function collectTeacherClassIds(
   supabase: ReturnType<typeof createSupabaseServiceClient>,
   teacherId: number,
 ) {
@@ -403,7 +412,7 @@ async function removeTeacherFromAllClasses(
     .eq("teacher_id", teacherId);
 
   if (linkedError) {
-    return linkedError.message;
+    return { error: linkedError.message as string };
   }
 
   const classIds = [
@@ -416,7 +425,7 @@ async function removeTeacherFromAllClasses(
     .eq("teacher_id", teacherId);
 
   if (primaryError) {
-    return primaryError.message;
+    return { error: primaryError.message };
   }
 
   for (const row of primaryClasses ?? []) {
@@ -425,6 +434,191 @@ async function removeTeacherFromAllClasses(
     }
   }
 
+  return { classIds };
+}
+
+/**
+ * Free this teacher's classes on the schedule without forgetting the links.
+ * Classes become unassigned so another teacher can take them; on reactivate we
+ * only reclaim classes that are still open.
+ */
+async function softReleaseTeacherClassAssignments(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  teacherId: number,
+) {
+  const collected = await collectTeacherClassIds(supabase, teacherId);
+  if ("error" in collected) {
+    return collected.error;
+  }
+
+  const { classIds } = collected;
+  if (classIds.length === 0) {
+    return null;
+  }
+
+  const { data: primaryClasses, error: primaryLoadError } = await supabase
+    .from("classes")
+    .select("id")
+    .eq("teacher_id", teacherId);
+
+  if (primaryLoadError) {
+    return primaryLoadError.message;
+  }
+
+  const primaryClassIds = new Set((primaryClasses ?? []).map((row) => row.id));
+
+  for (const classId of classIds) {
+    const { data: existingLink, error: linkLoadError } = await supabase
+      .from("class_teachers")
+      .select("class_id")
+      .eq("class_id", classId)
+      .eq("teacher_id", teacherId)
+      .maybeSingle();
+
+    if (linkLoadError) {
+      return linkLoadError.message;
+    }
+
+    if (!existingLink) {
+      const { error: insertError } = await supabase.from("class_teachers").insert({
+        class_id: classId,
+        teacher_id: teacherId,
+        is_primary: false,
+      });
+      if (insertError) {
+        return insertError.message;
+      }
+    }
+
+    // Remember the link but clear primary so the class reads as open/unassigned.
+    if (primaryClassIds.has(classId)) {
+      const { error: demoteAllError } = await supabase
+        .from("class_teachers")
+        .update({ is_primary: false })
+        .eq("class_id", classId);
+
+      if (demoteAllError) {
+        return demoteAllError.message;
+      }
+    } else {
+      const { error: demoteError } = await supabase
+        .from("class_teachers")
+        .update({ is_primary: false })
+        .eq("class_id", classId)
+        .eq("teacher_id", teacherId);
+
+      if (demoteError) {
+        return demoteError.message;
+      }
+    }
+  }
+
+  const { error: clearPrimaryError } = await supabase
+    .from("classes")
+    .update({ teacher_id: null })
+    .eq("teacher_id", teacherId);
+
+  if (clearPrimaryError) {
+    return clearPrimaryError.message;
+  }
+
+  return null;
+}
+
+/**
+ * Reclaim remembered class links after reactivation.
+ * Open classes (no teacher) come back; classes that already have another
+ * teacher stay with that teacher.
+ */
+async function restoreTeacherClassAssignments(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  teacherId: number,
+) {
+  const { data: linkedClasses, error: linkedError } = await supabase
+    .from("class_teachers")
+    .select("class_id")
+    .eq("teacher_id", teacherId);
+
+  if (linkedError) {
+    return linkedError.message;
+  }
+
+  for (const row of linkedClasses ?? []) {
+    const classId = row.class_id;
+    const { data: classRow, error: classLoadError } = await supabase
+      .from("classes")
+      .select("teacher_id")
+      .eq("id", classId)
+      .maybeSingle();
+
+    if (classLoadError) {
+      return classLoadError.message;
+    }
+    if (!classRow) {
+      continue;
+    }
+
+    // Class already has a different primary teacher — keep this teacher as a
+    // non-primary link, but do not take the class back.
+    if (classRow.teacher_id != null && classRow.teacher_id !== teacherId) {
+      const { error: demoteError } = await supabase
+        .from("class_teachers")
+        .update({ is_primary: false })
+        .eq("class_id", classId)
+        .eq("teacher_id", teacherId);
+      if (demoteError) {
+        return demoteError.message;
+      }
+      continue;
+    }
+
+    if (classRow.teacher_id == null) {
+      const { error: restoreError } = await supabase
+        .from("classes")
+        .update({ teacher_id: teacherId })
+        .eq("id", classId)
+        .is("teacher_id", null);
+
+      if (restoreError) {
+        return restoreError.message;
+      }
+    }
+
+    // One primary per class — clear others before promoting this teacher.
+    const { error: clearOthersError } = await supabase
+      .from("class_teachers")
+      .update({ is_primary: false })
+      .eq("class_id", classId)
+      .neq("teacher_id", teacherId);
+
+    if (clearOthersError) {
+      return clearOthersError.message;
+    }
+
+    const { error: primaryError } = await supabase
+      .from("class_teachers")
+      .update({ is_primary: true })
+      .eq("class_id", classId)
+      .eq("teacher_id", teacherId);
+
+    if (primaryError) {
+      return primaryError.message;
+    }
+  }
+
+  return null;
+}
+
+async function removeTeacherFromAllClasses(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  teacherId: number,
+) {
+  const collected = await collectTeacherClassIds(supabase, teacherId);
+  if ("error" in collected) {
+    return collected.error;
+  }
+
+  const { classIds } = collected;
   if (classIds.length === 0) {
     return null;
   }

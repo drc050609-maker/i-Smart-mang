@@ -621,6 +621,11 @@ export function buildScheduleEvents(
         }
       }
 
+      const activeTeacher =
+        classRow.teachers && classRow.teachers.is_active !== false
+          ? classRow.teachers
+          : null;
+
       return {
         scheduleId: scheduleRow.id,
         classId: classRow.id,
@@ -630,11 +635,12 @@ export function buildScheduleEvents(
         schedule_date: scheduleRow.schedule_date,
         schedule_start_time: scheduleRow.schedule_start_time!,
         schedule_end_time: scheduleRow.schedule_end_time!,
-        teacher_id: classRow.teacher_id,
-        teacher_name:
-          classRow.teachers && classRow.teachers.is_active !== false
-            ? formatTeacherName(classRow.teachers)
-            : null,
+        // Keep DB assignment when the teacher is inactive, but treat the slot
+        // as unassigned in the calendar until they are reactivated.
+        teacher_id: activeTeacher ? classRow.teacher_id : null,
+        teacher_name: activeTeacher
+          ? formatTeacherName(activeTeacher)
+          : null,
         room_number: classRow.rooms?.room_number ?? null,
         is_active: classRow.is_active,
         class_track: classRow.class_track,
