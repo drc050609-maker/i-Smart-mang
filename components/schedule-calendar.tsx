@@ -46,10 +46,12 @@ import {
   filterEventsByTeachers,
   formatDateYMD,
   formatDayHeader,
+  formatEasternDateYMD,
   formatHourLabel,
   formatScheduleEventStudentLabel,
   formatWeekRange,
   formatDayTitle,
+  getEasternMinutesSinceMidnight,
   getEventColumnStyle,
   getInstancePosition,
   getTeacherEventColors,
@@ -81,7 +83,7 @@ import {
 
 const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
-const COMPACT_MIN_HEIGHT = 40;
+const COMPACT_MIN_HEIGHT = 36;
 const TIME_GUTTER_WIDTH_PX = 64;
 
 function classNames(...classes: (string | false | undefined)[]) {
@@ -93,59 +95,39 @@ function initialSelectedTeacherIds(_events: ScheduleEvent[]) {
   return [] as number[];
 }
 
-function useCurrentTimeMinutes(startHour: number, endHour: number) {
+function CurrentTimeIndicator({
+  startHour,
+  endHour,
+}: {
+  startHour: number;
+  endHour: number;
+}) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const tick = () => setNow(new Date());
     tick();
-    const id = window.setInterval(tick, 30_000);
+    const id = window.setInterval(tick, 60_000);
     return () => window.clearInterval(id);
   }, []);
 
-  const minutes = now.getHours() * 60 + now.getMinutes();
+  const minutes = getEasternMinutesSinceMidnight(now);
   const gridStartMinutes = startHour * 60;
   const gridEndMinutes = endHour * 60;
   if (minutes < gridStartMinutes || minutes > gridEndMinutes) {
     return null;
   }
 
-  return {
-    minutes,
-    top: ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX,
-    label: formatTime12Hour(
-      `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`,
-    ),
-  };
-}
-
-function CurrentTimeIndicator({
-  startHour,
-  endHour,
-  showLabel = false,
-}: {
-  startHour: number;
-  endHour: number;
-  showLabel?: boolean;
-}) {
-  const current = useCurrentTimeMinutes(startHour, endHour);
-  if (!current) {
-    return null;
-  }
+  const top = ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX;
 
   return (
     <div
       className="pointer-events-none absolute inset-x-0 z-20"
-      style={{ top: current.top }}
+      style={{ top }}
       aria-hidden="true"
     >
       <div className="relative border-t-2 border-red-500">
-        <span className="absolute -top-1.5 left-0 size-3 rounded-full bg-red-500 shadow-sm" />
-        {showLabel ? (
-          <span className="absolute -top-2.5 right-1 rounded bg-red-500 px-1 py-0.5 text-[10px] font-semibold leading-none text-white">
-            {current.label}
-          </span>
-        ) : null}
+        <span className="absolute -top-1.5 -left-1 size-3 rounded-full bg-red-500" />
       </div>
     </div>
   );
@@ -308,12 +290,10 @@ export function ScheduleCalendar({
 }) {
   const { language, t } = useLanguage();
   const gridRef = useRef<HTMLDivElement>(null);
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dayColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragMovedRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
   const dragPreviewElRef = useRef<HTMLDivElement | null>(null);
-  const didScrollToNowRef = useRef(false);
   const eventPointerDownRef = useRef<
     | ((
         instance: ScheduleEventInstance,
@@ -323,16 +303,14 @@ export function ScheduleCalendar({
   >(null);
 
   const today = useMemo(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return now;
+    const [year, month, day] = formatEasternDateYMD().split("-").map(Number);
+    return new Date(year!, month! - 1, day!);
   }, []);
 
   const [viewMode, setViewMode] = useState<"week" | "day">("week");
   const [focusDate, setFocusDate] = useState(() => {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    return now;
+    const [year, month, day] = formatEasternDateYMD().split("-").map(Number);
+    return new Date(year!, month! - 1, day!);
   });
   const [internalSelectedTeacherIds, setInternalSelectedTeacherIds] = useState<
     number[]
@@ -479,20 +457,28 @@ export function ScheduleCalendar({
   }, [highlightStudentFilter, allInstancesByDay, instancesByDay]);
 
   const dayColumnWidthsPx = useMemo(() => {
+    if (viewMode !== "day") return null;
+
     return displayDays.map(({ dayIndex }) => {
       const layouts = layoutsByDay[dayIndex] ?? new Map();
       return dayColumnWidthPx(maxLayoutColumnCount(layouts));
     });
-  }, [displayDays, layoutsByDay]);
+  }, [viewMode, displayDays, layoutsByDay]);
 
   const calendarGridTemplateColumns = useMemo(() => {
+    if (!dayColumnWidthsPx) {
+      return `${TIME_GUTTER_WIDTH_PX}px repeat(${displayDays.length}, minmax(0, 1fr))`;
+    }
+
     const dayCols = dayColumnWidthsPx
       .map((width) => `minmax(${width}px, 1fr)`)
       .join(" ");
     return `${TIME_GUTTER_WIDTH_PX}px ${dayCols}`;
-  }, [dayColumnWidthsPx]);
+  }, [dayColumnWidthsPx, displayDays.length]);
 
   const calendarMinWidthPx = useMemo(() => {
+    if (!dayColumnWidthsPx) return undefined;
+
     return (
       TIME_GUTTER_WIDTH_PX +
       dayColumnWidthsPx.reduce((sum, width) => sum + width, 0)
@@ -533,28 +519,6 @@ export function ScheduleCalendar({
   }, [startHour, endHour]);
 
   const gridHeight = hours.length * HOUR_HEIGHT_PX;
-
-  // Scroll so the current-time line is visible when today is on screen.
-  useEffect(() => {
-    if (didScrollToNowRef.current) return;
-    const container = scrollContainerRef.current;
-    if (!container) return;
-
-    const todayInView = displayDays.some(
-      ({ date }) => formatDateYMD(date) === formatDateYMD(today),
-    );
-    if (!todayInView) return;
-
-    const now = new Date();
-    const minutes = now.getHours() * 60 + now.getMinutes();
-    const gridStartMinutes = startHour * 60;
-    const gridEndMinutes = endHour * 60;
-    if (minutes < gridStartMinutes || minutes > gridEndMinutes) return;
-
-    const top = ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX;
-    container.scrollTop = Math.max(0, top - container.clientHeight / 3);
-    didScrollToNowRef.current = true;
-  }, [displayDays, today, startHour, endHour, gridHeight]);
 
   const teacherCounts = useMemo(
     () => countEventsByTeacher(events),
@@ -751,9 +715,8 @@ export function ScheduleCalendar({
   }
 
   function goToToday() {
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    setFocusDate(now);
+    const [year, month, day] = formatEasternDateYMD().split("-").map(Number);
+    setFocusDate(new Date(year!, month! - 1, day!));
   }
 
   function goToDate(value: string) {
@@ -833,7 +796,7 @@ export function ScheduleCalendar({
   return (
     <div className="mt-6 flex flex-col gap-6 xl:flex-row">
       {showTeacherFilters ? (
-      <aside className="w-full shrink-0 xl:w-48">
+      <aside className="w-full shrink-0 xl:w-56">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("common.teachers")}
@@ -1153,10 +1116,7 @@ export function ScheduleCalendar({
                 })}
               </div>
 
-              <div
-                ref={scrollContainerRef}
-                className="max-h-[calc(100vh-11rem)] overflow-y-auto"
-              >
+              <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
                 <div
                   ref={gridRef}
                   className="relative"
@@ -1185,16 +1145,6 @@ export function ScheduleCalendar({
                           {formatHourLabel(hour, language)}
                         </div>
                       ))}
-                      {displayDays.some(
-                        ({ date }) =>
-                          formatDateYMD(date) === formatDateYMD(today),
-                      ) ? (
-                        <CurrentTimeIndicator
-                          startHour={startHour}
-                          endHour={endHour}
-                          showLabel
-                        />
-                      ) : null}
                     </div>
 
                     {displayDays.map(({ date: day, dayIndex }) => {
