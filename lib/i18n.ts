@@ -530,7 +530,8 @@ export type TranslationKey =
   | "sheet.violin1v1"
   | "sheet.level1v1Hint"
   | "sheet.otherInstrument1v1"
-  | "sheet.ensembleGroup"
+  | "sheet.choirOrchestraTheory"
+  | "sheet.talentExam"
   | "sheet.specialtyGroup"
   | "sheet.art"
   | "sheet.dance"
@@ -543,6 +544,7 @@ export type TranslationKey =
   | "sheet.grade.performance"
   | "sheet.perMonth"
   | "sheet.materialFeeAdd"
+  | "sheet.danceBagAdd"
   | "sheet.bandMonthlyNote"
   | "sheet.otherClasses"
   | "sheet.otherClassesSubtitle"
@@ -1419,12 +1421,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.level1v1Hint":
       "Choose duration and grade tier (G0–G2 → Levels 0–2, etc.) to see single, 20-pack, and 50-pack prices.",
     "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Guzheng / Cello 1V1",
-    "sheet.ensembleGroup": "Ensemble group lessons (Piano / Violin / Guitar / Drum / Guzheng / Vocal) — 60 min",
-    "sheet.specialtyGroup": "Sing & Play / Model / Music Theory / Vocal small group — 60 min",
-    "sheet.art": "Art",
-    "sheet.dance": "Jazz & Chinese dance / Hip Hop",
-    "sheet.band": "Band — 90 min",
-    "sheet.art1v1": "1-to-1 Art Lessons — 60 min",
+    "sheet.choirOrchestraTheory": "Choir / Orchestra / Music Theory — 60 min",
+    "sheet.talentExam": "Talent Examination Preparation Class — 60 min",
+    "sheet.specialtyGroup": "Sing & Play / Model (group) — 60 min",
+    "sheet.art": "Art (group)",
+    "sheet.dance": "Dance / Jazz / Chinese Dance / Hip Hop",
+    "sheet.band": "Band group lessons — 60 min",
+    "sheet.art1v1": "1-to-1 Art Lessons",
     "sheet.grade.g0_2": "Levels 0–2",
     "sheet.grade.g3_4": "Levels 3–4",
     "sheet.grade.g5_6": "Levels 5–6",
@@ -1432,6 +1435,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.grade.performance": "Performance",
     "sheet.perMonth": "/ month",
     "sheet.materialFeeAdd": "+${amount} materials",
+    "sheet.danceBagAdd": "+${amount} dance equipment bag",
     "sheet.bandMonthlyNote": "$160/month (4 lessons); no 20/50 packs.",
     "sheet.otherClasses": "Other classes",
     "sheet.otherClassesSubtitle":
@@ -2335,12 +2339,13 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.level1v1Hint":
       "选择时长与级别（G0–G2 对应 0–2 级等），查看单节、20 节、50 节价格。",
     "sheet.otherInstrument1v1": "吉他 / 架子鼓 / 声乐 / 古筝 / 大提琴一对一",
-    "sheet.ensembleGroup": "合奏小组课（钢琴 / 小提琴 / 吉他 / 架子鼓 / 古筝 / 声乐）— 60 分钟",
-    "sheet.specialtyGroup": "边弹边唱 / 模特 / 乐理 / 声乐小班 — 60 分钟",
-    "sheet.art": "画画",
-    "sheet.dance": "爵士舞 & 中国舞 / 街舞",
-    "sheet.band": "乐队 — 90 分钟",
-    "sheet.art1v1": "一对一画画课 — 60 分钟",
+    "sheet.choirOrchestraTheory": "合唱团 / 乐团 / 乐理课 — 60 分钟",
+    "sheet.talentExam": "艺考班 — 60 分钟",
+    "sheet.specialtyGroup": "弹唱 / 模特走秀（小组课）— 60 分钟",
+    "sheet.art": "画画（小组课）",
+    "sheet.dance": "舞蹈 / 爵士舞 / 中国舞 / 街舞",
+    "sheet.band": "乐队小组课 — 60 分钟",
+    "sheet.art1v1": "一对一画画课",
     "sheet.grade.g0_2": "0–2 级",
     "sheet.grade.g3_4": "3–4 级",
     "sheet.grade.g5_6": "5–6 级",
@@ -2348,6 +2353,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.grade.performance": "演奏级",
     "sheet.perMonth": "/ 月",
     "sheet.materialFeeAdd": "+${amount} 材料费",
+    "sheet.danceBagAdd": "+${amount} 舞蹈装备包",
     "sheet.bandMonthlyNote": "每月 $160（4 节课）；无 20/50 节套餐。",
     "sheet.otherClasses": "其他课程",
     "sheet.otherClassesSubtitle":
