@@ -129,22 +129,19 @@ function PriceCells({
   const editPricing = editClass?.pricing ?? null;
   const canEdit = Boolean(editClass && editPricing);
   const trial = editClass ? editClass.lesson_type === "trial" : false;
-  const displayPricing: SheetPricing = editPricing
-    ? {
-        perClass: editPricing.perClass,
-        package20: editPricing.package20 ?? pricing.package20,
-        package50: editPricing.package50 ?? pricing.package50,
-        monthlyOnly: pricing.monthlyOnly,
-        materialFees: pricing.materialFees,
-      }
-    : pricing;
+  // Official sheet rows always display catalog rates; DB values are for edits/payments.
+  const displayPricing: SheetPricing = pricing;
   const dialogPricing: TuitionPricing | null = editPricing
     ? {
-        perClass: displayPricing.perClass,
-        package20: displayPricing.package20,
-        package50: displayPricing.package50,
+        perClass: editPricing.perClass,
+        package20: editPricing.package20,
+        package50: editPricing.package50,
       }
-    : null;
+    : {
+        perClass: pricing.perClass,
+        package20: pricing.package20,
+        package50: pricing.package50,
+      };
 
   return (
     <>
@@ -196,9 +193,10 @@ function PriceCells({
                 </>
               ) : null}
             </span>
-            {displayPricing.materialFees ? (
+            {displayPricing.materialFees &&
+            displayPricing.materialFees.pack20 > 0 ? (
               <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
-                {t("sheet.materialFeeAdd", {
+                {t(displayPricing.materialFees.labelKey ?? "sheet.materialFeeAdd", {
                   amount: displayPricing.materialFees.pack20,
                 })}
               </span>
@@ -234,9 +232,10 @@ function PriceCells({
                 </>
               ) : null}
             </span>
-            {displayPricing.materialFees ? (
+            {displayPricing.materialFees &&
+            displayPricing.materialFees.pack50 > 0 ? (
               <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
-                {t("sheet.materialFeeAdd", {
+                {t(displayPricing.materialFees.labelKey ?? "sheet.materialFeeAdd", {
                   amount: displayPricing.materialFees.pack50,
                 })}
               </span>
@@ -484,7 +483,13 @@ function DurationOptionBlock({
                   const editClass = primaryMatchedClass(matches, classesById);
                   const durationLabel = formatDuration(row.durationMinutes, t);
                   const materialNote = row.pricing.materialFees
-                    ? artMaterialFeeNote(t)
+                    ? row.pricing.materialFees.labelKey === "sheet.danceBagAdd"
+                      ? row.pricing.materialFees.pack50 > 0
+                        ? t("sheet.danceBagAdd", {
+                            amount: row.pricing.materialFees.pack50,
+                          })
+                        : null
+                      : artMaterialFeeNote(t)
                     : null;
                   return (
                     <CourseLabel
@@ -579,6 +584,19 @@ function FixedSectionBlock({
                       const monthlyNote = row.pricing.monthlyOnly
                         ? t("sheet.bandMonthlyNote")
                         : null;
+                      const feeNote = row.pricing.materialFees
+                        ? row.pricing.materialFees.labelKey ===
+                          "sheet.danceBagAdd"
+                          ? t("sheet.danceBagAdd", {
+                              amount: row.pricing.materialFees.pack50,
+                            })
+                          : artMaterialFeeNote(t)
+                        : null;
+                      const noteParts = [
+                        editClass ? durationLabel : null,
+                        monthlyNote,
+                        feeNote,
+                      ].filter(Boolean);
                       return (
                         <CourseLabel
                           label={
@@ -588,11 +606,9 @@ function FixedSectionBlock({
                           }
                           editClass={editClass}
                           note={
-                            editClass
-                              ? [durationLabel, monthlyNote]
-                                  .filter(Boolean)
-                                  .join(" · ")
-                              : monthlyNote
+                            noteParts.length > 0
+                              ? noteParts.join(" · ")
+                              : undefined
                           }
                         />
                       );

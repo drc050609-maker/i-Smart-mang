@@ -11,8 +11,13 @@ export { gradeTierLabelKey, resolveGradeTier };
 export type SheetPricing = TuitionPricing & {
   /** Band-style monthly fee with no lesson packs. */
   monthlyOnly?: boolean;
-  /** Art material fees added on top of packs. */
-  materialFees?: { pack20: number; pack50: number };
+  /** Extra fees added on top of packs (materials, dance bag, etc.). */
+  materialFees?: {
+    pack20: number;
+    pack50: number;
+    /** Defaults to materials wording when omitted. */
+    labelKey?: "sheet.materialFeeAdd" | "sheet.danceBagAdd";
+  };
 };
 
 /** Official Piano/Violin 1V1 matrix: duration × grade tier. */
@@ -57,12 +62,13 @@ export type PriceSheetSection =
       kind: "fixed";
       titleKey:
         | "sheet.otherInstrument1v1"
-        | "sheet.ensembleGroup"
+        | "sheet.band"
+        | "sheet.choirOrchestraTheory"
+        | "sheet.talentExam"
         | "sheet.specialtyGroup"
         | "sheet.art"
-        | "sheet.dance"
-        | "sheet.band"
-        | "sheet.art1v1";
+        | "sheet.art1v1"
+        | "sheet.dance";
       /** When set, UI shows a duration dropdown over these options. */
       durationOptions?: readonly number[];
       rows: Array<{
@@ -116,7 +122,7 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
       {
         id: "other_1v1_60",
         durationMinutes: 60,
-        pricing: { perClass: 65, package20: 1300, package50: 3100 },
+        pricing: { perClass: 68, package20: 1360, package50: 3250 },
         match: {
           subjects: [
             "Guitar",
@@ -133,16 +139,50 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     ],
   },
   {
-    id: "ensemble_group",
+    id: "band",
     kind: "fixed",
-    titleKey: "sheet.ensembleGroup",
+    titleKey: "sheet.band",
     rows: [
       {
-        id: "ensemble_60",
+        id: "band_60",
         durationMinutes: 60,
-        pricing: { perClass: 53, package20: 1060, package50: 2500 },
+        pricing: { perClass: 48, package20: 960, package50: 2250 },
         match: {
-          subjects: ["Guitar Group", "Drums Group", "Vocal Group"],
+          subjects: ["Band"],
+          durationMinutes: 60,
+          lessonType: "group",
+        },
+      },
+    ],
+  },
+  {
+    id: "choir_orchestra_theory",
+    kind: "fixed",
+    titleKey: "sheet.choirOrchestraTheory",
+    rows: [
+      {
+        id: "choir_orchestra_theory_60",
+        durationMinutes: 60,
+        pricing: { perClass: 45, package20: 900, package50: 2100 },
+        match: {
+          subjects: ["Choir", "Orchestra", "Music Theory"],
+          durationMinutes: 60,
+          lessonType: "group",
+        },
+      },
+    ],
+  },
+  {
+    id: "talent_exam",
+    kind: "fixed",
+    titleKey: "sheet.talentExam",
+    rows: [
+      {
+        id: "talent_exam_60",
+        durationMinutes: 60,
+        pricing: { perClass: 100, package20: 2000, package50: null },
+        match: {
+          subjects: ["Talent Exam Prep"],
           durationMinutes: 60,
           lessonType: "group",
         },
@@ -159,7 +199,7 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
         durationMinutes: 60,
         pricing: { perClass: 45, package20: 900, package50: 2100 },
         match: {
-          subjects: ["Sing & Play", "Model / Catwalk", "Music Theory"],
+          subjects: ["Sing & Play", "Model / Catwalk"],
           durationMinutes: 60,
           lessonType: "group",
         },
@@ -205,59 +245,10 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     ],
   },
   {
-    id: "dance",
-    kind: "fixed",
-    titleKey: "sheet.dance",
-    durationOptions: [60, 90],
-    rows: [
-      {
-        id: "dance_60",
-        durationMinutes: 60,
-        pricing: { perClass: 34, package20: 680, package50: 1550 },
-        match: {
-          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
-          durationMinutes: 60,
-          lessonType: "group",
-        },
-      },
-      {
-        id: "dance_90",
-        durationMinutes: 90,
-        pricing: { perClass: 38, package20: 760, package50: 1750 },
-        match: {
-          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
-          durationMinutes: 90,
-          lessonType: "group",
-        },
-      },
-    ],
-  },
-  {
-    id: "band",
-    kind: "fixed",
-    titleKey: "sheet.band",
-    rows: [
-      {
-        id: "band_90",
-        durationMinutes: 90,
-        pricing: {
-          perClass: 160,
-          package20: null,
-          package50: null,
-          monthlyOnly: true,
-        },
-        match: {
-          subjects: ["Band"],
-          durationMinutes: 90,
-          lessonType: "group",
-        },
-      },
-    ],
-  },
-  {
     id: "art_1v1",
     kind: "fixed",
     titleKey: "sheet.art1v1",
+    durationOptions: [60, 90],
     rows: [
       {
         id: "art_1v1_60",
@@ -267,6 +258,53 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
           subjects: ["1-to-1 Art", "Special Education"],
           durationMinutes: 60,
           lessonType: "private",
+        },
+      },
+      {
+        id: "art_1v1_90",
+        durationMinutes: 90,
+        pricing: { perClass: 85, package20: 1700, package50: 4100 },
+        match: {
+          subjects: ["1-to-1 Art", "Special Education"],
+          durationMinutes: 90,
+          lessonType: "private",
+        },
+      },
+    ],
+  },
+  {
+    id: "dance",
+    kind: "fixed",
+    titleKey: "sheet.dance",
+    durationOptions: [60, 90],
+    rows: [
+      {
+        id: "dance_60",
+        durationMinutes: 60,
+        pricing: { perClass: 29, package20: 580, package50: 1300 },
+        match: {
+          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
+          durationMinutes: 60,
+          lessonType: "group",
+        },
+      },
+      {
+        id: "dance_90",
+        durationMinutes: 90,
+        pricing: {
+          perClass: 32.5,
+          package20: 650,
+          package50: 1500,
+          materialFees: {
+            pack20: 0,
+            pack50: 50,
+            labelKey: "sheet.danceBagAdd",
+          },
+        },
+        match: {
+          subjects: ["Jazz Dance", "Jazz", "Chinese Dance", "Dance — Hip Hop"],
+          durationMinutes: 90,
+          lessonType: "group",
         },
       },
     ],
@@ -376,4 +414,3 @@ export function listPriceSheetSubjects() {
     a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
 }
-
