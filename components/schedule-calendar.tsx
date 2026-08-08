@@ -1015,7 +1015,7 @@ export function ScheduleCalendar({
           </p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overscroll-x-none">
               <div
                 className="grid border-b border-gray-200 dark:border-white/10"
                 style={{
@@ -1077,7 +1077,7 @@ export function ScheduleCalendar({
                 })}
               </div>
 
-              <div className="max-h-[calc(100vh-16rem)] overflow-y-auto">
+              <div className="max-h-[calc(100vh-16rem)] overflow-x-hidden overflow-y-auto overscroll-x-none">
                 <div
                   ref={gridRef}
                   className="relative"
