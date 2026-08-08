@@ -83,29 +83,13 @@ const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
 const COMPACT_MIN_HEIGHT = 36;
 const TIME_GUTTER_WIDTH_PX = 64;
-/** Above this event count, default to one teacher so the grid stays usable. */
-const AUTO_TEACHER_FILTER_THRESHOLD = 250;
-
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-function initialSelectedTeacherIds(events: ScheduleEvent[]) {
-  if (events.length < AUTO_TEACHER_FILTER_THRESHOLD) {
-    return [] as number[];
-  }
-
-  const counts = countEventsByTeacher(events);
-  let bestId: number | null = null;
-  let bestCount = 0;
-  for (const [teacherId, count] of counts) {
-    if (count > bestCount) {
-      bestId = teacherId;
-      bestCount = count;
-    }
-  }
-
-  return bestId != null ? [bestId] : [];
+/** Empty selection means "all teachers". */
+function initialSelectedTeacherIds(_events: ScheduleEvent[]) {
+  return [] as number[];
 }
 
 type DragState = {
