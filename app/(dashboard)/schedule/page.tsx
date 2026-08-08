@@ -9,7 +9,6 @@ import { sortTeachers } from "@/lib/person-name";
 import {
   fetchTeacherScheduleCounts,
   loadScheduleCalendarEvents,
-  pickBusiestTeacherId,
 } from "@/lib/schedule-load";
 import { createClient } from "@/utils/supabase/server";
 
@@ -89,18 +88,14 @@ export default async function SchedulePage() {
     fetchTeacherScheduleCounts(supabase, locationId),
   ]);
 
-  const busiestTeacherId = pickBusiestTeacherId(teacherCounts);
-  const initialTeacherIds = busiestTeacherId != null ? [busiestTeacherId] : [];
+  // Empty selection means "all teachers" in the calendar filter UI.
+  const initialTeacherIds: number[] = [];
 
   const {
     events: initialEvents,
     exceptions: initialExceptions,
     error: eventsError,
-  } = await loadScheduleCalendarEvents(
-    supabase,
-    locationId,
-    initialTeacherIds.length > 0 ? initialTeacherIds : null,
-  );
+  } = await loadScheduleCalendarEvents(supabase, locationId, null);
 
   const error =
     teachersError ?? studentsError ?? countsError ?? eventsError ?? null;

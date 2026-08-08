@@ -348,14 +348,3 @@ export async function loadScheduleCalendarEvents(
   return { events, exceptions: exceptionRows, error };
 }
 
-export function pickBusiestTeacherId(counts: Map<number, number>) {
-  let bestId: number | null = null;
-  let bestCount = 0;
-  for (const [teacherId, count] of counts) {
-    if (count > bestCount) {
-      bestId = teacherId;
-      bestCount = count;
-    }
-  }
-  return bestId;
-}
