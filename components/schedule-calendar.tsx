@@ -418,28 +418,20 @@ export function ScheduleCalendar({
   }, [highlightStudentFilter, allInstancesByDay, instancesByDay]);
 
   const dayColumnWidthsPx = useMemo(() => {
-    if (viewMode !== "day") return null;
-
     return displayDays.map(({ dayIndex }) => {
       const layouts = layoutsByDay[dayIndex] ?? new Map();
       return dayColumnWidthPx(maxLayoutColumnCount(layouts));
     });
-  }, [viewMode, displayDays, layoutsByDay]);
+  }, [displayDays, layoutsByDay]);
 
   const calendarGridTemplateColumns = useMemo(() => {
-    if (!dayColumnWidthsPx) {
-      return `${TIME_GUTTER_WIDTH_PX}px repeat(${displayDays.length}, minmax(0, 1fr))`;
-    }
-
     const dayCols = dayColumnWidthsPx
       .map((width) => `minmax(${width}px, 1fr)`)
       .join(" ");
     return `${TIME_GUTTER_WIDTH_PX}px ${dayCols}`;
-  }, [dayColumnWidthsPx, displayDays.length]);
+  }, [dayColumnWidthsPx]);
 
   const calendarMinWidthPx = useMemo(() => {
-    if (!dayColumnWidthsPx) return undefined;
-
     return (
       TIME_GUTTER_WIDTH_PX +
       dayColumnWidthsPx.reduce((sum, width) => sum + width, 0)
@@ -1015,14 +1007,12 @@ export function ScheduleCalendar({
           </p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-            <div className="overflow-x-auto overscroll-x-none">
+            <div className="overflow-x-auto overscroll-x-contain">
               <div
                 className="grid border-b border-gray-200 dark:border-white/10"
                 style={{
                   gridTemplateColumns: calendarGridTemplateColumns,
-                  ...(calendarMinWidthPx != null
-                    ? { minWidth: calendarMinWidthPx }
-                    : {}),
+                  minWidth: calendarMinWidthPx,
                 }}
               >
                 <div className="border-r border-gray-200 dark:border-white/10" />
@@ -1077,15 +1067,16 @@ export function ScheduleCalendar({
                 })}
               </div>
 
-              <div className="max-h-[calc(100vh-16rem)] overflow-x-hidden overflow-y-auto overscroll-x-none">
+              <div
+                className="max-h-[calc(100vh-16rem)] overflow-y-auto overscroll-x-contain"
+                style={{ minWidth: calendarMinWidthPx }}
+              >
                 <div
                   ref={gridRef}
                   className="relative"
                   style={{
                     height: gridHeight,
-                    ...(calendarMinWidthPx != null
-                      ? { minWidth: calendarMinWidthPx }
-                      : {}),
+                    minWidth: calendarMinWidthPx,
                   }}
                 >
                   <div
