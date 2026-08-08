@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/actions";
 import { ScheduleCalendar } from "@/components/schedule-calendar";
@@ -11,6 +11,33 @@ import type {
   ScheduleStudent,
   ScheduleTeacher,
 } from "@/lib/schedule-calendar";
+
+const TEACHER_FILTER_STORAGE_KEY = "schedule-selected-teacher-ids";
+
+function readStoredTeacherIds(): number[] | null {
+  try {
+    const raw = sessionStorage.getItem(TEACHER_FILTER_STORAGE_KEY);
+    if (raw == null) return null;
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return null;
+    return parsed.filter(
+      (id): id is number => typeof id === "number" && Number.isInteger(id),
+    );
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredTeacherIds(teacherIds: number[]) {
+  try {
+    sessionStorage.setItem(
+      TEACHER_FILTER_STORAGE_KEY,
+      JSON.stringify(teacherIds),
+    );
+  } catch {
+    // Ignore quota / private-mode failures.
+  }
+}
 
 export function ScheduleCalendarLoader({
   teachers,
@@ -36,6 +63,7 @@ export function ScheduleCalendarLoader({
   const requestIdRef = useRef(0);
   const selectedTeacherIdsRef = useRef(selectedTeacherIds);
   selectedTeacherIdsRef.current = selectedTeacherIds;
+  const didRestoreFilterRef = useRef(false);
 
   const loadEventsForTeachers = useCallback((teacherIds: number[]) => {
     const requestId = ++requestIdRef.current;
@@ -63,8 +91,26 @@ export function ScheduleCalendarLoader({
       });
   }, []);
 
+  // Restore the last teacher filter after refresh/remount (e.g. after delete).
+  useEffect(() => {
+    if (didRestoreFilterRef.current) return;
+    didRestoreFilterRef.current = true;
+
+    const stored = readStoredTeacherIds();
+    if (stored == null) return;
+
+    const sameAsInitial =
+      stored.length === initialTeacherIds.length &&
+      stored.every((id, index) => id === initialTeacherIds[index]);
+    if (sameAsInitial) return;
+
+    setSelectedTeacherIds(stored);
+    loadEventsForTeachers(stored);
+  }, [initialTeacherIds, loadEventsForTeachers]);
+
   const handleSelectedTeacherIdsChange = useCallback(
     (nextIds: number[]) => {
+      writeStoredTeacherIds(nextIds);
       setSelectedTeacherIds(nextIds);
       loadEventsForTeachers(nextIds);
     },

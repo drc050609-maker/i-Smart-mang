@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useActionState, useEffect, useRef, useState } from "react";
 
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useLanguage } from "@/components/language-provider";
@@ -14,9 +15,31 @@ export function DeleteStudentButton({
   studentName: string;
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(deleteStudent, {});
+
+  useEffect(() => {
+    if (!state.success) {
+      return;
+    }
+
+    // Prefer returning to the previous page (schedule, students list, etc.).
+    try {
+      if (document.referrer) {
+        const referrer = new URL(document.referrer);
+        if (referrer.origin === window.location.origin) {
+          router.back();
+          return;
+        }
+      }
+    } catch {
+      // Fall through to students list.
+    }
+
+    router.replace("/students");
+  }, [router, state.success]);
 
   return (
     <>
