@@ -82,7 +82,7 @@ import {
 
 const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
-const COMPACT_MIN_HEIGHT = 36;
+const COMPACT_MIN_HEIGHT = 40;
 const TIME_GUTTER_WIDTH_PX = 64;
 
 function classNames(...classes: (string | false | undefined)[]) {
@@ -1007,70 +1007,67 @@ export function ScheduleCalendar({
           </p>
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
-            <div className="overflow-x-auto overscroll-x-contain">
-              <div
-                className="grid border-b border-gray-200 dark:border-white/10"
-                style={{
-                  gridTemplateColumns: calendarGridTemplateColumns,
-                  minWidth: calendarMinWidthPx,
-                }}
-              >
-                <div className="border-r border-gray-200 dark:border-white/10" />
-                {displayDays.map(({ date: day }) => {
-                  const header = formatDayHeader(day, today, language);
+            <div className="max-h-[calc(100vh-16rem)] overflow-auto">
+              <div style={{ minWidth: calendarMinWidthPx }}>
+                <div
+                  className="sticky top-0 z-30 grid border-b border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900"
+                  style={{
+                    gridTemplateColumns: calendarGridTemplateColumns,
+                    minWidth: calendarMinWidthPx,
+                  }}
+                >
+                  <div className="border-r border-gray-200 dark:border-white/10" />
+                  {displayDays.map(({ date: day }) => {
+                    const header = formatDayHeader(day, today, language);
 
-                  return (
-                    <div
-                      key={day.toISOString()}
-                      className="border-r border-gray-200 px-2 py-3 text-center last:border-r-0 dark:border-white/10"
-                    >
-                      {viewMode === "week" ? (
-                        <button
-                          type="button"
-                          onClick={() => openDayView(day)}
-                          className="mx-auto block rounded-md px-1 py-0.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10 dark:focus-visible:outline-indigo-500"
-                          aria-label={formatDayTitle(day, language)}
-                        >
-                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            {header.weekday}
-                          </p>
-                          <p
-                            className={classNames(
-                              header.isToday
-                                ? "bg-indigo-600 text-white"
-                                : "text-gray-900 dark:text-white",
-                              "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                            )}
+                    return (
+                      <div
+                        key={day.toISOString()}
+                        className="border-r border-gray-200 px-2 py-3 text-center last:border-r-0 dark:border-white/10"
+                      >
+                        {viewMode === "week" ? (
+                          <button
+                            type="button"
+                            onClick={() => openDayView(day)}
+                            className="mx-auto block rounded-md px-1 py-0.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:hover:bg-white/10 dark:focus-visible:outline-indigo-500"
+                            aria-label={formatDayTitle(day, language)}
                           >
-                            {header.day}
-                          </p>
-                        </button>
-                      ) : (
-                        <>
-                          <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-                            {header.weekday}
-                          </p>
-                          <p
-                            className={classNames(
-                              header.isToday
-                                ? "bg-indigo-600 text-white"
-                                : "text-gray-900 dark:text-white",
-                              "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
-                            )}
-                          >
-                            {header.day}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                              {header.weekday}
+                            </p>
+                            <p
+                              className={classNames(
+                                header.isToday
+                                  ? "bg-indigo-600 text-white"
+                                  : "text-gray-900 dark:text-white",
+                                "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                              )}
+                            >
+                              {header.day}
+                            </p>
+                          </button>
+                        ) : (
+                          <>
+                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                              {header.weekday}
+                            </p>
+                            <p
+                              className={classNames(
+                                header.isToday
+                                  ? "bg-indigo-600 text-white"
+                                  : "text-gray-900 dark:text-white",
+                                "mx-auto mt-1 inline-flex size-8 items-center justify-center rounded-full text-sm font-semibold",
+                              )}
+                            >
+                              {header.day}
+                            </p>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
 
-              <div
-                className="max-h-[calc(100vh-16rem)] overflow-y-auto overscroll-x-contain"
-                style={{ minWidth: calendarMinWidthPx }}
-              >
                 <div
                   ref={gridRef}
                   className="relative"
