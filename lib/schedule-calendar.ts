@@ -37,12 +37,6 @@ export function getEasternDateTimeParts(date: Date = new Date()) {
   };
 }
 
-/** Minutes since midnight in America/New_York (handles EST/EDT). */
-export function getEasternMinutesSinceMidnight(date: Date = new Date()) {
-  const { hour, minute } = getEasternDateTimeParts(date);
-  return hour * 60 + minute;
-}
-
 /** Calendar YMD for "today" in America/New_York. */
 export function formatEasternDateYMD(date: Date = new Date()) {
   const { year, month, day } = getEasternDateTimeParts(date);
