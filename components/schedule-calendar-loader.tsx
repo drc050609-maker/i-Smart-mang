@@ -12,32 +12,8 @@ import type {
   ScheduleTeacher,
 } from "@/lib/schedule-calendar";
 
-const TEACHER_FILTER_STORAGE_KEY = "schedule-selected-teacher-ids";
-
-function readStoredTeacherIds(): number[] | null {
-  try {
-    const raw = sessionStorage.getItem(TEACHER_FILTER_STORAGE_KEY);
-    if (raw == null) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    return parsed.filter(
-      (id): id is number => typeof id === "number" && Number.isInteger(id),
-    );
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredTeacherIds(teacherIds: number[]) {
-  try {
-    sessionStorage.setItem(
-      TEACHER_FILTER_STORAGE_KEY,
-      JSON.stringify(teacherIds),
-    );
-  } catch {
-    // Ignore quota / private-mode failures.
-  }
-}
+/** Legacy key from a prior filter-persistence experiment — clear so Jeff is not restored. */
+const LEGACY_TEACHER_FILTER_STORAGE_KEY = "schedule-selected-teacher-ids";
 
 export function ScheduleCalendarLoader({
   teachers,
@@ -55,6 +31,7 @@ export function ScheduleCalendarLoader({
   const { t } = useLanguage();
   const [events, setEvents] = useState(initialEvents);
   const [exceptions, setExceptions] = useState(initialExceptions);
+  // Empty selection = all teachers. Always start from the server default.
   const [selectedTeacherIds, setSelectedTeacherIds] =
     useState(initialTeacherIds);
   const [error, setError] = useState<string | null>(null);
@@ -63,7 +40,14 @@ export function ScheduleCalendarLoader({
   const requestIdRef = useRef(0);
   const selectedTeacherIdsRef = useRef(selectedTeacherIds);
   selectedTeacherIdsRef.current = selectedTeacherIds;
-  const didRestoreFilterRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem(LEGACY_TEACHER_FILTER_STORAGE_KEY);
+    } catch {
+      // Ignore private-mode / storage failures.
+    }
+  }, []);
 
   const loadEventsForTeachers = useCallback((teacherIds: number[]) => {
     const requestId = ++requestIdRef.current;
@@ -91,26 +75,8 @@ export function ScheduleCalendarLoader({
       });
   }, []);
 
-  // Restore the last teacher filter after refresh/remount (e.g. after delete).
-  useEffect(() => {
-    if (didRestoreFilterRef.current) return;
-    didRestoreFilterRef.current = true;
-
-    const stored = readStoredTeacherIds();
-    if (stored == null) return;
-
-    const sameAsInitial =
-      stored.length === initialTeacherIds.length &&
-      stored.every((id, index) => id === initialTeacherIds[index]);
-    if (sameAsInitial) return;
-
-    setSelectedTeacherIds(stored);
-    loadEventsForTeachers(stored);
-  }, [initialTeacherIds, loadEventsForTeachers]);
-
   const handleSelectedTeacherIdsChange = useCallback(
     (nextIds: number[]) => {
-      writeStoredTeacherIds(nextIds);
       setSelectedTeacherIds(nextIds);
       loadEventsForTeachers(nextIds);
     },
