@@ -418,20 +418,29 @@ export function ScheduleCalendar({
   }, [highlightStudentFilter, allInstancesByDay, instancesByDay]);
 
   const dayColumnWidthsPx = useMemo(() => {
+    // Week view must fit Mon–Sun in the viewport; overlapping events share the day column.
+    if (viewMode !== "day") return null;
+
     return displayDays.map(({ dayIndex }) => {
       const layouts = layoutsByDay[dayIndex] ?? new Map();
       return dayColumnWidthPx(maxLayoutColumnCount(layouts));
     });
-  }, [displayDays, layoutsByDay]);
+  }, [viewMode, displayDays, layoutsByDay]);
 
   const calendarGridTemplateColumns = useMemo(() => {
+    if (!dayColumnWidthsPx) {
+      return `${TIME_GUTTER_WIDTH_PX}px repeat(${displayDays.length}, minmax(0, 1fr))`;
+    }
+
     const dayCols = dayColumnWidthsPx
       .map((width) => `minmax(${width}px, 1fr)`)
       .join(" ");
     return `${TIME_GUTTER_WIDTH_PX}px ${dayCols}`;
-  }, [dayColumnWidthsPx]);
+  }, [dayColumnWidthsPx, displayDays.length]);
 
   const calendarMinWidthPx = useMemo(() => {
+    if (!dayColumnWidthsPx) return undefined;
+
     return (
       TIME_GUTTER_WIDTH_PX +
       dayColumnWidthsPx.reduce((sum, width) => sum + width, 0)
@@ -1008,12 +1017,20 @@ export function ScheduleCalendar({
         ) : (
           <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
             <div className="max-h-[calc(100vh-16rem)] overflow-auto">
-              <div style={{ minWidth: calendarMinWidthPx }}>
+              <div
+                style={
+                  calendarMinWidthPx != null
+                    ? { minWidth: calendarMinWidthPx }
+                    : undefined
+                }
+              >
                 <div
                   className="sticky top-0 z-30 grid border-b border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900"
                   style={{
                     gridTemplateColumns: calendarGridTemplateColumns,
-                    minWidth: calendarMinWidthPx,
+                    ...(calendarMinWidthPx != null
+                      ? { minWidth: calendarMinWidthPx }
+                      : {}),
                   }}
                 >
                   <div className="border-r border-gray-200 dark:border-white/10" />
@@ -1073,7 +1090,9 @@ export function ScheduleCalendar({
                   className="relative"
                   style={{
                     height: gridHeight,
-                    minWidth: calendarMinWidthPx,
+                    ...(calendarMinWidthPx != null
+                      ? { minWidth: calendarMinWidthPx }
+                      : {}),
                   }}
                 >
                   <div
