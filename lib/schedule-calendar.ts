@@ -6,9 +6,48 @@ import type { AppLanguage } from "@/lib/language";
 import { appLanguageLocale } from "@/lib/language";
 import { formatStudentName, sortStudents } from "@/lib/person-name";
 
-export const HOUR_HEIGHT_PX = 112;
+export const HOUR_HEIGHT_PX = 64;
 export const DEFAULT_START_HOUR = 8;
 export const DEFAULT_END_HOUR = 20;
+/** Schedule wall times and the current-time line use Eastern Time. */
+export const SCHEDULE_TIME_ZONE = "America/New_York";
+
+export function getEasternDateTimeParts(date: Date = new Date()) {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: SCHEDULE_TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(date);
+
+  const value = (type: Intl.DateTimeFormatPartTypes) => {
+    const part = parts.find((entry) => entry.type === type)?.value;
+    return part == null ? Number.NaN : Number(part);
+  };
+
+  return {
+    year: value("year"),
+    month: value("month"),
+    day: value("day"),
+    hour: value("hour") % 24,
+    minute: value("minute"),
+  };
+}
+
+/** Minutes since midnight in America/New_York (handles EST/EDT). */
+export function getEasternMinutesSinceMidnight(date: Date = new Date()) {
+  const { hour, minute } = getEasternDateTimeParts(date);
+  return hour * 60 + minute;
+}
+
+/** Calendar YMD for "today" in America/New_York. */
+export function formatEasternDateYMD(date: Date = new Date()) {
+  const { year, month, day } = getEasternDateTimeParts(date);
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
 
 export type ScheduleStudent = {
   id: number;
@@ -552,10 +591,10 @@ export function getEventColumnStyle(layout: ScheduleEventColumnLayout) {
 }
 
 /** Minimum width (px) for one side-by-side event column so student names stay readable. */
-export const MIN_EVENT_COLUMN_WIDTH_PX = 140;
+export const MIN_EVENT_COLUMN_WIDTH_PX = 120;
 
 /** Floor width for a day column even with a single event. */
-export const MIN_DAY_COLUMN_WIDTH_PX = 180;
+export const MIN_DAY_COLUMN_WIDTH_PX = 160;
 
 export function maxLayoutColumnCount(
   layouts: Map<string, ScheduleEventColumnLayout>,
