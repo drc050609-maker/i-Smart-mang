@@ -51,7 +51,6 @@ import {
   formatScheduleEventStudentLabel,
   formatWeekRange,
   formatDayTitle,
-  getEasternMinutesSinceMidnight,
   getEventColumnStyle,
   getInstancePosition,
   getTeacherEventColors,
@@ -93,44 +92,6 @@ function classNames(...classes: (string | false | undefined)[]) {
 /** Empty selection means "all teachers". */
 function initialSelectedTeacherIds(_events: ScheduleEvent[]) {
   return [] as number[];
-}
-
-function CurrentTimeIndicator({
-  startHour,
-  endHour,
-}: {
-  startHour: number;
-  endHour: number;
-}) {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const tick = () => setNow(new Date());
-    tick();
-    const id = window.setInterval(tick, 60_000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  const minutes = getEasternMinutesSinceMidnight(now);
-  const gridStartMinutes = startHour * 60;
-  const gridEndMinutes = endHour * 60;
-  if (minutes < gridStartMinutes || minutes > gridEndMinutes) {
-    return null;
-  }
-
-  const top = ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX;
-
-  return (
-    <div
-      className="pointer-events-none absolute inset-x-0 z-20"
-      style={{ top }}
-      aria-hidden="true"
-    >
-      <div className="relative border-t-2 border-red-500">
-        <span className="absolute -top-1.5 -left-1 size-3 rounded-full bg-red-500" />
-      </div>
-    </div>
-  );
 }
 
 type DragState = {
@@ -1152,8 +1113,6 @@ export function ScheduleCalendar({
                       const dimmedInstances =
                         dimmedInstancesByDay[dayIndex] ?? [];
                       const dayLayouts = layoutsByDay[dayIndex] ?? new Map();
-                      const isTodayColumn =
-                        formatDateYMD(day) === formatDateYMD(today);
 
                       return (
                         <div
@@ -1170,13 +1129,6 @@ export function ScheduleCalendar({
                               style={{ top: index * HOUR_HEIGHT_PX }}
                             />
                           ))}
-
-                          {isTodayColumn ? (
-                            <CurrentTimeIndicator
-                              startHour={startHour}
-                              endHour={endHour}
-                            />
-                          ) : null}
 
                           {dimmedInstances.map((instance) => (
                             <ScheduleEventBlock
