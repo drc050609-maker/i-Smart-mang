@@ -6,7 +6,7 @@ import type { AppLanguage } from "@/lib/language";
 import { appLanguageLocale } from "@/lib/language";
 import { formatStudentName, sortStudents } from "@/lib/person-name";
 
-export const HOUR_HEIGHT_PX = 96;
+export const HOUR_HEIGHT_PX = 112;
 export const DEFAULT_START_HOUR = 8;
 export const DEFAULT_END_HOUR = 20;
 
