@@ -93,19 +93,13 @@ function initialSelectedTeacherIds(_events: ScheduleEvent[]) {
   return [] as number[];
 }
 
-function CurrentTimeIndicator({
-  startHour,
-  endHour,
-}: {
-  startHour: number;
-  endHour: number;
-}) {
+function useCurrentTimeMinutes(startHour: number, endHour: number) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
     const tick = () => setNow(new Date());
     tick();
-    const id = window.setInterval(tick, 60_000);
+    const id = window.setInterval(tick, 30_000);
     return () => window.clearInterval(id);
   }, []);
 
@@ -116,16 +110,42 @@ function CurrentTimeIndicator({
     return null;
   }
 
-  const top = ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX;
+  return {
+    minutes,
+    top: ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX,
+    label: formatTime12Hour(
+      `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:00`,
+    ),
+  };
+}
+
+function CurrentTimeIndicator({
+  startHour,
+  endHour,
+  showLabel = false,
+}: {
+  startHour: number;
+  endHour: number;
+  showLabel?: boolean;
+}) {
+  const current = useCurrentTimeMinutes(startHour, endHour);
+  if (!current) {
+    return null;
+  }
 
   return (
     <div
       className="pointer-events-none absolute inset-x-0 z-20"
-      style={{ top }}
+      style={{ top: current.top }}
       aria-hidden="true"
     >
       <div className="relative border-t-2 border-red-500">
-        <span className="absolute -top-1.5 -left-1 size-3 rounded-full bg-red-500" />
+        <span className="absolute -top-1.5 left-0 size-3 rounded-full bg-red-500 shadow-sm" />
+        {showLabel ? (
+          <span className="absolute -top-2.5 right-1 rounded bg-red-500 px-1 py-0.5 text-[10px] font-semibold leading-none text-white">
+            {current.label}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -288,10 +308,12 @@ export function ScheduleCalendar({
 }) {
   const { language, t } = useLanguage();
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const dayColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragMovedRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
   const dragPreviewElRef = useRef<HTMLDivElement | null>(null);
+  const didScrollToNowRef = useRef(false);
   const eventPointerDownRef = useRef<
     | ((
         instance: ScheduleEventInstance,
@@ -511,6 +533,28 @@ export function ScheduleCalendar({
   }, [startHour, endHour]);
 
   const gridHeight = hours.length * HOUR_HEIGHT_PX;
+
+  // Scroll so the current-time line is visible when today is on screen.
+  useEffect(() => {
+    if (didScrollToNowRef.current) return;
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const todayInView = displayDays.some(
+      ({ date }) => formatDateYMD(date) === formatDateYMD(today),
+    );
+    if (!todayInView) return;
+
+    const now = new Date();
+    const minutes = now.getHours() * 60 + now.getMinutes();
+    const gridStartMinutes = startHour * 60;
+    const gridEndMinutes = endHour * 60;
+    if (minutes < gridStartMinutes || minutes > gridEndMinutes) return;
+
+    const top = ((minutes - gridStartMinutes) / 60) * HOUR_HEIGHT_PX;
+    container.scrollTop = Math.max(0, top - container.clientHeight / 3);
+    didScrollToNowRef.current = true;
+  }, [displayDays, today, startHour, endHour, gridHeight]);
 
   const teacherCounts = useMemo(
     () => countEventsByTeacher(events),
@@ -1109,7 +1153,10 @@ export function ScheduleCalendar({
                 })}
               </div>
 
-              <div className="max-h-[calc(100vh-11rem)] overflow-y-auto">
+              <div
+                ref={scrollContainerRef}
+                className="max-h-[calc(100vh-11rem)] overflow-y-auto"
+              >
                 <div
                   ref={gridRef}
                   className="relative"
@@ -1138,6 +1185,16 @@ export function ScheduleCalendar({
                           {formatHourLabel(hour, language)}
                         </div>
                       ))}
+                      {displayDays.some(
+                        ({ date }) =>
+                          formatDateYMD(date) === formatDateYMD(today),
+                      ) ? (
+                        <CurrentTimeIndicator
+                          startHour={startHour}
+                          endHour={endHour}
+                          showLabel
+                        />
+                      ) : null}
                     </div>
 
                     {displayDays.map(({ date: day, dayIndex }) => {
