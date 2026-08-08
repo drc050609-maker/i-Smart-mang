@@ -6,7 +6,7 @@ import type { AppLanguage } from "@/lib/language";
 import { appLanguageLocale } from "@/lib/language";
 import { formatStudentName, sortStudents } from "@/lib/person-name";
 
-export const HOUR_HEIGHT_PX = 64;
+export const HOUR_HEIGHT_PX = 96;
 export const DEFAULT_START_HOUR = 8;
 export const DEFAULT_END_HOUR = 20;
 
@@ -552,10 +552,10 @@ export function getEventColumnStyle(layout: ScheduleEventColumnLayout) {
 }
 
 /** Minimum width (px) for one side-by-side event column so student names stay readable. */
-export const MIN_EVENT_COLUMN_WIDTH_PX = 120;
+export const MIN_EVENT_COLUMN_WIDTH_PX = 140;
 
 /** Floor width for a day column even with a single event. */
-export const MIN_DAY_COLUMN_WIDTH_PX = 160;
+export const MIN_DAY_COLUMN_WIDTH_PX = 180;
 
 export function maxLayoutColumnCount(
   layouts: Map<string, ScheduleEventColumnLayout>,
