@@ -275,9 +275,6 @@ export async function deleteFromCalendar(
   formData: FormData,
 ): Promise<ScheduleActionState> {
   const staff = await requireStaff();
-  if (isFrontDeskStaffRole(staff.role)) {
-    return { error: "Front desk accounts cannot change the schedule." };
-  }
 
   const scheduleId = Number(formData.get("scheduleId"));
   const classId = Number(formData.get("classId"));
@@ -297,6 +294,39 @@ export async function deleteFromCalendar(
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
+  }
+
+  const { data: classRow, error: classLookupError } = await client.supabase
+    .from("classes")
+    .select("id, lesson_type")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (classLookupError) {
+    return { error: classLookupError.message };
+  }
+
+  const isTrial = classRow?.lesson_type?.trim().toLowerCase() === "trial";
+
+  if (isFrontDeskStaffRole(staff.role) && !isTrial) {
+    return { error: "Front desk accounts cannot change the schedule." };
+  }
+
+  if (isTrial) {
+    const { error: trialDeleteError } = await client.supabase.rpc(
+      "delete_trial_class",
+      { p_class_id: classId },
+    );
+
+    if (trialDeleteError) {
+      return { error: trialDeleteError.message };
+    }
+
+    revalidateSchedule(classId);
+    revalidatePath("/tuitions");
+    revalidatePath("/payments");
+    revalidatePath("/students", "layout");
+    return { success: true };
   }
 
   const { data: scheduleRow, error: scheduleError } = await client.supabase

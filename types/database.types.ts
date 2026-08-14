@@ -2057,6 +2057,10 @@ export type Database = {
         Args: { p_entry_id: number }
         Returns: undefined
       }
+      delete_trial_class: {
+        Args: { p_class_id: number }
+        Returns: undefined
+      }
       ensure_statement_period: {
         Args: { p_created_by?: string; p_month: number; p_year: number }
         Returns: undefined

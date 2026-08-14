@@ -86,8 +86,10 @@ export function ScheduleClassDetailDialog({
         ? formatStudentName(displayStudents[0]!)
         : t("common.enrolled", { count: displayStudents.length });
 
-  const deleteDescription =
-    instance.is_recurring && scope === "series"
+  const isTrial = instance.lesson_type === "trial";
+  const deleteDescription = isTrial
+    ? t("common.deleteTrialFromCalendarConfirm")
+    : instance.is_recurring && scope === "series"
       ? t("common.deleteAllOccurrencesConfirm")
       : t("common.deleteScheduleEventConfirm");
 
@@ -201,7 +203,7 @@ export function ScheduleClassDetailDialog({
                   {deleteDescription}
                 </p>
 
-                {instance.is_recurring ? (
+                {instance.is_recurring && !isTrial ? (
                   <fieldset className="mt-3 space-y-2">
                     <label className="flex cursor-pointer items-start gap-3 rounded-md border border-red-200/80 bg-white px-3 py-2 dark:border-red-500/20 dark:bg-gray-900/40">
                       <input

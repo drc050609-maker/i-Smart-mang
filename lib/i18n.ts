@@ -602,6 +602,7 @@ export type TranslationKey =
   | "common.deleteThisOccurrence"
   | "common.deleteAllOccurrences"
   | "common.deleteScheduleEventConfirm"
+  | "common.deleteTrialFromCalendarConfirm"
   | "common.deleteAllOccurrencesConfirm"
   | "common.originalTime"
   | "common.newTime"
@@ -1546,6 +1547,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteAllOccurrences": "Entire schedule",
     "common.deleteScheduleEventConfirm":
       "Remove this class time from the calendar?",
+    "common.deleteTrialFromCalendarConfirm":
+      "This will permanently delete this trial class, including its payment and enrollment.",
     "common.deleteAllOccurrencesConfirm":
       "This will permanently remove the entire recurring schedule.",
     "common.originalTime": "Original time",
@@ -2511,6 +2514,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteThisOccurrence": "仅此次",
     "common.deleteAllOccurrences": "整个日程",
     "common.deleteScheduleEventConfirm": "从日历中移除此上课时间？",
+    "common.deleteTrialFromCalendarConfirm":
+      "这将永久删除此试课，包括试课付款和报名。",
     "common.deleteAllOccurrencesConfirm": "这将永久删除整个重复日程。",
     "common.originalTime": "原时间",
     "common.newTime": "新时间",
