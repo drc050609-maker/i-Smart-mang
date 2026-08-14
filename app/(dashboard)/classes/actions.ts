@@ -1041,39 +1041,26 @@ async function deleteClassById(classId: number): Promise<ActionState> {
     return { error: "Class not found." };
   }
 
-  const isTrial = classRow.lesson_type === "trial";
+  const isTrial =
+    classRow.lesson_type?.trim().toLowerCase() === "trial";
 
   if (isTrial) {
-    const { data: trialPayments, error: trialPaymentsError } =
-      await client.supabase
-        .from("class_payments")
-        .select("id")
-        .eq("class_id", classId);
+    const { error: trialDeleteError } = await client.supabase.rpc(
+      "delete_trial_class",
+      { p_class_id: classId },
+    );
 
-    if (trialPaymentsError) {
-      return { error: trialPaymentsError.message };
+    if (trialDeleteError) {
+      return { error: trialDeleteError.message };
     }
 
-    const paymentIds = (trialPayments ?? []).map((row) => row.id);
-    if (paymentIds.length > 0) {
-      const { error: statementError } = await client.supabase
-        .from("statement_entries")
-        .delete()
-        .in("class_payment_id", paymentIds);
-
-      if (statementError) {
-        return { error: statementError.message };
-      }
-
-      const { error: paymentDeleteError } = await client.supabase
-        .from("class_payments")
-        .delete()
-        .eq("class_id", classId);
-
-      if (paymentDeleteError) {
-        return { error: paymentDeleteError.message };
-      }
-    }
+    revalidatePath("/classes");
+    revalidatePath("/tuitions");
+    revalidatePath("/payments");
+    revalidatePath("/schedule");
+    revalidatePath("/tutors", "layout");
+    revalidatePath("/students", "layout");
+    return { success: true };
   } else {
     const { count: paymentCount, error: paymentCountError } =
       await client.supabase
