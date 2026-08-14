@@ -2039,6 +2039,16 @@ export type Database = {
         Args: { p_class_id: number; p_field: string; p_reason?: string }
         Returns: undefined
       }
+      correct_money_source: {
+        Args: {
+          p_corrected_amount_cents: number
+          p_field_name?: string
+          p_reason: string
+          p_source_id: number
+          p_source_kind: Database["public"]["Enums"]["financial_source_kind"]
+        }
+        Returns: number
+      }
       deduct_class_credits: {
         Args: { p_class_id: number; p_count: number; p_student_id: number }
         Returns: undefined
@@ -2077,7 +2087,7 @@ export type Database = {
       record_class_attendance: {
         Args: {
           p_class_id: number
-          p_class_schedule_id: number
+          p_class_schedule_id?: number | null
           p_created_by?: string
           p_notes?: string
           p_session_date: string
@@ -2101,7 +2111,7 @@ export type Database = {
       record_class_session: {
         Args: {
           p_class_id: number
-          p_class_schedule_id: number
+          p_class_schedule_id?: number | null
           p_created_by?: string
           p_session_date: string
           p_source: Database["public"]["Enums"]["session_record_source"]
@@ -2132,11 +2142,11 @@ export type Database = {
       record_makeup_session: {
         Args: {
           p_class_id: number
-          p_class_schedule_id: number
+          p_class_schedule_id?: number | null
           p_created_by?: string
           p_credit_cost: number
           p_notes?: string
-          p_related_attendance_id?: number
+          p_related_attendance_id?: number | null
           p_session_date: string
           p_student_id: number
         }
@@ -2174,7 +2184,7 @@ export type Database = {
           p_from_student_id: number
           p_reason?: string
           p_related_payment_id?: number
-          p_to_student_id: number
+          p_to_student_id?: number | null
           p_transfer_type: Database["public"]["Enums"]["credit_transfer_type"]
         }
         Returns: number
@@ -2221,6 +2231,14 @@ export type Database = {
             }
             Returns: undefined
           }
+      update_recurring_statement_entry_amount: {
+        Args: {
+          p_amount_cents: number
+          p_id: number
+          p_reason?: string
+        }
+        Returns: undefined
+      }
       upsert_student_class_history: {
         Args: {
           p_attendance_status?: Database["public"]["Enums"]["attendance_status"]
