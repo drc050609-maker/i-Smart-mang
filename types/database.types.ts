@@ -52,6 +52,80 @@ export type Database = {
           },
         ]
       }
+      chat_conversations: {
+        Row: {
+          created_at: string
+          id: number
+          student_id: number
+          teacher_id: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          student_id: number
+          teacher_id: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          student_id?: number
+          teacher_id?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_conversations_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_conversations_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_messages: {
+        Row: {
+          body: string
+          conversation_id: number
+          created_at: string
+          id: number
+          sender_id: string | null
+          sender_type: Database["public"]["Enums"]["chat_sender_type"]
+        }
+        Insert: {
+          body: string
+          conversation_id: number
+          created_at?: string
+          id?: never
+          sender_id?: string | null
+          sender_type: Database["public"]["Enums"]["chat_sender_type"]
+        }
+        Update: {
+          body?: string
+          conversation_id?: number
+          created_at?: string
+          id?: never
+          sender_id?: string | null
+          sender_type?: Database["public"]["Enums"]["chat_sender_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "chat_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_attendance: {
         Row: {
           class_id: number
@@ -437,7 +511,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_date: string
-          id?: number
+          id?: never
           is_active?: boolean
           name: string
           package_20_price_cents?: number | null
@@ -450,7 +524,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           end_date?: string
-          id?: number
+          id?: never
           is_active?: boolean
           name?: string
           package_20_price_cents?: number | null
@@ -554,42 +628,6 @@ export type Database = {
           },
         ]
       }
-      class_teachers: {
-        Row: {
-          class_id: number
-          created_at: string
-          is_primary: boolean
-          teacher_id: number
-        }
-        Insert: {
-          class_id: number
-          created_at?: string
-          is_primary?: boolean
-          teacher_id: number
-        }
-        Update: {
-          class_id?: number
-          created_at?: string
-          is_primary?: boolean
-          teacher_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "class_teachers_class_id_fkey"
-            columns: ["class_id"]
-            isOneToOne: false
-            referencedRelation: "classes"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "class_teachers_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       class_session_records: {
         Row: {
           class_id: number
@@ -647,6 +685,42 @@ export type Database = {
             columns: ["student_id"]
             isOneToOne: false
             referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      class_teachers: {
+        Row: {
+          class_id: number
+          created_at: string
+          is_primary: boolean
+          teacher_id: number
+        }
+        Insert: {
+          class_id: number
+          created_at?: string
+          is_primary?: boolean
+          teacher_id: number
+        }
+        Update: {
+          class_id?: number
+          created_at?: string
+          is_primary?: boolean
+          teacher_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "class_teachers_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_teachers_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
             referencedColumns: ["id"]
           },
         ]
@@ -825,6 +899,154 @@ export type Database = {
         }
         Relationships: []
       }
+      financial_adjustments: {
+        Row: {
+          adjustment_cents: number
+          corrected_amount_cents: number
+          created_at: string
+          created_by: string | null
+          field_name: string
+          id: number
+          original_amount_cents: number
+          reason: string
+          source_id: number
+          source_kind: Database["public"]["Enums"]["financial_source_kind"]
+          statement_entry_id: number | null
+        }
+        Insert: {
+          adjustment_cents: number
+          corrected_amount_cents: number
+          created_at?: string
+          created_by?: string | null
+          field_name?: string
+          id?: never
+          original_amount_cents: number
+          reason: string
+          source_id: number
+          source_kind: Database["public"]["Enums"]["financial_source_kind"]
+          statement_entry_id?: number | null
+        }
+        Update: {
+          adjustment_cents?: number
+          corrected_amount_cents?: number
+          created_at?: string
+          created_by?: string | null
+          field_name?: string
+          id?: never
+          original_amount_cents?: number
+          reason?: string
+          source_id?: number
+          source_kind?: Database["public"]["Enums"]["financial_source_kind"]
+          statement_entry_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_adjustments_statement_entry_id_fkey"
+            columns: ["statement_entry_id"]
+            isOneToOne: false
+            referencedRelation: "statement_entries"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      front_desk_hour_logs: {
+        Row: {
+          clock_in: string
+          clock_out: string
+          created_at: string
+          created_by: string | null
+          hours: number
+          id: number
+          notes: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Insert: {
+          clock_in: string
+          clock_out: string
+          created_at?: string
+          created_by?: string | null
+          hours: number
+          id?: never
+          notes?: string | null
+          rate_cents: number
+          teacher_id: number
+          work_date: string
+        }
+        Update: {
+          clock_in?: string
+          clock_out?: string
+          created_at?: string
+          created_by?: string | null
+          hours?: number
+          id?: never
+          notes?: string | null
+          rate_cents?: number
+          teacher_id?: number
+          work_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "front_desk_hour_logs_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      front_desk_paychecks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: number
+          month: number
+          statement_entry_id: number | null
+          teacher_id: number
+          total_amount_cents: number
+          total_minutes: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          month: number
+          statement_entry_id?: number | null
+          teacher_id: number
+          total_amount_cents: number
+          total_minutes: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: never
+          month?: number
+          statement_entry_id?: number | null
+          teacher_id?: number
+          total_amount_cents?: number
+          total_minutes?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "front_desk_paychecks_statement_entry_id_fkey"
+            columns: ["statement_entry_id"]
+            isOneToOne: false
+            referencedRelation: "statement_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "front_desk_paychecks_teacher_id_fkey"
+            columns: ["teacher_id"]
+            isOneToOne: false
+            referencedRelation: "teachers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_children: {
         Row: {
           background: string | null
@@ -946,7 +1168,15 @@ export type Database = {
           updated_at?: string
           zip_code?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "leads_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       locations: {
         Row: {
@@ -1132,161 +1362,6 @@ export type Database = {
           },
         ]
       }
-      front_desk_hour_logs: {
-        Row: {
-          clock_in: string
-          clock_out: string
-          created_at: string
-          created_by: string | null
-          hours: number
-          id: number
-          notes: string | null
-          rate_cents: number
-          teacher_id: number
-          work_date: string
-        }
-        Insert: {
-          clock_in: string
-          clock_out: string
-          created_at?: string
-          created_by?: string | null
-          hours: number
-          id?: number
-          notes?: string | null
-          rate_cents: number
-          teacher_id: number
-          work_date: string
-        }
-        Update: {
-          clock_in?: string
-          clock_out?: string
-          created_at?: string
-          created_by?: string | null
-          hours?: number
-          id?: number
-          notes?: string | null
-          rate_cents?: number
-          teacher_id?: number
-          work_date?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "front_desk_hour_logs_created_by_fkey"
-            columns: ["created_by"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "front_desk_hour_logs_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      front_desk_paychecks: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          id: number
-          month: number
-          statement_entry_id: number | null
-          teacher_id: number
-          total_amount_cents: number
-          total_minutes: number
-          year: number
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          id?: never
-          month: number
-          statement_entry_id?: number | null
-          teacher_id: number
-          total_amount_cents: number
-          total_minutes: number
-          year: number
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          id?: never
-          month?: number
-          statement_entry_id?: number | null
-          teacher_id?: number
-          total_amount_cents?: number
-          total_minutes?: number
-          year?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "front_desk_paychecks_statement_entry_id_fkey"
-            columns: ["statement_entry_id"]
-            isOneToOne: false
-            referencedRelation: "statement_entries"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "front_desk_paychecks_teacher_id_fkey"
-            columns: ["teacher_id"]
-            isOneToOne: false
-            referencedRelation: "teachers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      financial_adjustments: {
-        Row: {
-          adjustment_cents: number
-          corrected_amount_cents: number
-          created_at: string
-          created_by: string | null
-          field_name: string
-          id: number
-          original_amount_cents: number
-          reason: string
-          source_id: number
-          source_kind: Database["public"]["Enums"]["financial_source_kind"]
-          statement_entry_id: number | null
-        }
-        Insert: {
-          adjustment_cents: number
-          corrected_amount_cents: number
-          created_at?: string
-          created_by?: string | null
-          field_name?: string
-          id?: never
-          original_amount_cents: number
-          reason: string
-          source_id: number
-          source_kind: Database["public"]["Enums"]["financial_source_kind"]
-          statement_entry_id?: number | null
-        }
-        Update: {
-          adjustment_cents?: number
-          corrected_amount_cents?: number
-          created_at?: string
-          created_by?: string | null
-          field_name?: string
-          id?: never
-          original_amount_cents?: number
-          reason?: string
-          source_id?: number
-          source_kind?: Database["public"]["Enums"]["financial_source_kind"]
-          statement_entry_id?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "financial_adjustments_statement_entry_id_fkey"
-            columns: ["statement_entry_id"]
-            isOneToOne: false
-            referencedRelation: "statement_entries"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       statement_entries: {
         Row: {
           amount_cents: number
@@ -1298,11 +1373,11 @@ export type Database = {
           entry_date: string
           entry_type: Database["public"]["Enums"]["statement_entry_type"]
           financial_adjustment_id: number | null
+          front_desk_paycheck_id: number | null
           id: number
           recurring_statement_entry_id: number | null
           student_purchase_id: number | null
           teacher_paycheck_id: number | null
-          front_desk_paycheck_id: number | null
         }
         Insert: {
           amount_cents: number
@@ -1314,11 +1389,11 @@ export type Database = {
           entry_date?: string
           entry_type: Database["public"]["Enums"]["statement_entry_type"]
           financial_adjustment_id?: number | null
+          front_desk_paycheck_id?: number | null
           id?: never
           recurring_statement_entry_id?: number | null
           student_purchase_id?: number | null
           teacher_paycheck_id?: number | null
-          front_desk_paycheck_id?: number | null
         }
         Update: {
           amount_cents?: number
@@ -1330,11 +1405,11 @@ export type Database = {
           entry_date?: string
           entry_type?: Database["public"]["Enums"]["statement_entry_type"]
           financial_adjustment_id?: number | null
+          front_desk_paycheck_id?: number | null
           id?: never
           recurring_statement_entry_id?: number | null
           student_purchase_id?: number | null
           teacher_paycheck_id?: number | null
-          front_desk_paycheck_id?: number | null
         }
         Relationships: [
           {
@@ -1342,6 +1417,27 @@ export type Database = {
             columns: ["class_payment_id"]
             isOneToOne: false
             referencedRelation: "class_payments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statement_entries_corrects_entry_id_fkey"
+            columns: ["corrects_entry_id"]
+            isOneToOne: false
+            referencedRelation: "statement_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statement_entries_financial_adjustment_id_fkey"
+            columns: ["financial_adjustment_id"]
+            isOneToOne: false
+            referencedRelation: "financial_adjustments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "statement_entries_front_desk_paycheck_id_fkey"
+            columns: ["front_desk_paycheck_id"]
+            isOneToOne: false
+            referencedRelation: "front_desk_paychecks"
             referencedColumns: ["id"]
           },
           {
@@ -1363,13 +1459,6 @@ export type Database = {
             columns: ["teacher_paycheck_id"]
             isOneToOne: false
             referencedRelation: "teacher_paychecks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "statement_entries_front_desk_paycheck_id_fkey"
-            columns: ["front_desk_paycheck_id"]
-            isOneToOne: false
-            referencedRelation: "front_desk_paychecks"
             referencedColumns: ["id"]
           },
         ]
@@ -1549,6 +1638,47 @@ export type Database = {
           },
         ]
       }
+      student_phone_contacts: {
+        Row: {
+          created_at: string
+          id: number
+          is_primary: boolean
+          owner_name: string | null
+          owner_role: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order: number
+          student_id: number
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number: string
+          sort_order?: number
+          student_id: number
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          is_primary?: boolean
+          owner_name?: string | null
+          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
+          phone_number?: string
+          sort_order?: number
+          student_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_phone_contacts_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_purchases: {
         Row: {
           amount_cents: number
@@ -1590,47 +1720,6 @@ export type Database = {
           },
         ]
       }
-      student_phone_contacts: {
-        Row: {
-          created_at: string
-          id: number
-          is_primary: boolean
-          owner_name: string | null
-          owner_role: Database["public"]["Enums"]["phone_owner_role"]
-          phone_number: string
-          sort_order: number
-          student_id: number
-        }
-        Insert: {
-          created_at?: string
-          id?: number
-          is_primary?: boolean
-          owner_name?: string | null
-          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
-          phone_number: string
-          sort_order?: number
-          student_id: number
-        }
-        Update: {
-          created_at?: string
-          id?: number
-          is_primary?: boolean
-          owner_name?: string | null
-          owner_role?: Database["public"]["Enums"]["phone_owner_role"]
-          phone_number?: string
-          sort_order?: number
-          student_id?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "student_phone_contacts_student_id_fkey"
-            columns: ["student_id"]
-            isOneToOne: false
-            referencedRelation: "students"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       student_receipts: {
         Row: {
           created_at: string
@@ -1645,7 +1734,7 @@ export type Database = {
         Insert: {
           created_at?: string
           file_name: string
-          id?: number
+          id?: never
           mime_type?: string | null
           note?: string | null
           storage_path: string
@@ -1655,7 +1744,7 @@ export type Database = {
         Update: {
           created_at?: string
           file_name?: string
-          id?: number
+          id?: never
           mime_type?: string | null
           note?: string | null
           storage_path?: string
@@ -1950,18 +2039,12 @@ export type Database = {
         Args: { p_class_id: number; p_field: string; p_reason?: string }
         Returns: undefined
       }
-      correct_money_source: {
-        Args: {
-          p_corrected_amount_cents: number
-          p_field_name?: string
-          p_reason: string
-          p_source_id: number
-          p_source_kind: Database["public"]["Enums"]["financial_source_kind"]
-        }
-        Returns: number
-      }
       deduct_class_credits: {
         Args: { p_class_id: number; p_count: number; p_student_id: number }
+        Returns: undefined
+      }
+      delete_statement_entry: {
+        Args: { p_entry_id: number }
         Returns: undefined
       }
       ensure_statement_period: {
@@ -1994,9 +2077,9 @@ export type Database = {
       record_class_attendance: {
         Args: {
           p_class_id: number
-          p_class_schedule_id?: number | null
+          p_class_schedule_id: number
           p_created_by?: string
-          p_notes?: string | null
+          p_notes?: string
           p_session_date: string
           p_status: Database["public"]["Enums"]["attendance_status"]
           p_student_id: number
@@ -2008,7 +2091,7 @@ export type Database = {
           p_amount_cents: number
           p_class_id: number
           p_created_by?: string
-          p_notes?: string | null
+          p_notes?: string
           p_payment_plan: Database["public"]["Enums"]["payment_plan"]
           p_session_count: number
           p_student_id: number
@@ -2018,7 +2101,7 @@ export type Database = {
       record_class_session: {
         Args: {
           p_class_id: number
-          p_class_schedule_id?: number | null
+          p_class_schedule_id: number
           p_created_by?: string
           p_session_date: string
           p_source: Database["public"]["Enums"]["session_record_source"]
@@ -2037,14 +2120,23 @@ export type Database = {
         }
         Returns: number
       }
+      record_front_desk_paycheck: {
+        Args: {
+          p_created_by?: string
+          p_month: number
+          p_teacher_id: number
+          p_year: number
+        }
+        Returns: number
+      }
       record_makeup_session: {
         Args: {
           p_class_id: number
-          p_class_schedule_id?: number | null
+          p_class_schedule_id: number
           p_created_by?: string
           p_credit_cost: number
-          p_notes?: string | null
-          p_related_attendance_id?: number | null
+          p_notes?: string
+          p_related_attendance_id?: number
           p_session_date: string
           p_student_id: number
         }
@@ -2069,21 +2161,7 @@ export type Database = {
         }
         Returns: number
       }
-      record_front_desk_paycheck: {
-        Args: {
-          p_created_by?: string
-          p_month: number
-          p_teacher_id: number
-          p_year: number
-        }
-        Returns: number
-      }
-      delete_statement_entry: {
-        Args: {
-          p_entry_id: number
-        }
-        Returns: undefined
-      }
+      require_active_staff: { Args: never; Returns: string }
       set_staff_preferred_language: {
         Args: { p_language: Database["public"]["Enums"]["staff_language"] }
         Returns: undefined
@@ -2096,12 +2174,11 @@ export type Database = {
           p_from_student_id: number
           p_reason?: string
           p_related_payment_id?: number
-          p_to_student_id?: number | null
+          p_to_student_id: number
           p_transfer_type: Database["public"]["Enums"]["credit_transfer_type"]
         }
         Returns: number
       }
-      require_active_staff: { Args: never; Returns: string }
       update_campus_trial_pricing: {
         Args: {
           p_location_id: number
@@ -2121,20 +2198,12 @@ export type Database = {
         }
         Returns: undefined
       }
-      update_recurring_statement_entry_amount: {
-        Args: {
-          p_amount_cents: number
-          p_id: number
-          p_reason?: string
-        }
-        Returns: undefined
-      }
       update_payment_status:
         | {
             Args: {
               p_changed_by?: string
               p_exchanged_for_payment_id?: number
-              p_notes?: string | null
+              p_notes?: string
               p_payment_id: number
               p_status: Database["public"]["Enums"]["payment_status"]
             }
@@ -2145,7 +2214,7 @@ export type Database = {
               p_changed_by?: string
               p_credits?: number
               p_exchanged_for_payment_id?: number
-              p_notes?: string | null
+              p_notes?: string
               p_payment_id: number
               p_status: Database["public"]["Enums"]["payment_status"]
               p_to_student_id?: number
@@ -2162,7 +2231,7 @@ export type Database = {
           p_credits_used?: number
           p_history_type?: Database["public"]["Enums"]["student_class_history_type"]
           p_makeup_session_id?: number
-          p_notes?: string | null
+          p_notes?: string
           p_session_date: string
           p_session_record_id?: number
           p_source?: Database["public"]["Enums"]["session_record_source"]
@@ -2183,7 +2252,16 @@ export type Database = {
     }
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
+      chat_sender_type: "teacher" | "student"
       credit_transfer_type: "exchange" | "refund"
+      financial_source_kind:
+        | "class_payment"
+        | "student_purchase"
+        | "teacher_paycheck"
+        | "statement_entry"
+        | "recurring_statement_entry"
+        | "class_pricing"
+        | "campus_pricing"
       lead_status: "new" | "contacted" | "enrolled" | "closed"
       member_type: "student" | "teacher"
       payment_plan: "single" | "package_20" | "package_50"
@@ -2204,16 +2282,8 @@ export type Database = {
       staff_language: "en" | "zh"
       staff_location: "brooklyn" | "staten_island"
       staff_position: "teacher" | "front_desk"
-      staff_role: "admin" | "manager" | "front_desk"
+      staff_role: "admin" | "manager" | "teacher" | "front_desk"
       statement_entry_type: "income" | "expense"
-      financial_source_kind:
-        | "class_payment"
-        | "student_purchase"
-        | "teacher_paycheck"
-        | "statement_entry"
-        | "recurring_statement_entry"
-        | "class_pricing"
-        | "campus_pricing"
       student_class_history_type: "regular" | "makeup"
     }
     CompositeTypes: {
@@ -2343,7 +2413,17 @@ export const Constants = {
   public: {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
+      chat_sender_type: ["teacher", "student"],
       credit_transfer_type: ["exchange", "refund"],
+      financial_source_kind: [
+        "class_payment",
+        "student_purchase",
+        "teacher_paycheck",
+        "statement_entry",
+        "recurring_statement_entry",
+        "class_pricing",
+        "campus_pricing",
+      ],
       lead_status: ["new", "contacted", "enrolled", "closed"],
       member_type: ["student", "teacher"],
       payment_plan: ["single", "package_20", "package_50"],
@@ -2365,17 +2445,8 @@ export const Constants = {
       staff_language: ["en", "zh"],
       staff_location: ["brooklyn", "staten_island"],
       staff_position: ["teacher", "front_desk"],
-      staff_role: ["admin", "manager", "front_desk"],
+      staff_role: ["admin", "manager", "teacher", "front_desk"],
       statement_entry_type: ["income", "expense"],
-      financial_source_kind: [
-        "class_payment",
-        "student_purchase",
-        "teacher_paycheck",
-        "statement_entry",
-        "recurring_statement_entry",
-        "class_pricing",
-        "campus_pricing",
-      ],
       student_class_history_type: ["regular", "makeup"],
     },
   },

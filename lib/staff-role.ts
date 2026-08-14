@@ -2,13 +2,15 @@ import { translate } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 import type { StaffLocation } from "@/lib/staff-location";
 
-export const STAFF_ROLES = ["admin", "manager", "front_desk"] as const;
+/** admin + manager = console staff; teacher = app login; front_desk = hours login */
+export const STAFF_ROLES = ["admin", "manager", "teacher", "front_desk"] as const;
 
 export type StaffRole = (typeof STAFF_ROLES)[number];
 
 const STAFF_ROLE_KEYS = {
   admin: "enum.staffRole.admin",
   manager: "enum.staffRole.manager",
+  teacher: "enum.staffRole.teacher",
   front_desk: "enum.staffRole.frontDesk",
 } as const;
 
@@ -18,6 +20,14 @@ export function isStaffRole(value: string): value is StaffRole {
 
 export function isFrontDeskStaffRole(role: StaffRole) {
   return role === "front_desk";
+}
+
+export function isManagerStaffRole(role: StaffRole) {
+  return role === "manager";
+}
+
+export function isTeacherAppRole(role: StaffRole) {
+  return role === "teacher";
 }
 
 /** Can open My hours (front desk logins, admins, or any staff linked to a front desk profile). */
@@ -47,6 +57,7 @@ export function canCreateStaffRole(
   return (
     targetRole === "admin" ||
     targetRole === "manager" ||
+    targetRole === "teacher" ||
     targetRole === "front_desk"
   );
 }
