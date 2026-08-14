@@ -26,8 +26,10 @@ import { useLanguage } from "@/components/language-provider";
 import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import type { StudentOption } from "@/components/student-combobox";
+import { StudentMultiCombobox } from "@/components/student-multi-combobox";
 import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
+import type { LessonType } from "@/lib/class-lesson-type";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import {
   filterStudentsByQuery,
@@ -54,6 +56,12 @@ const selectClassName = `${inputClassName} appearance-none pr-10`;
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
 
+const SCHEDULE_LESSON_TYPES = ["private", "group"] as const;
+
+function classNames(...classes: (string | false | undefined)[]) {
+  return classes.filter(Boolean).join(" ");
+}
+
 function toTimeInputValue(time: string) {
   return time.slice(0, 5);
 }
@@ -75,7 +83,11 @@ export function ScheduleAddStudentDialog({
   const router = useRouter();
   const sortedTeachers = useMemo(() => sortTeachers(teachers), [teachers]);
   const [teacherId, setTeacherId] = useState<number | "">("");
+  const [lessonType, setLessonType] = useState<Extract<LessonType, "private" | "group">>(
+    "private",
+  );
   const [student, setStudent] = useState<StudentOption | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<StudentOption[]>([]);
   const [extraStudents, setExtraStudents] = useState<StudentOption[]>([]);
   const [subject, setSubject] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(
@@ -107,7 +119,9 @@ export function ScheduleAddStudentDialog({
     }
 
     setTeacherId(pending.teacherId ?? "");
+    setLessonType("private");
     setStudent(null);
+    setSelectedStudents([]);
     setExtraStudents([]);
     setSubject("");
     setDurationMinutes(String(DEFAULT_SLOT_DURATION_MINUTES));
@@ -217,7 +231,24 @@ export function ScheduleAddStudentDialog({
       }
       return [...current, created];
     });
-    setStudent(created);
+    if (lessonType === "private") {
+      setStudent(created);
+    }
+  }
+
+  function handleLessonTypeChange(next: Extract<LessonType, "private" | "group">) {
+    setLessonType(next);
+    if (next === "group" && student) {
+      setSelectedStudents((current) =>
+        current.some((item) => item.id === student.id)
+          ? current
+          : [student, ...current],
+      );
+      return;
+    }
+    if (next === "private" && !student && selectedStudents[0]) {
+      setStudent(selectedStudents[0]);
+    }
   }
 
   if (!pending) {
@@ -256,13 +287,19 @@ export function ScheduleAddStudentDialog({
             </div>
 
             <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t("common.addStudentToSchedule")}
+              {lessonType === "group"
+                ? t("common.addGroupClassToSchedule")
+                : t("common.addStudentToSchedule")}
             </DialogTitle>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {selectedTeacher
-                ? t("common.addStudentToScheduleHelp", {
-                    name: formatTeacherName(selectedTeacher),
-                  })
+                ? lessonType === "group"
+                  ? t("common.addGroupClassToScheduleHelp", {
+                      name: formatTeacherName(selectedTeacher),
+                    })
+                  : t("common.addStudentToScheduleHelp", {
+                      name: formatTeacherName(selectedTeacher),
+                    })
                 : t("common.selectTeacherToAddStudent")}
             </p>
 
@@ -272,7 +309,18 @@ export function ScheduleAddStudentDialog({
                 name="teacherId"
                 value={teacherId === "" ? "" : teacherId}
               />
-              <input type="hidden" name="studentId" value={student?.id ?? ""} />
+              {lessonType === "private" ? (
+                <input type="hidden" name="studentId" value={student?.id ?? ""} />
+              ) : (
+                selectedStudents.map((item) => (
+                  <input
+                    key={item.id}
+                    type="hidden"
+                    name="studentIds"
+                    value={item.id}
+                  />
+                ))
+              )}
               <input type="hidden" name="classId" value="new" />
               <input
                 type="hidden"
@@ -292,6 +340,7 @@ export function ScheduleAddStudentDialog({
                       const value = event.target.value;
                       setTeacherId(value === "" ? "" : Number(value));
                       setStudent(null);
+                      setSelectedStudents([]);
                       setSubject("");
                     }}
                     required
@@ -311,27 +360,83 @@ export function ScheduleAddStudentDialog({
                 </div>
               </div>
 
-              <div>
-                <label htmlFor="addScheduleStudent" className={labelClassName}>
-                  {t("common.student")}
-                </label>
-                <div className="mt-2">
-                  <ScheduleStudentPicker
-                    id="addScheduleStudent"
-                    students={availableStudents}
-                    teacherStudents={teacherStudents}
-                    selected={student}
-                    onChange={setStudent}
-                    disabled={teacherId === ""}
-                  />
+              <fieldset>
+                <legend className={labelClassName}>{t("common.lessonType")}</legend>
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  {SCHEDULE_LESSON_TYPES.map((value) => (
+                    <label
+                      key={value}
+                      className={classNames(
+                        "flex cursor-pointer items-center justify-center rounded-md border px-3 py-2 text-sm font-semibold",
+                        lessonType === value
+                          ? "border-indigo-600 bg-indigo-50 text-indigo-700 dark:border-indigo-500 dark:bg-indigo-500/10 dark:text-indigo-300"
+                          : "border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/5",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="lessonType"
+                        value={value}
+                        checked={lessonType === value}
+                        onChange={() => handleLessonTypeChange(value)}
+                        className="sr-only"
+                      />
+                      {t(
+                        value === "group"
+                          ? "enum.lessonType.group"
+                          : "enum.lessonType.private",
+                      )}
+                    </label>
+                  ))}
                 </div>
-                <div className="mt-2">
-                  <QuickAddStudentDialog
-                    onCreated={handleStudentAdded}
-                    onOpenChange={setQuickAddOpen}
-                  />
+              </fieldset>
+
+              {lessonType === "group" ? (
+                <div>
+                  <label htmlFor="addScheduleStudents" className={labelClassName}>
+                    {t("common.students")}
+                  </label>
+                  <div className="mt-2">
+                    <StudentMultiCombobox
+                      id="addScheduleStudents"
+                      students={availableStudents}
+                      teacherStudents={teacherStudents}
+                      selected={selectedStudents}
+                      onChange={setSelectedStudents}
+                      onStudentAdded={handleStudentAdded}
+                      onQuickAddOpenChange={setQuickAddOpen}
+                      disabled={teacherId === ""}
+                    />
+                  </div>
+                  {selectedStudents.length === 0 ? (
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {t("common.selectAtLeastOneStudent")}
+                    </p>
+                  ) : null}
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label htmlFor="addScheduleStudent" className={labelClassName}>
+                    {t("common.student")}
+                  </label>
+                  <div className="mt-2">
+                    <ScheduleStudentPicker
+                      id="addScheduleStudent"
+                      students={availableStudents}
+                      teacherStudents={teacherStudents}
+                      selected={student}
+                      onChange={setStudent}
+                      disabled={teacherId === ""}
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <QuickAddStudentDialog
+                      onCreated={handleStudentAdded}
+                      onOpenChange={setQuickAddOpen}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label htmlFor="addScheduleSubject" className={labelClassName}>
@@ -427,7 +532,9 @@ export function ScheduleAddStudentDialog({
                   disabled={
                     pendingSubmit ||
                     teacherId === "" ||
-                    student == null ||
+                    (lessonType === "group"
+                      ? selectedStudents.length === 0
+                      : student == null) ||
                     !subject.trim() ||
                     !durationMinutes
                   }

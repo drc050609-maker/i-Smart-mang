@@ -9,6 +9,7 @@ import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { addMinutesToScheduleTime, minutesBetweenScheduleTimes } from "@/lib/class-schedule";
 import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { inferClassTrackFromSubject } from "@/lib/class-track";
+import { parseLessonType } from "@/lib/class-lesson-type";
 import { pickReusableClass } from "@/lib/find-reusable-class";
 import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
 import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
@@ -384,6 +385,17 @@ function parsePositiveId(value: FormDataEntryValue | null) {
   return id;
 }
 
+function parseStudentIds(formData: FormData) {
+  return [
+    ...new Set(
+      formData
+        .getAll("studentIds")
+        .map((value) => Number(value))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  ];
+}
+
 function weekdayFromDateYmd(date: string) {
   const [year, month, day] = date.split("-").map(Number);
   if (!year || !month || !day) {
@@ -481,7 +493,22 @@ export async function addStudentToCalendar(
   }
 
   const teacherId = parsePositiveId(formData.get("teacherId"));
+  const parsedLessonType = parseLessonType(formData.get("lessonType"));
+  if (parsedLessonType === null) {
+    return { error: "Select a private or group class." };
+  }
+  const lessonType = parsedLessonType ?? "private";
+  if (lessonType === "trial") {
+    return { error: "Select a private or group class." };
+  }
+
   const studentId = parsePositiveId(formData.get("studentId"));
+  const studentIds =
+    lessonType === "group"
+      ? parseStudentIds(formData)
+      : studentId
+        ? [studentId]
+        : [];
   const classIdValue = formData.get("classId")?.toString().trim() ?? "";
   const classId =
     classIdValue === "" || classIdValue === "new"
@@ -497,8 +524,13 @@ export async function addStudentToCalendar(
   if (!teacherId) {
     return { error: "Select a teacher." };
   }
-  if (!studentId) {
-    return { error: "Select a student." };
+  if (studentIds.length === 0) {
+    return {
+      error:
+        lessonType === "group"
+          ? "Select at least one student."
+          : "Select a student.",
+    };
   }
   if (classIdValue !== "" && classIdValue !== "new" && !classId) {
     return { error: "Invalid class." };
@@ -526,19 +558,20 @@ export async function addStudentToCalendar(
     return { error: "Campus location could not be resolved." };
   }
 
-  const [{ data: teacher, error: teacherError }, { data: student, error: studentError }] =
-    await Promise.all([
-      client.supabase
-        .from("teachers")
-        .select("id, location_id")
-        .eq("id", teacherId)
-        .maybeSingle(),
-      client.supabase
-        .from("students")
-        .select("id, location_id, starting_class_credits")
-        .eq("id", studentId)
-        .maybeSingle(),
-    ]);
+  const [
+    { data: teacher, error: teacherError },
+    { data: studentRows, error: studentsError },
+  ] = await Promise.all([
+    client.supabase
+      .from("teachers")
+      .select("id, location_id")
+      .eq("id", teacherId)
+      .maybeSingle(),
+    client.supabase
+      .from("students")
+      .select("id, location_id, starting_class_credits")
+      .in("id", studentIds),
+  ]);
 
   if (teacherError) {
     return { error: teacherError.message };
@@ -546,11 +579,19 @@ export async function addStudentToCalendar(
   if (!teacher || teacher.location_id !== locationId) {
     return { error: "Teacher could not be found at this campus." };
   }
-  if (studentError) {
-    return { error: studentError.message };
+  if (studentsError) {
+    return { error: studentsError.message };
   }
-  if (!student || student.location_id !== locationId) {
+
+  const studentsById = new Map((studentRows ?? []).map((row) => [row.id, row]));
+  if (studentsById.size !== studentIds.length) {
     return { error: "Student could not be found at this campus." };
+  }
+  for (const id of studentIds) {
+    const student = studentsById.get(id);
+    if (!student || student.location_id !== locationId) {
+      return { error: "Student could not be found at this campus." };
+    }
   }
 
   const { error: classLookupError, classes: teacherClasses } = await loadTeacherClassRows(
@@ -581,7 +622,7 @@ export async function addStudentToCalendar(
 
     const existing = pickReusableClass(teacherClasses, {
       subject,
-      lessonType: "private",
+      lessonType,
       durationMinutes,
     });
 
@@ -594,7 +635,7 @@ export async function addStudentToCalendar(
           subject,
           teacher_id: teacherId,
           duration_minutes: durationMinutes,
-          lesson_type: "private",
+          lesson_type: lessonType,
           class_track: inferClassTrackFromSubject(subject),
           location_id: locationId,
         })
@@ -621,6 +662,8 @@ export async function addStudentToCalendar(
     return { error: "Class is required." };
   }
 
+  const targetClassId = resolvedClassId;
+
   const endTime = addMinutesToScheduleTime(startTime, durationMinutes);
   if (!endTime) {
     return {
@@ -629,40 +672,55 @@ export async function addStudentToCalendar(
     };
   }
 
-  const { data: enrollment, error: enrollmentError } = await client.supabase
-    .from("enrollments")
-    .select("id")
-    .eq("class id", resolvedClassId)
-    .eq("student id", studentId)
-    .maybeSingle();
+  const { data: existingEnrollments, error: enrollmentError } =
+    await client.supabase
+      .from("enrollments")
+      .select('"student id"')
+      .eq("class id", targetClassId)
+      .in("student id", studentIds);
 
   if (enrollmentError) {
     return { error: enrollmentError.message };
   }
 
-  if (!enrollment) {
+  const enrolledIds = new Set(
+    (existingEnrollments ?? [])
+      .map((row) => row["student id"])
+      .filter((id): id is number => typeof id === "number"),
+  );
+  const newStudentIds = studentIds.filter((id) => !enrolledIds.has(id));
+
+  if (newStudentIds.length > 0) {
     const today = new Date().toISOString().slice(0, 10);
     const { error: insertEnrollmentError } = await client.supabase
       .from("enrollments")
-      .insert({
-        "class id": resolvedClassId,
-        "student id": studentId,
-        created_date: today,
-        is_active: true,
-        updated_date: today,
-      });
+      .insert(
+        newStudentIds.map((id) => ({
+          "class id": targetClassId,
+          "student id": id,
+          created_date: today,
+          is_active: true,
+          updated_date: today,
+        })),
+      );
 
     if (insertEnrollmentError) {
       return { error: insertEnrollmentError.message };
     }
 
-    const creditCount = student.starting_class_credits ?? DEFAULT_STARTING_CLASS_CREDITS;
-    if (creditCount > 0) {
+    for (const id of newStudentIds) {
+      const student = studentsById.get(id);
+      const creditCount =
+        student?.starting_class_credits ?? DEFAULT_STARTING_CLASS_CREDITS;
+      if (creditCount <= 0) {
+        continue;
+      }
+
       const { error: creditsError } = await client.supabase.rpc(
         "add_student_class_credits",
         {
-          p_student_id: studentId,
-          p_class_id: resolvedClassId,
+          p_student_id: id,
+          p_class_id: targetClassId,
           p_count: creditCount,
         },
       );
@@ -678,8 +736,8 @@ export async function addStudentToCalendar(
   }
 
   const { error: scheduleError } = await client.supabase.from("class_schedules").insert({
-    class_id: resolvedClassId,
-    student_id: studentId,
+    class_id: targetClassId,
+    student_id: lessonType === "group" ? null : studentIds[0],
     is_recurring: isRecurring,
     schedule_day_of_week: isRecurring ? dayOfWeek : null,
     schedule_date: isRecurring ? null : scheduleDate,
@@ -691,9 +749,11 @@ export async function addStudentToCalendar(
     return { error: scheduleError.message };
   }
 
-  revalidateSchedule(resolvedClassId);
+  revalidateSchedule(targetClassId);
   revalidatePath("/students");
-  revalidatePath(`/students/${studentId}`);
+  for (const id of studentIds) {
+    revalidatePath(`/students/${id}`);
+  }
   revalidatePath(`/tutors/${teacherId}`);
   return { success: true };
 }

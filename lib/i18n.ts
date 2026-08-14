@@ -369,9 +369,13 @@ export type TranslationKey =
   | "common.teacherDayListHelp"
   | "common.addStudentToSchedule"
   | "common.addStudentToScheduleHelp"
+  | "common.addGroupClassToSchedule"
+  | "common.addGroupClassToScheduleHelp"
   | "common.selectTeacherToAddStudent"
   | "common.teacherStudents"
   | "common.searchTeacherStudents"
+  | "common.students"
+  | "common.selectAtLeastOneStudent"
   | "common.createNewClass"
   | "common.addToSchedule"
   | "common.clickEmptySlotToAdd"
@@ -1301,14 +1305,19 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addStudentToSchedule": "Add student",
     "common.addStudentToScheduleHelp":
       "Choose a student, then pick the instrument and how long this class time is.",
+    "common.addGroupClassToSchedule": "Add group class",
+    "common.addGroupClassToScheduleHelp":
+      "Choose students, then pick the instrument and how long this class time is.",
     "common.selectTeacherToAddStudent":
       "Select a teacher, then choose an existing student or add a new one.",
     "common.teacherStudents": "This teacher's students",
     "common.searchTeacherStudents": "Search this teacher's students, or type to find anyone",
+    "common.students": "Students",
+    "common.selectAtLeastOneStudent": "Select at least one student.",
     "common.createNewClass": "Create a new class…",
     "common.addToSchedule": "Add to schedule",
     "common.clickEmptySlotToAdd":
-      "Select a teacher and click an empty time to add a student.",
+      "Select a teacher and click an empty time to add a private or group class.",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint":
       "In the print dialog, choose “Save as PDF” to download a copy.",
@@ -2284,13 +2293,18 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addStudentToSchedule": "添加学生",
     "common.addStudentToScheduleHelp":
       "选择学生，再选择乐器和本节课时长。",
+    "common.addGroupClassToSchedule": "添加小组课",
+    "common.addGroupClassToScheduleHelp":
+      "选择学生，再选择乐器和本节课时长。",
     "common.selectTeacherToAddStudent":
       "请先选择老师，然后选择已有学生或添加新学生。",
     "common.teacherStudents": "该老师的学生",
     "common.searchTeacherStudents": "搜索该老师的学生，或输入以查找所有学生",
+    "common.students": "学生",
+    "common.selectAtLeastOneStudent": "请至少选择一名学生。",
     "common.createNewClass": "创建新课程…",
     "common.addToSchedule": "添加到日程",
-    "common.clickEmptySlotToAdd": "选择老师后，点击空白时间即可添加学生。",
+    "common.clickEmptySlotToAdd": "选择老师后，点击空白时间即可添加一对一或小组课。",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”即可下载。",
     "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",

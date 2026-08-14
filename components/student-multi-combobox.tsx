@@ -42,6 +42,8 @@ export function StudentMultiCombobox({
   onChange,
   onStudentAdded,
   onQuickAddOpenChange,
+  teacherStudents,
+  disabled,
 }: {
   id: string;
   students: StudentOption[];
@@ -49,6 +51,8 @@ export function StudentMultiCombobox({
   onChange: (students: StudentOption[]) => void;
   onStudentAdded?: (student: StudentOption) => void;
   onQuickAddOpenChange?: (open: boolean) => void;
+  teacherStudents?: StudentOption[];
+  disabled?: boolean;
 }) {
   const { t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -57,10 +61,20 @@ export function StudentMultiCombobox({
     [selected],
   );
   const sortedStudents = useMemo(() => sortStudents(students), [students]);
-  const filteredStudents = useMemo(
-    () => filterStudents(sortedStudents, query),
-    [sortedStudents, query],
+  const sortedTeacherStudents = useMemo(
+    () => sortStudents(teacherStudents ?? []),
+    [teacherStudents],
   );
+  const trimmedQuery = query.trim();
+  const filteredStudents = useMemo(() => {
+    if (trimmedQuery) {
+      return filterStudents(sortedStudents, trimmedQuery);
+    }
+    if (sortedTeacherStudents.length > 0) {
+      return sortedTeacherStudents;
+    }
+    return sortedStudents;
+  }, [trimmedQuery, sortedStudents, sortedTeacherStudents]);
 
   const handleStudentCreated = useCallback(
     (student: StudentOption) => {
@@ -120,6 +134,7 @@ export function StudentMultiCombobox({
           }
         }}
         onClose={() => setQuery("")}
+        disabled={disabled}
       >
         <div className="relative">
           <ComboboxInput
@@ -127,8 +142,13 @@ export function StudentMultiCombobox({
             className={inputClassName}
             displayValue={() => query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder={t("common.searchAndSelectStudents")}
+            placeholder={
+              sortedTeacherStudents.length > 0
+                ? t("common.searchTeacherStudents")
+                : t("common.searchAndSelectStudents")
+            }
             autoComplete="off"
+            disabled={disabled}
           />
           <ComboboxButton className="absolute inset-y-0 right-0 flex items-center rounded-r-md px-2 focus:outline-hidden">
             <ChevronDownIcon
@@ -142,6 +162,11 @@ export function StudentMultiCombobox({
             anchor="bottom start"
             className="z-20 mt-1 max-h-60 w-(--input-width) overflow-auto rounded-md bg-white py-1 text-base shadow-lg outline outline-black/5 transition duration-100 ease-in data-closed:data-leave:opacity-0 sm:text-sm dark:bg-gray-800 dark:outline-white/10"
           >
+            {!trimmedQuery && sortedTeacherStudents.length > 0 ? (
+              <div className="px-3 py-1.5 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:text-gray-400">
+                {t("common.teacherStudents")}
+              </div>
+            ) : null}
             {filteredStudents.length === 0 ? (
               <div className="relative cursor-default px-3 py-2 text-gray-500 select-none dark:text-gray-400">
                 {students.length === 0
