@@ -1,7 +1,7 @@
 import type { ClassScheduleFields } from "@/lib/class-schedule";
 
 export const SESSION_LOOKBACK_DAYS = 90;
-export const DEFAULT_STARTING_CLASS_CREDITS = 10;
+export const DEFAULT_STARTING_CLASS_CREDITS = 0;
 
 export function parseStartingClassCredits(value: FormDataEntryValue | null) {
   const raw = value?.toString().trim();
