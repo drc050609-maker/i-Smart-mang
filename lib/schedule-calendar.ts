@@ -103,6 +103,10 @@ export type ScheduleTeacher = {
   class_count: number;
 };
 
+export function isTrialLessonType(lessonType: string | null | undefined) {
+  return lessonType === "trial";
+}
+
 /** Compact calendar label: one name, two names, or "First +N". */
 export function formatScheduleEventStudentLabel(
   students: ScheduleStudent[],
@@ -113,6 +117,28 @@ export function formatScheduleEventStudentLabel(
   if (names.length === 1) return names[0]!;
   if (names.length === 2) return `${names[0]}, ${names[1]}`;
   return `${names[0]} +${names.length - 1}`;
+}
+
+/** Fallback title when a slot has no student: trial, group type, or subject. */
+export function scheduleEventUnassignedLabel(
+  lessonType: string | null | undefined,
+  subjectLabel: string,
+  labels: { trial: string; group: string },
+) {
+  if (isTrialLessonType(lessonType)) return labels.trial;
+  if (lessonType === "group") return labels.group;
+  return subjectLabel;
+}
+
+/** Append a short "trial" tag next to a student name for text-only surfaces. */
+export function withTrialStudentLabel(
+  name: string,
+  lessonType: string | null | undefined,
+  trialLabel: string,
+) {
+  if (!isTrialLessonType(lessonType)) return name;
+  if (!name || name === trialLabel) return trialLabel;
+  return `${name} ${trialLabel}`;
 }
 
 export function timeToMinutes(time: string) {

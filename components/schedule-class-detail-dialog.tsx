@@ -16,6 +16,7 @@ import {
 import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { useLanguage } from "@/components/language-provider";
 import { StudentNoteStar } from "@/components/student-note-star";
+import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
@@ -93,7 +94,9 @@ export function ScheduleClassDetailDialog({
         : t("common.student");
   const studentSummary =
     displayStudents.length === 0
-      ? t("common.noStudentsEnrolled")
+      ? instance.lesson_type === "trial"
+        ? t("common.trialLabel")
+        : t("common.noStudentsEnrolled")
       : instance.schedule_student_id != null
         ? formatStudentName(displayStudents[0]!)
         : t("common.enrolled", { count: displayStudents.length });
@@ -197,6 +200,7 @@ export function ScheduleClassDetailDialog({
                     >
                       {formatStudentName(student)}
                     </Link>
+                    <ScheduleTrialLabel lessonType={instance.lesson_type} />
                     <StudentNoteStar students={[student]} />
                   </li>
                 ))}

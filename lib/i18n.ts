@@ -181,6 +181,7 @@ export type TranslationKey =
   | "common.noTeacherAssigned"
   | "common.inSession"
   | "common.noStudentsEnrolled"
+  | "common.trialLabel"
   | "common.enrolled"
   | "common.viewClass"
   | "common.when"
@@ -1073,6 +1074,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noTeacherAssigned": "No teacher assigned",
     "common.inSession": "In session",
     "common.noStudentsEnrolled": "No students enrolled",
+    "common.trialLabel": "trial",
     "common.enrolled": "{count} enrolled",
     "common.viewClass": "View class →",
     "common.when": "When",
@@ -2042,6 +2044,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noTeacherAssigned": "未分配老师",
     "common.inSession": "进行中",
     "common.noStudentsEnrolled": "暂无学生报名",
+    "common.trialLabel": "试课",
     "common.enrolled": "已报名 {count} 人",
     "common.viewClass": "查看课程 →",
     "common.when": "时间",

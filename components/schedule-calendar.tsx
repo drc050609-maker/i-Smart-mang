@@ -38,6 +38,7 @@ import {
 import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { ScheduleTeacherDayDialog } from "@/components/schedule-teacher-day-dialog";
 import { StudentNoteStar } from "@/components/student-note-star";
+import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
@@ -54,6 +55,8 @@ import {
   formatEasternDateYMD,
   formatHourLabel,
   formatScheduleEventStudentLabel,
+  scheduleEventUnassignedLabel,
+  withTrialStudentLabel,
   formatWeekRange,
   formatDayTitle,
   getEventColumnStyle,
@@ -149,10 +152,15 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   const displayHeight = Math.max(height, COMPACT_MIN_HEIGHT);
   const columnStyle = getEventColumnStyle(layout);
   const subjectLabel = formatClassSubject(instance.subject, language);
-  const unassignedLabel =
-    instance.lesson_type === "group"
-      ? t("enum.lessonType.group")
-      : subjectLabel;
+  const trialLabel = t("common.trialLabel");
+  const unassignedLabel = scheduleEventUnassignedLabel(
+    instance.lesson_type,
+    subjectLabel,
+    {
+      trial: trialLabel,
+      group: t("enum.lessonType.group"),
+    },
+  );
   const labeledStudents = instance.students.map((student) => {
     const campus = studentsById?.get(student.id);
     if (!campus?.notes?.trim()) return student;
@@ -162,14 +170,19 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     labeledStudents,
     unassignedLabel,
   );
+  const displayStudentLabel = withTrialStudentLabel(
+    studentLabel,
+    instance.lesson_type,
+    trialLabel,
+  );
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
   const showSecondary = displayHeight >= 40;
   const showSubjectTertiary =
     displayHeight >= 58 && studentLabel !== subjectLabel;
   const tooltip =
-    studentLabel === subjectLabel
+    displayStudentLabel === subjectLabel
       ? `${subjectLabel} · ${timeLabel}`
-      : `${studentLabel} · ${timeLabel} · ${subjectLabel}`;
+      : `${displayStudentLabel} · ${timeLabel} · ${subjectLabel}`;
 
   return (
     <div
@@ -211,6 +224,12 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
         <span className={showFullName ? "min-w-0 break-words" : "min-w-0 truncate"}>
           {studentLabel}
         </span>
+        {labeledStudents.length > 0 ? (
+          <ScheduleTrialLabel
+            lessonType={instance.lesson_type}
+            className="shrink-0 font-medium opacity-80"
+          />
+        ) : null}
         <StudentNoteStar
           students={labeledStudents}
           className="mt-px"

@@ -14,6 +14,7 @@ import Link from "next/link";
 import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/actions";
 import { useLanguage } from "@/components/language-provider";
 import { StudentNoteStar } from "@/components/student-note-star";
+import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
@@ -23,8 +24,10 @@ import {
   formatDateYMD,
   formatDayTitle,
   getWeekDays,
+  isTrialLessonType,
   startOfWeek,
   timeToMinutes,
+  withTrialStudentLabel,
   type ScheduleEvent,
   type ScheduleEventInstance,
   type ScheduleException,
@@ -205,7 +208,9 @@ export function ScheduleTeacherDayDialog({
       if (instanceStudents.length === 0) {
         rows.push({
           time: timeLabel,
-          student: t("common.noStudentsEnrolled"),
+          student: isTrialLessonType(instance.lesson_type)
+            ? t("common.trialLabel")
+            : t("common.noStudentsEnrolled"),
           instrument,
         });
         continue;
@@ -214,7 +219,11 @@ export function ScheduleTeacherDayDialog({
       for (const student of instanceStudents) {
         rows.push({
           time: timeLabel,
-          student: formatStudentName(student),
+          student: withTrialStudentLabel(
+            formatStudentName(student),
+            instance.lesson_type,
+            t("common.trialLabel"),
+          ),
           instrument,
         });
       }
@@ -454,7 +463,9 @@ export function ScheduleTeacherDayDialog({
                             <td className="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">
                               {instanceStudents.length === 0 ? (
                                 <span className="text-gray-500 dark:text-gray-400">
-                                  {t("common.noStudentsEnrolled")}
+                                  {isTrialLessonType(instance.lesson_type)
+                                    ? t("common.trialLabel")
+                                    : t("common.noStudentsEnrolled")}
                                 </span>
                               ) : (
                                 <ul className="space-y-0.5">
@@ -469,6 +480,9 @@ export function ScheduleTeacherDayDialog({
                                       >
                                         {formatStudentName(student)}
                                       </Link>
+                                      <ScheduleTrialLabel
+                                        lessonType={instance.lesson_type}
+                                      />
                                       <StudentNoteStar students={[student]} />
                                     </li>
                                   ))}
