@@ -272,7 +272,11 @@ export async function loadScheduleCalendarEvents(
   const classIdsNeedingRoster = [
     ...new Set(
       scheduleRows
-        .filter((row) => row.student_id == null)
+        .filter((row) => {
+          if (row.student_id == null) return true;
+          const classRow = firstOrNull(row.classes);
+          return classRow?.lesson_type === "group";
+        })
         .map((row) => row.class_id),
     ),
   ];

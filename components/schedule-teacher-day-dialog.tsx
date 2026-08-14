@@ -25,6 +25,7 @@ import {
   formatDayTitle,
   getWeekDays,
   isTrialLessonType,
+  resolveScheduleEventStudents,
   startOfWeek,
   timeToMinutes,
   withTrialStudentLabel,
@@ -37,7 +38,6 @@ import {
 import {
   formatStudentName,
   formatTeacherName,
-  sortStudents,
   sortTeachers,
 } from "@/lib/person-name";
 import {
@@ -50,34 +50,6 @@ function parseDateYMD(ymd: string) {
   const date = new Date(year!, month! - 1, day!);
   date.setHours(0, 0, 0, 0);
   return date;
-}
-
-function resolveInstanceStudents(
-  instance: ScheduleEventInstance,
-  students: ScheduleStudent[],
-) {
-  const studentById = new Map(students.map((student) => [student.id, student]));
-
-  function withCampusNotes(student: ScheduleStudent): ScheduleStudent {
-    const campus = studentById.get(student.id);
-    if (!campus?.notes?.trim()) return student;
-    return { ...student, notes: campus.notes };
-  }
-
-  const slotStudents = sortStudents(instance.students).map(withCampusNotes);
-  if (slotStudents.length > 0) {
-    return slotStudents;
-  }
-
-  if (instance.schedule_student_id != null) {
-    return [];
-  }
-
-  return sortStudents(
-    instance.student_ids
-      .map((id) => studentById.get(id))
-      .filter((student): student is ScheduleStudent => student !== undefined),
-  );
 }
 
 export function ScheduleTeacherDayDialog({
@@ -173,6 +145,10 @@ export function ScheduleTeacherDayDialog({
 
   const sourceEvents = localEvents ?? events;
   const sourceExceptions = localExceptions ?? exceptions;
+  const studentsById = useMemo(
+    () => new Map(students.map((student) => [student.id, student])),
+    [students],
+  );
 
   const dayInstances = useMemo(() => {
     if (teacherId === "") {
@@ -203,7 +179,10 @@ export function ScheduleTeacherDayDialog({
     for (const instance of dayInstances) {
       const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
       const instrument = formatClassSubject(instance.subject, language);
-      const instanceStudents = resolveInstanceStudents(instance, students);
+      const instanceStudents = resolveScheduleEventStudents(
+        instance,
+        studentsById,
+      );
 
       if (instanceStudents.length === 0) {
         rows.push({
@@ -230,7 +209,7 @@ export function ScheduleTeacherDayDialog({
     }
 
     return rows;
-  }, [dayInstances, students, language, t]);
+  }, [dayInstances, studentsById, language, t]);
 
   function shiftDate(days: number) {
     setDateYmd(formatDateYMD(addDays(parseDateYMD(dateYmd), days)));
@@ -444,9 +423,9 @@ export function ScheduleTeacherDayDialog({
                     </thead>
                     <tbody className="divide-y divide-gray-200 dark:divide-white/10">
                       {dayInstances.map((instance) => {
-                        const instanceStudents = resolveInstanceStudents(
+                        const instanceStudents = resolveScheduleEventStudents(
                           instance,
-                          students,
+                          studentsById,
                         );
                         const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
 
