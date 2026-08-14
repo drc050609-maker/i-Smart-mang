@@ -17,7 +17,7 @@ function lessonTypeKey(value: string | null | undefined) {
 /**
  * Find an existing class for the same teacher + instrument (and lesson type).
  * Prefers a matching duration when one exists; otherwise reuses any class for
- * that instrument so 30/45/60 minute slots do not require duplicate classes.
+ * that instrument so different-length slots do not require duplicate classes.
  */
 export function pickReusableClass<T extends ReusableClassRow>(
   classes: T[],

@@ -144,6 +144,7 @@ export type TranslationKey =
   | "common.schedule"
   | "common.duration"
   | "common.typicalDurationOptional"
+  | "common.durationMinutesPlaceholder"
   | "common.lessonLengthHelp"
   | "common.typicalDurationHelp"
   | "common.student"
@@ -1052,10 +1053,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.schedule": "Schedule",
     "common.duration": "Duration",
     "common.typicalDurationOptional": "Optional typical length",
+    "common.durationMinutesPlaceholder": "e.g. 45",
     "common.lessonLengthHelp":
-      "How long this class time is. The same class can be 30, 45, or 60 minutes.",
+      "How long this class time is, in minutes. Type any whole number, such as 25, 40, or 90.",
     "common.typicalDurationHelp":
-      "Typical length for this class. Each scheduled lesson can be a different length — you do not need a separate class for 30 vs 45 vs 60 minutes.",
+      "Typical length for this class, in minutes. Each scheduled lesson can be a different length — you do not need a separate class for each duration.",
     "common.student": "Student",
     "common.class": "Class",
     "common.date": "Date",
@@ -1504,7 +1506,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchases": "Purchases",
     "common.deleteClassSchedule": "Delete",
     "common.scheduleHelp":
-      "Pair each meeting time with a student when possible. Set how long that class time is — the same class can have 30, 45, or 60 minute slots.",
+      "Pair each meeting time with a student when possible. Set how long that class time is in minutes.",
     "common.noMeetingTimes": "No meeting times set yet.",
     "common.activeEnrollment": "Active enrollment",
     "common.inactiveEnrollment": "Inactive enrollment",
@@ -2043,10 +2045,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.schedule": "日程",
     "common.duration": "时长",
     "common.typicalDurationOptional": "可选常用时长",
+    "common.durationMinutesPlaceholder": "例如 45",
     "common.lessonLengthHelp":
-      "本节课上多久。同一门课可以安排 30、45 或 60 分钟。",
+      "本节课上多久（分钟）。请输入任意正整数，例如 25、40 或 90。",
     "common.typicalDurationHelp":
-      "这门课的常用时长。每次排课时可以另选时长，不必为 30、45、60 分钟分别建课。",
+      "这门课的常用时长（分钟）。每次排课时可以另选时长，不必按时长分别建课。",
     "common.student": "学生",
     "common.class": "课程",
     "common.date": "日期",
@@ -2486,7 +2489,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchases": "购买",
     "common.deleteClassSchedule": "删除",
     "common.scheduleHelp":
-      "尽量为每个上课时间关联学生。每次可单独选择时长，同一门课可以有 30、45 或 60 分钟的时段。",
+      "尽量为每个上课时间关联学生。每次可单独输入时长（分钟）。",
     "common.noMeetingTimes": "暂无上课时间。",
     "common.activeEnrollment": "活跃报名",
     "common.inactiveEnrollment": "非活跃报名",
