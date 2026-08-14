@@ -6,9 +6,11 @@ import { cookies } from "next/headers";
 import { requireStaff } from "@/lib/auth";
 import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
-import { addMinutesToScheduleTime } from "@/lib/class-schedule";
+import { addMinutesToScheduleTime, minutesBetweenScheduleTimes } from "@/lib/class-schedule";
 import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { inferClassTrackFromSubject } from "@/lib/class-track";
+import { pickReusableClass } from "@/lib/find-reusable-class";
+import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
 import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
@@ -168,28 +170,13 @@ export async function rescheduleFromCalendar(
     return { error: "Schedule not found." };
   }
 
-  const { data: classRow, error: classError } = await client.supabase
-    .from("classes")
-    .select("duration_minutes")
-    .eq("id", classId)
-    .maybeSingle();
-
-  if (classError) {
-    return { error: classError.message };
-  }
-
-  if (!classRow) {
-    return { error: "Class not found." };
-  }
-
   const durationMinutes =
-    timeToMinutes(scheduleRow.schedule_end_time) -
-    timeToMinutes(scheduleRow.schedule_start_time);
+    minutesBetweenScheduleTimes(
+      scheduleRow.schedule_start_time,
+      scheduleRow.schedule_end_time,
+    ) ?? 45;
 
-  const computedEnd =
-    classRow.duration_minutes && classRow.duration_minutes > 0
-      ? addMinutesToScheduleTime(newStartTime, classRow.duration_minutes)
-      : addMinutesToScheduleTime(newStartTime, durationMinutes);
+  const computedEnd = addMinutesToScheduleTime(newStartTime, durationMinutes);
 
   const newEndTime =
     parseScheduleTime(formData.get("newEndTime")) ?? computedEnd;
@@ -409,70 +396,6 @@ function weekdayFromDateYmd(date: string) {
   return parsed.getDay();
 }
 
-async function loadTeacherClassRows(
-  supabase: ReturnType<typeof createSupabaseServiceClient>,
-  teacherId: number,
-  locationId: number,
-) {
-  const [{ data: linkedRows, error: linkedError }, { data: ownedRows, error: ownedError }] =
-    await Promise.all([
-      supabase
-        .from("class_teachers")
-        .select("class_id")
-        .eq("teacher_id", teacherId),
-      supabase
-        .from("classes")
-        .select("id, subject, duration_minutes, lesson_type, teacher_id, location_id, is_active")
-        .eq("teacher_id", teacherId)
-        .eq("location_id", locationId)
-        .eq("is_active", true),
-    ]);
-
-  if (linkedError) {
-    return { error: linkedError.message, classes: [] as TeacherScheduleClassOption[] };
-  }
-  if (ownedError) {
-    return { error: ownedError.message, classes: [] as TeacherScheduleClassOption[] };
-  }
-
-  const linkedIds = [
-    ...new Set(
-      (linkedRows ?? [])
-        .map((row) => row.class_id)
-        .filter((id): id is number => typeof id === "number"),
-    ),
-  ];
-
-  let linkedClasses: typeof ownedRows = [];
-  if (linkedIds.length > 0) {
-    const { data, error } = await supabase
-      .from("classes")
-      .select("id, subject, duration_minutes, lesson_type, teacher_id, location_id, is_active")
-      .in("id", linkedIds)
-      .eq("location_id", locationId)
-      .eq("is_active", true);
-    if (error) {
-      return { error: error.message, classes: [] as TeacherScheduleClassOption[] };
-    }
-    linkedClasses = data ?? [];
-  }
-
-  const byId = new Map<number, TeacherScheduleClassOption>();
-  for (const row of [...(ownedRows ?? []), ...(linkedClasses ?? [])]) {
-    byId.set(row.id, {
-      id: row.id,
-      subject: row.subject,
-      duration_minutes: row.duration_minutes,
-      lesson_type: row.lesson_type,
-    });
-  }
-
-  return {
-    error: null as string | null,
-    classes: [...byId.values()].sort((a, b) => a.subject.localeCompare(b.subject)),
-  };
-}
-
 export async function fetchTeacherScheduleOptionsAction(
   teacherId: number,
 ): Promise<TeacherScheduleOptionsResult> {
@@ -642,41 +565,29 @@ export async function addStudentToCalendar(
   let resolvedClassId = classId;
   let durationMinutes = parsedDuration;
 
+  if (durationMinutes == null || durationMinutes <= 0) {
+    durationMinutes = 45;
+  }
+
   if (resolvedClassId) {
     const match = teacherClasses.find((row) => row.id === resolvedClassId);
     if (!match) {
       return { error: "That class does not belong to this teacher." };
     }
-    if (durationMinutes == null && match.duration_minutes && match.duration_minutes > 0) {
-      durationMinutes = match.duration_minutes;
-    }
   } else {
     if (!subject) {
-      return { error: "Subject is required for a new class." };
+      return { error: "Instrument is required." };
     }
 
-    const existing = teacherClasses.find(
-      (row) =>
-        row.subject.trim().toLowerCase() === subject.toLowerCase() &&
-        (durationMinutes == null ||
-          row.duration_minutes == null ||
-          row.duration_minutes === durationMinutes),
-    );
+    const existing = pickReusableClass(teacherClasses, {
+      subject,
+      lessonType: "private",
+      durationMinutes,
+    });
 
     if (existing) {
       resolvedClassId = existing.id;
-      if (
-        durationMinutes == null &&
-        existing.duration_minutes &&
-        existing.duration_minutes > 0
-      ) {
-        durationMinutes = existing.duration_minutes;
-      }
     } else {
-      if (durationMinutes == null) {
-        durationMinutes = 45;
-      }
-
       const { data: createdClass, error: createError } = await client.supabase
         .from("classes")
         .insert({
@@ -708,10 +619,6 @@ export async function addStudentToCalendar(
 
   if (!resolvedClassId) {
     return { error: "Class is required." };
-  }
-
-  if (durationMinutes == null || durationMinutes <= 0) {
-    durationMinutes = 45;
   }
 
   const endTime = addMinutesToScheduleTime(startTime, durationMinutes);
@@ -789,9 +696,4 @@ export async function addStudentToCalendar(
   revalidatePath(`/students/${studentId}`);
   revalidatePath(`/tutors/${teacherId}`);
   return { success: true };
-}
-
-function timeToMinutes(time: string) {
-  const [hoursStr, minutesStr] = time.slice(0, 5).split(":");
-  return Number(hoursStr) * 60 + Number(minutesStr);
 }

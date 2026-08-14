@@ -11,7 +11,9 @@ import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { addMinutesToScheduleTime } from "@/lib/class-schedule";
 import { parseLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { parseClassTrack, type ClassTrack } from "@/lib/class-track";
+import { pickReusableClass } from "@/lib/find-reusable-class";
 import { parseDollarsToCents } from "@/lib/money";
+import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
 export type ActionState = {
   error?: string;
   success?: boolean;
@@ -255,6 +257,43 @@ export async function createClass(
   );
   if (teacherLocationError) {
     return { error: teacherLocationError };
+  }
+
+  if (fields.teacherId) {
+    const { error: existingLookupError, classes: existingClasses } =
+      await loadTeacherClassRows(
+        client.supabase,
+        fields.teacherId,
+        locationId,
+      );
+    if (existingLookupError) {
+      return { error: existingLookupError };
+    }
+
+    const existing = pickReusableClass(existingClasses, {
+      subject: fields.subject!,
+      lessonType: fields.lessonType,
+      durationMinutes: fields.durationMinutes,
+    });
+
+    if (existing) {
+      const syncExistingError = await syncClassTeachers(
+        client.supabase,
+        existing.id,
+        fields.teacherIds ?? [],
+      );
+      if (syncExistingError) {
+        return { error: syncExistingError };
+      }
+
+      revalidatePath("/classes");
+      revalidatePath("/tutors", "layout");
+      for (const teacherId of fields.teacherIds ?? []) {
+        revalidatePath(`/tutors/${teacherId}`);
+      }
+      revalidatePath("/tuitions");
+      return successState();
+    }
   }
 
   const { data: createdClass, error: classError } = await client.supabase
@@ -567,6 +606,7 @@ function parseClassScheduleFields(formData: FormData) {
   const scheduleDate = parseScheduleDate(formData.get("scheduleDate"));
   const scheduleStartTime = parseScheduleTime(formData.get("scheduleStartTime"));
   const scheduleEndTime = parseScheduleTime(formData.get("scheduleEndTime"));
+  const durationMinutes = parseDurationMinutes(formData.get("durationMinutes"));
   const studentIdRaw = formData.get("studentId");
   const studentId =
     studentIdRaw === null || studentIdRaw.toString().trim() === ""
@@ -579,13 +619,13 @@ function parseClassScheduleFields(formData: FormData) {
     scheduleDate,
     scheduleStartTime,
     scheduleEndTime,
+    durationMinutes,
     studentId,
   };
 }
 
 function validateClassScheduleFields(
   fields: ReturnType<typeof parseClassScheduleFields>,
-  durationMinutes: number | null,
 ) {
   if (fields.studentId === undefined) {
     return { error: "Invalid student." };
@@ -607,15 +647,15 @@ function validateClassScheduleFields(
     return { error: "Start time is required." };
   }
 
-  const usesClassDuration =
-    durationMinutes !== null &&
-    Number.isInteger(durationMinutes) &&
-    durationMinutes > 0;
+  if (fields.durationMinutes === undefined) {
+    return { error: "Duration must be a whole number of minutes." };
+  }
 
-  if (usesClassDuration) {
+  const slotDuration = fields.durationMinutes;
+  if (slotDuration !== null && slotDuration > 0) {
     const computedEnd = addMinutesToScheduleTime(
       fields.scheduleStartTime,
-      durationMinutes,
+      slotDuration,
     );
 
     if (!computedEnd) {
@@ -630,7 +670,7 @@ function validateClassScheduleFields(
     }
 
     if (!fields.scheduleEndTime) {
-      return { error: "Start and end times are required." };
+      return { error: "Duration or end time is required." };
     }
 
     if (fields.scheduleStartTime >= fields.scheduleEndTime) {
@@ -654,16 +694,18 @@ function validateClassScheduleFields(
 
 function resolveScheduleEndTime(
   fields: ReturnType<typeof parseClassScheduleFields>,
-  durationMinutes: number | null,
 ) {
-  const usesClassDuration =
-    durationMinutes !== null &&
-    Number.isInteger(durationMinutes) &&
-    durationMinutes > 0 &&
-    fields.scheduleStartTime;
-
-  if (usesClassDuration) {
-    return addMinutesToScheduleTime(fields.scheduleStartTime!, durationMinutes);
+  if (
+    fields.durationMinutes !== null &&
+    fields.durationMinutes !== undefined &&
+    Number.isInteger(fields.durationMinutes) &&
+    fields.durationMinutes > 0 &&
+    fields.scheduleStartTime
+  ) {
+    return addMinutesToScheduleTime(
+      fields.scheduleStartTime,
+      fields.durationMinutes,
+    );
   }
 
   return fields.scheduleEndTime ?? null;
@@ -681,7 +723,7 @@ async function saveClassSchedule(
 
   const { data: classRow, error: classLookupError } = await client.supabase
     .from("classes")
-    .select("duration_minutes")
+    .select("id")
     .eq("id", classId)
     .maybeSingle();
 
@@ -694,10 +736,7 @@ async function saveClassSchedule(
   }
 
   const fields = parseClassScheduleFields(formData);
-  const validationError = validateClassScheduleFields(
-    fields,
-    classRow.duration_minutes,
-  );
+  const validationError = validateClassScheduleFields(fields);
 
   if (validationError) {
     return validationError;
@@ -720,10 +759,7 @@ async function saveClassSchedule(
     }
   }
 
-  const scheduleEndTime = resolveScheduleEndTime(
-    fields,
-    classRow.duration_minutes,
-  );
+  const scheduleEndTime = resolveScheduleEndTime(fields);
 
   if (!scheduleEndTime) {
     return { error: "End time is required." };

@@ -20,6 +20,7 @@ import type { RoomOption } from "@/components/add-class-dialog";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import { LessonTypeField } from "@/components/lesson-type-field";
 import { ClassTrackField } from "@/components/class-track-field";
+import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { useLanguage } from "@/components/language-provider";
 import type { LessonType } from "@/lib/class-lesson-type";
 import type { ClassTrack } from "@/lib/class-track";
@@ -78,6 +79,9 @@ export function EditClassDialog({
     () => findTeachers(teachers, classData.teacher_ids),
   );
   const [selectedSubject, setSelectedSubject] = useState(classData.subject);
+  const [durationMinutes, setDurationMinutes] = useState(
+    classData.duration_minutes ? String(classData.duration_minutes) : "",
+  );
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     updateClass,
@@ -90,7 +94,10 @@ export function EditClassDialog({
 
   useEffect(() => {
     setSelectedSubject(classData.subject);
-  }, [classData.subject]);
+    setDurationMinutes(
+      classData.duration_minutes ? String(classData.duration_minutes) : "",
+    );
+  }, [classData.subject, classData.duration_minutes]);
 
   function handleTeacherAdded(teacher: TeacherOption) {
     setTeacherOptions((current) => {
@@ -105,6 +112,9 @@ export function EditClassDialog({
     setError(null);
     setSelectedTeachers(findTeachers(teacherOptions, classData.teacher_ids));
     setSelectedSubject(classData.subject);
+    setDurationMinutes(
+      classData.duration_minutes ? String(classData.duration_minutes) : "",
+    );
     setOpen(true);
   }
 
@@ -112,6 +122,9 @@ export function EditClassDialog({
     setError(null);
     setSelectedTeachers(findTeachers(teacherOptions, classData.teacher_ids));
     setSelectedSubject(classData.subject);
+    setDurationMinutes(
+      classData.duration_minutes ? String(classData.duration_minutes) : "",
+    );
     setOpen(false);
   }
 
@@ -258,23 +271,13 @@ export function EditClassDialog({
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="editClassDuration" className={labelClassName}>
-                    {t("common.duration")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="editClassDuration"
-                      name="durationMinutes"
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      defaultValue={classData.duration_minutes ?? ""}
-                      className={inputClassName}
-                    />
-                  </div>
-                </div>
+                <DurationMinutesField
+                  id="editClassDuration"
+                  value={durationMinutes}
+                  onChange={setDurationMinutes}
+                  allowEmpty
+                  help={t("common.typicalDurationHelp")}
+                />
 
                 {error ? (
                   <p className="text-sm text-red-600 dark:text-red-400">
