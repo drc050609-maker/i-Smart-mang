@@ -1027,20 +1027,70 @@ async function deleteClassById(classId: number): Promise<ActionState> {
     return { error: client.error };
   }
 
-  const { count: paymentCount, error: paymentCountError } = await client.supabase
-    .from("class_payments")
-    .select("id", { count: "exact", head: true })
-    .eq("class_id", classId);
+  const { data: classRow, error: classLookupError } = await client.supabase
+    .from("classes")
+    .select("id, lesson_type")
+    .eq("id", classId)
+    .maybeSingle();
 
-  if (paymentCountError) {
-    return { error: paymentCountError.message };
+  if (classLookupError) {
+    return { error: classLookupError.message };
   }
 
-  if ((paymentCount ?? 0) > 0) {
-    return {
-      error:
-        "This course has payment records and cannot be deleted. Clear or reassign those payments first.",
-    };
+  if (!classRow) {
+    return { error: "Class not found." };
+  }
+
+  const isTrial = classRow.lesson_type === "trial";
+
+  if (isTrial) {
+    const { data: trialPayments, error: trialPaymentsError } =
+      await client.supabase
+        .from("class_payments")
+        .select("id")
+        .eq("class_id", classId);
+
+    if (trialPaymentsError) {
+      return { error: trialPaymentsError.message };
+    }
+
+    const paymentIds = (trialPayments ?? []).map((row) => row.id);
+    if (paymentIds.length > 0) {
+      const { error: statementError } = await client.supabase
+        .from("statement_entries")
+        .delete()
+        .in("class_payment_id", paymentIds);
+
+      if (statementError) {
+        return { error: statementError.message };
+      }
+
+      const { error: paymentDeleteError } = await client.supabase
+        .from("class_payments")
+        .delete()
+        .eq("class_id", classId);
+
+      if (paymentDeleteError) {
+        return { error: paymentDeleteError.message };
+      }
+    }
+  } else {
+    const { count: paymentCount, error: paymentCountError } =
+      await client.supabase
+        .from("class_payments")
+        .select("id", { count: "exact", head: true })
+        .eq("class_id", classId);
+
+    if (paymentCountError) {
+      return { error: paymentCountError.message };
+    }
+
+    if ((paymentCount ?? 0) > 0) {
+      return {
+        error:
+          "This course has payment records and cannot be deleted. Clear or reassign those payments first.",
+      };
+    }
   }
 
   const { error: enrollmentError } = await client.supabase
@@ -1064,6 +1114,7 @@ async function deleteClassById(classId: number): Promise<ActionState> {
   revalidatePath("/classes");
   revalidatePath("/tuitions");
   revalidatePath("/payments");
+  revalidatePath("/schedule");
   revalidatePath("/tutors", "layout");
   revalidatePath("/students", "layout");
   return { success: true };

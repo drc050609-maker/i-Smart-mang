@@ -488,6 +488,7 @@ export default async function ClassDetailPage({
             <DeleteClassButton
               classId={classId}
               classSubject={formatClassSubject(detail.subject, staff.preferred_language)}
+              lessonType={detail.lesson_type}
             />
           </div>
         </div>
