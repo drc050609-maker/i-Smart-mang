@@ -10,14 +10,20 @@ import { deleteClass } from "@/app/(dashboard)/classes/actions";
 export function DeleteClassButton({
   classId,
   classSubject,
+  lessonType,
 }: {
   classId: number;
   classSubject: string;
+  lessonType?: string | null;
 }) {
   const { language, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(deleteClass, {});
+  const confirmDescription =
+    lessonType === "trial"
+      ? t("common.deleteTrialConfirm")
+      : t("common.deleteClassConfirm");
 
   return (
     <>
@@ -38,7 +44,7 @@ export function DeleteClassButton({
         onClose={() => setOpen(false)}
         onConfirm={() => formRef.current?.requestSubmit()}
         title={t("common.deleteClass")}
-        description={`${t("common.deleteClassConfirm")} (${formatClassSubject(classSubject, language)})`}
+        description={`${confirmDescription} (${formatClassSubject(classSubject, language)})`}
         confirmLabel={t("common.deleteClass")}
         pending={pending}
       />

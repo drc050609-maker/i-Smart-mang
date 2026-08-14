@@ -16,13 +16,19 @@ const initialState: ActionState = {};
 export function DeleteCourseButton({
   classId,
   subject,
+  lessonType,
 }: {
   classId: number;
   subject: string;
+  lessonType?: string | null;
 }) {
   const { language, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
+  const confirmDescription =
+    lessonType === "trial"
+      ? t("common.deleteTrialConfirm")
+      : t("common.deleteCourseConfirm");
   const [state, formAction, pending] = useActionState(
     async (prev: ActionState, formData: FormData) => {
       const result = await deleteTuitionCourse(prev, formData);
@@ -55,7 +61,7 @@ export function DeleteCourseButton({
         onClose={() => setOpen(false)}
         onConfirm={() => formRef.current?.requestSubmit()}
         title={t("common.deleteCourse")}
-        description={`${t("common.deleteCourseConfirm")} (${formatClassSubject(subject, language)})`}
+        description={`${confirmDescription} (${formatClassSubject(subject, language)})`}
         confirmLabel={t("common.deleteCourse")}
         pending={pending}
       />

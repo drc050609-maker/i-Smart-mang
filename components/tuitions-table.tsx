@@ -93,6 +93,7 @@ function CourseLabel({
             <DeleteCourseButton
               classId={editClass.id}
               subject={editClass.subject}
+              lessonType={editClass.lesson_type}
             />
           </>
         ) : null}
