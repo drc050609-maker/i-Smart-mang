@@ -66,6 +66,8 @@ function RoleBadge({
 }) {
   const isAdmin = role === "admin";
   const isFrontDesk = role === "front_desk";
+  const isTeacher = role === "teacher";
+  const isManager = role === "manager";
 
   return (
     <span
@@ -74,7 +76,11 @@ function RoleBadge({
           ? "inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
           : isFrontDesk
             ? "inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-            : "inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-white/10 dark:text-gray-300"
+            : isTeacher
+              ? "inline-flex items-center rounded-full bg-sky-50 px-2 py-0.5 text-xs font-medium text-sky-700 dark:bg-sky-500/10 dark:text-sky-300"
+              : isManager
+                ? "inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:text-amber-300"
+                : "inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-white/10 dark:text-gray-300"
       }
     >
       {formatStaffRole(role, language)}
@@ -305,15 +311,19 @@ export function StaffAccountsTable({
                       <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                         <div className="flex flex-col items-start gap-2">
                           <span>{formatDisplayName(account)}</span>
-                          {account.role === "front_desk" ? (
+                          {account.role === "front_desk" ||
+                          account.role === "teacher" ? (
                             <span className="text-xs font-normal text-gray-500 dark:text-gray-400">
                               {account.linked_teacher_name
                                 ? `${t("common.linkedTeacher")}: ${account.linked_teacher_name}`
-                                : t("common.frontDeskProfileMissing")}
+                                : account.role === "front_desk"
+                                  ? t("common.frontDeskProfileMissing")
+                                  : null}
                             </span>
                           ) : null}
                           {canManageAccounts &&
                           (account.role === "manager" ||
+                            account.role === "teacher" ||
                             account.role === "front_desk") ? (
                             <AdminSetStaffPasswordDialog
                               staffId={account.id}

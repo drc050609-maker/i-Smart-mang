@@ -14,7 +14,7 @@ import {
   type CreateStaffAccountState,
 } from "@/app/(dashboard)/settings/actions";
 import { useLanguage } from "@/components/language-provider";
-import { formatStaffRole, type StaffRole } from "@/lib/staff-role";
+import type { FrontDeskTeacherOption } from "@/components/add-staff-account-dialog";
 import {
   STAFF_LOCATIONS,
   formatStaffLocation,
@@ -29,30 +29,21 @@ const labelClassName =
 
 const initialState: CreateStaffAccountState = {};
 
-export type FrontDeskTeacherOption = {
-  id: number;
-  first_name: string;
-  last_name: string | null;
-  location_slug: StaffLocation;
-  hourly_rate_cents: number | null;
-};
-
 function teacherLabel(teacher: FrontDeskTeacherOption) {
   const name = [teacher.first_name, teacher.last_name].filter(Boolean).join(" ");
-  return name || `Front desk #${teacher.id}`;
+  return name || `Teacher #${teacher.id}`;
 }
 
-export function AddStaffAccountDialog({
+export function AddTeacherAccountDialog({
   defaultLocation = "brooklyn",
-  frontDeskTeachers = [],
+  teacherProfiles = [],
 }: {
   defaultLocation?: StaffLocation;
-  frontDeskTeachers?: FrontDeskTeacherOption[];
+  teacherProfiles?: FrontDeskTeacherOption[];
 }) {
   const { t, language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [role, setRole] = useState<StaffRole>("manager");
   const [location, setLocation] = useState<StaffLocation>(defaultLocation);
   const [teacherId, setTeacherId] = useState("new");
   const formRef = useRef<HTMLFormElement>(null);
@@ -61,20 +52,14 @@ export function AddStaffAccountDialog({
     initialState,
   );
 
-  const isStatenIsland = defaultLocation === "staten_island";
-  const availableRoles = isStatenIsland
-    ? (["manager", "front_desk"] as StaffRole[])
-    : (["admin", "manager", "front_desk"] as StaffRole[]);
-
   const teachersForCampus = useMemo(
     () =>
-      frontDeskTeachers.filter((teacher) => teacher.location_slug === location),
-    [frontDeskTeachers, location],
+      teacherProfiles.filter((teacher) => teacher.location_slug === location),
+    [teacherProfiles, location],
   );
 
   function openDialog() {
     setError(null);
-    setRole(isStatenIsland ? "manager" : "manager");
     setLocation(defaultLocation);
     setTeacherId("new");
     setOpen(true);
@@ -102,7 +87,10 @@ export function AddStaffAccountDialog({
   }, [defaultLocation]);
 
   useEffect(() => {
-    if (teacherId !== "new" && !teachersForCampus.some((row) => String(row.id) === teacherId)) {
+    if (
+      teacherId !== "new" &&
+      !teachersForCampus.some((row) => String(row.id) === teacherId)
+    ) {
       setTeacherId("new");
     }
   }, [teachersForCampus, teacherId]);
@@ -115,7 +103,7 @@ export function AddStaffAccountDialog({
         className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
       >
         <PlusIcon aria-hidden="true" className="size-4" />
-        {t("common.addStaffAccount")}
+        {t("common.addTeacherAccount")}
       </button>
 
       <Dialog open={open} onClose={closeDialog} className="relative z-50">
@@ -145,20 +133,20 @@ export function AddStaffAccountDialog({
                 as="h3"
                 className="text-base font-semibold text-gray-900 dark:text-white"
               >
-                {t("common.addStaffAccount")}
+                {t("common.addTeacherAccount")}
               </DialogTitle>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {role === "front_desk"
-                  ? t("common.frontDeskAccountHelp")
-                  : t("settings.staffAccountsDescription")}
+                {t("common.addTeacherAccountHelp")}
               </p>
 
               <form
-                key={`${defaultLocation}-${role}`}
+                key={`${defaultLocation}-${location}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-4"
               >
+                <input type="hidden" name="role" value="teacher" />
+
                 <div>
                   <label htmlFor="fullName" className={labelClassName}>
                     {t("common.name")}
@@ -168,7 +156,7 @@ export function AddStaffAccountDialog({
                       id="fullName"
                       name="fullName"
                       type="text"
-                      required={role === "front_desk" && teacherId === "new"}
+                      required={teacherId === "new"}
                       autoComplete="name"
                       className={inputClassName}
                     />
@@ -209,124 +197,58 @@ export function AddStaffAccountDialog({
                 </div>
 
                 <div>
-                  <label htmlFor="role" className={labelClassName}>
-                    {t("common.role")}
+                  <label htmlFor="location" className={labelClassName}>
+                    {t("common.campus")}
                   </label>
                   <div className="mt-2">
-                    {isStatenIsland && availableRoles.length === 1 ? (
-                      <>
-                        <input type="hidden" name="role" value={availableRoles[0]} />
-                        <div className={inputClassName}>
-                          {formatStaffRole(availableRoles[0]!, language)}
-                        </div>
-                      </>
-                    ) : (
-                      <select
-                        id="role"
-                        name="role"
-                        required
-                        value={role}
-                        onChange={(event) =>
-                          setRole(event.target.value as StaffRole)
-                        }
-                        className={inputClassName}
-                      >
-                        {availableRoles.map((value) => (
-                          <option key={value} value={value}>
-                            {formatStaffRole(value, language)}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                    <select
+                      id="location"
+                      name="location"
+                      required
+                      value={location}
+                      onChange={(event) =>
+                        setLocation(event.target.value as StaffLocation)
+                      }
+                      className={inputClassName}
+                    >
+                      {STAFF_LOCATIONS.map((value) => (
+                        <option key={value} value={value}>
+                          {formatStaffLocation(value, language)} iSmart
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
-                {!isStatenIsland ? (
-                  <div>
-                    <label htmlFor="location" className={labelClassName}>
-                      {t("common.campus")}
-                    </label>
-                    <div className="mt-2">
-                      <select
-                        id="location"
-                        name="location"
-                        required
-                        value={location}
-                        onChange={(event) =>
-                          setLocation(event.target.value as StaffLocation)
-                        }
-                        className={inputClassName}
-                      >
-                        {STAFF_LOCATIONS.map((value) => (
-                          <option key={value} value={value}>
-                            {formatStaffLocation(value, language)} iSmart
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                <div>
+                  <label htmlFor="teacherId" className={labelClassName}>
+                    {t("common.linkTeacherProfile")}
+                  </label>
+                  <div className="mt-2">
+                    <select
+                      id="teacherId"
+                      name="teacherId"
+                      required
+                      value={teacherId}
+                      onChange={(event) => setTeacherId(event.target.value)}
+                      className={inputClassName}
+                    >
+                      <option value="new">
+                        {t("common.createNewTeacherProfile")}
+                      </option>
+                      {teachersForCampus.map((teacher) => (
+                        <option key={teacher.id} value={teacher.id}>
+                          {teacherLabel(teacher)}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                ) : (
-                  <>
-                    <input type="hidden" name="location" value="staten_island" />
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {t("common.campus")}:{" "}
-                      {formatStaffLocation("staten_island", language)} iSmart
+                  {teachersForCampus.length === 0 ? (
+                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                      {t("common.noTeacherProfiles")}
                     </p>
-                  </>
-                )}
-
-                {role === "front_desk" ? (
-                  <>
-                    <div>
-                      <label htmlFor="teacherId" className={labelClassName}>
-                        {t("common.linkFrontDeskTeacher")}
-                      </label>
-                      <div className="mt-2">
-                        <select
-                          id="teacherId"
-                          name="teacherId"
-                          required
-                          value={teacherId}
-                          onChange={(event) => setTeacherId(event.target.value)}
-                          className={inputClassName}
-                        >
-                          <option value="new">
-                            {t("common.createNewFrontDeskTeacher")}
-                          </option>
-                          {teachersForCampus.map((teacher) => (
-                            <option key={teacher.id} value={teacher.id}>
-                              {teacherLabel(teacher)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      {teachersForCampus.length === 0 ? (
-                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                          {t("common.noFrontDeskTeachers")}
-                        </p>
-                      ) : null}
-                    </div>
-
-                    {teacherId === "new" ? (
-                      <div>
-                        <label htmlFor="hourlyRate" className={labelClassName}>
-                          {t("common.hourlyRate")}
-                        </label>
-                        <div className="mt-2">
-                          <input
-                            id="hourlyRate"
-                            name="hourlyRate"
-                            type="text"
-                            inputMode="decimal"
-                            required
-                            placeholder={t("common.hourlyRatePlaceholder")}
-                            className={inputClassName}
-                          />
-                        </div>
-                      </div>
-                    ) : null}
-                  </>
-                ) : null}
+                  ) : null}
+                </div>
 
                 {error ? (
                   <p className="text-sm text-red-600 dark:text-red-400">

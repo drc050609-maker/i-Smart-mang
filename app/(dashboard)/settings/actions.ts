@@ -31,6 +31,9 @@ function getServiceClient() {
 
 function revalidateStaffSettings() {
   revalidatePath("/settings");
+  revalidatePath("/settings/staff");
+  revalidatePath("/settings/teachers");
+  revalidatePath("/chat");
 }
 
 export async function createStaffAccount(
@@ -87,7 +90,12 @@ export async function createStaffAccount(
   let teacherId: number | null = null;
   let createdNewTeacher = false;
 
-  if (roleValue === "front_desk") {
+  if (roleValue === "front_desk" || roleValue === "teacher") {
+    const profilePosition =
+      roleValue === "front_desk" ? "front_desk" : "teacher";
+    const profileLabel =
+      roleValue === "front_desk" ? "front desk profile" : "teacher profile";
+
     const { data: locationRow, error: locationError } = await client.supabase
       .from("locations")
       .select("id")
@@ -104,7 +112,7 @@ export async function createStaffAccount(
     if (teacherIdRaw && teacherIdRaw !== "new") {
       const parsedTeacherId = Number(teacherIdRaw);
       if (!Number.isInteger(parsedTeacherId) || parsedTeacherId <= 0) {
-        return { error: "Choose a valid front desk profile." };
+        return { error: `Choose a valid ${profileLabel}.` };
       }
 
       const { data: teacher, error: teacherError } = await client.supabase
@@ -118,11 +126,11 @@ export async function createStaffAccount(
       }
       if (
         !teacher ||
-        teacher.position !== "front_desk" ||
+        teacher.position !== profilePosition ||
         teacher.location_id !== locationRow.id
       ) {
         return {
-          error: "That front desk profile is not available for this campus.",
+          error: `That ${profileLabel} is not available for this campus.`,
         };
       }
 
@@ -133,23 +141,29 @@ export async function createStaffAccount(
         .maybeSingle();
 
       if (linked) {
-        return { error: "That front desk profile already has a login account." };
-      }
-
-      teacherId = parsedTeacherId;
-    } else {
-      if (!fullName) {
         return {
-          error: "Name is required when creating a new front desk profile.",
+          error: `That ${profileLabel} already has a login account.`,
         };
       }
 
-      const rateParsed = parseDollarsToCents(hourlyRateRaw || null, {
-        allowZero: true,
-        fieldLabel: "Hourly rate",
-      });
-      if (!rateParsed.ok) {
-        return { error: rateParsed.error };
+      teacherId = parsedTeacherId;
+    } else if (roleValue === "front_desk" || teacherIdRaw === "new") {
+      if (!fullName) {
+        return {
+          error: `Name is required when creating a new ${profileLabel}.`,
+        };
+      }
+
+      let hourlyRateCents: number | null = null;
+      if (roleValue === "front_desk") {
+        const rateParsed = parseDollarsToCents(hourlyRateRaw || null, {
+          allowZero: true,
+          fieldLabel: "Hourly rate",
+        });
+        if (!rateParsed.ok) {
+          return { error: rateParsed.error };
+        }
+        hourlyRateCents = rateParsed.cents;
       }
 
       const nameParts = fullName.split(/\s+/).filter(Boolean);
@@ -164,8 +178,8 @@ export async function createStaffAccount(
             first_name: firstName,
             last_name: lastName,
             location_id: locationRow.id,
-            position: "front_desk",
-            hourly_rate_cents: rateParsed.cents,
+            position: profilePosition,
+            hourly_rate_cents: hourlyRateCents,
             is_active: true,
           })
           .select("id")
@@ -175,7 +189,7 @@ export async function createStaffAccount(
         return {
           error:
             createTeacherError?.message ??
-            "Could not create the front desk profile.",
+            `Could not create the ${profileLabel}.`,
         };
       }
 
@@ -353,8 +367,14 @@ export async function adminSetStaffPassword(
     return { error: "That staff account was not found." };
   }
 
-  if (target.role !== "manager" && target.role !== "front_desk") {
-    return { error: "Admins can only reset manager or front desk passwords." };
+  if (
+    target.role !== "manager" &&
+    target.role !== "teacher" &&
+    target.role !== "front_desk"
+  ) {
+    return {
+      error: "Admins can only reset manager, teacher, or front desk passwords.",
+    };
   }
 
   const { error: updateError } =

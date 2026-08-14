@@ -22,6 +22,7 @@ import {
   Bars3Icon,
   CalendarIcon,
   ChartBarSquareIcon,
+  ChatBubbleLeftRightIcon,
   ClipboardDocumentCheckIcon,
   ClockIcon,
   CreditCardIcon,
@@ -113,6 +114,12 @@ const navigation: NavItem[] = [
     frontDeskOnly: true,
   },
   { name: "Events", href: "/events", icon: PhotoIcon, adminOnly: true },
+  {
+    name: "Chat",
+    href: "/chat",
+    icon: ChatBubbleLeftRightIcon,
+    adminOnly: true,
+  },
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
 

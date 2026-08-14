@@ -18,13 +18,13 @@ async function main() {
 
   if (!email || !password) {
     console.error(
-      "Usage: npm run create-admin -- --email you@example.com --password 'your-password' [--name 'Full Name'] [--role admin|manager] [--location brooklyn|staten_island]",
+      "Usage: npm run create-admin -- --email you@example.com --password 'your-password' [--name 'Full Name'] [--role admin|manager|teacher] [--location brooklyn|staten_island]",
     );
     process.exit(1);
   }
 
-  if (role !== "admin" && role !== "manager") {
-    console.error("Role must be admin or manager.");
+  if (role !== "admin" && role !== "manager" && role !== "teacher") {
+    console.error("Role must be admin, manager, or teacher.");
     process.exit(1);
   }
 
