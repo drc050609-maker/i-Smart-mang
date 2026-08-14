@@ -26,10 +26,9 @@ import { useLanguage } from "@/components/language-provider";
 import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import type { StudentOption } from "@/components/student-combobox";
+import { DurationMinutesField } from "@/components/duration-minutes-field";
+import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
 import { formatTime12Hour } from "@/lib/class-schedule";
-import { formatClassSubject } from "@/lib/class-subject";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
-import type { AppLanguage } from "@/lib/language";
 import {
   filterStudentsByQuery,
   formatStudentName,
@@ -59,23 +58,6 @@ function toTimeInputValue(time: string) {
   return time.slice(0, 5);
 }
 
-function formatClassOptionLabel(
-  option: TeacherScheduleClassOption,
-  language: AppLanguage,
-  t: ReturnType<typeof useLanguage>["t"],
-) {
-  const subject = formatClassSubject(option.subject, language);
-  const duration =
-    option.duration_minutes && option.duration_minutes > 0
-      ? t("common.minutes", { count: option.duration_minutes })
-      : null;
-  const lessonType = formatLessonType(
-    option.lesson_type as LessonType | null,
-    language,
-  );
-  return [subject, duration, lessonType].filter(Boolean).join(" · ");
-}
-
 export function ScheduleAddStudentDialog({
   pending,
   teachers,
@@ -89,15 +71,16 @@ export function ScheduleAddStudentDialog({
   onClose: () => void;
   onSuccess: () => void;
 }) {
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const router = useRouter();
   const sortedTeachers = useMemo(() => sortTeachers(teachers), [teachers]);
   const [teacherId, setTeacherId] = useState<number | "">("");
   const [student, setStudent] = useState<StudentOption | null>(null);
   const [extraStudents, setExtraStudents] = useState<StudentOption[]>([]);
-  const [classId, setClassId] = useState("");
   const [subject, setSubject] = useState("");
-  const [durationMinutes, setDurationMinutes] = useState("45");
+  const [durationMinutes, setDurationMinutes] = useState(
+    String(DEFAULT_SLOT_DURATION_MINUTES),
+  );
   const [isRecurring, setIsRecurring] = useState(true);
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
@@ -105,7 +88,6 @@ export function ScheduleAddStudentDialog({
   const [classes, setClasses] = useState<TeacherScheduleClassOption[]>([]);
   const [subjects, setSubjects] = useState<string[]>([]);
   const [optionsError, setOptionsError] = useState<string | null>(null);
-  const [loadingOptions, setLoadingOptions] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -127,9 +109,8 @@ export function ScheduleAddStudentDialog({
     setTeacherId(pending.teacherId ?? "");
     setStudent(null);
     setExtraStudents([]);
-    setClassId("");
     setSubject("");
-    setDurationMinutes("45");
+    setDurationMinutes(String(DEFAULT_SLOT_DURATION_MINUTES));
     setIsRecurring(true);
     setDate(pending.date);
     setStartTime(toTimeInputValue(pending.startTime));
@@ -145,12 +126,10 @@ export function ScheduleAddStudentDialog({
       setTeacherStudentIds([]);
       setClasses([]);
       setSubjects([]);
-      setLoadingOptions(false);
       return;
     }
 
     let cancelled = false;
-    setLoadingOptions(true);
     setOptionsError(null);
 
     void fetchTeacherScheduleOptionsAction(teacherId)
@@ -169,25 +148,18 @@ export function ScheduleAddStudentDialog({
         setClasses(result.classes);
         setTeacherStudentIds(result.teacherStudentIds);
         setSubjects(result.subjects);
-        setClassId((current) => {
-          if (current && current !== "new") {
-            if (result.classes.some((row) => String(row.id) === current)) {
-              return current;
-            }
+        const uniqueSubjects = [
+          ...new Set(result.classes.map((row) => row.subject.trim()).filter(Boolean)),
+        ];
+        setSubject((current) => {
+          if (current && uniqueSubjects.includes(current)) {
+            return current;
           }
-          if (result.classes.length === 1) {
-            return String(result.classes[0]!.id);
+          if (uniqueSubjects.length === 1) {
+            return uniqueSubjects[0]!;
           }
-          if (result.classes.length === 0) {
-            return "new";
-          }
-          return "";
+          return current;
         });
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoadingOptions(false);
-        }
       });
 
     return () => {
@@ -229,8 +201,14 @@ export function ScheduleAddStudentDialog({
     );
   }, [availableStudents, teacherStudentIds]);
 
-  const selectedClass = classes.find((row) => String(row.id) === classId) ?? null;
-  const creatingNewClass = classId === "new" || (classId === "" && classes.length === 0);
+  const instrumentSubjects = useMemo(() => {
+    const fromClasses = classes
+      .map((row) => row.subject.trim())
+      .filter(Boolean);
+    return [...new Set([...fromClasses, ...subjects])].sort((a, b) =>
+      a.localeCompare(b),
+    );
+  }, [classes, subjects]);
 
   function handleStudentAdded(created: StudentOption) {
     setExtraStudents((current) => {
@@ -295,18 +273,12 @@ export function ScheduleAddStudentDialog({
                 value={teacherId === "" ? "" : teacherId}
               />
               <input type="hidden" name="studentId" value={student?.id ?? ""} />
+              <input type="hidden" name="classId" value="new" />
               <input
                 type="hidden"
                 name="isRecurring"
                 value={isRecurring ? "true" : "false"}
               />
-              {selectedClass && !creatingNewClass ? (
-                <input
-                  type="hidden"
-                  name="durationMinutes"
-                  value={selectedClass.duration_minutes ?? durationMinutes}
-                />
-              ) : null}
 
               <div>
                 <label htmlFor="addScheduleTeacher" className={labelClassName}>
@@ -320,7 +292,6 @@ export function ScheduleAddStudentDialog({
                       const value = event.target.value;
                       setTeacherId(value === "" ? "" : Number(value));
                       setStudent(null);
-                      setClassId("");
                       setSubject("");
                     }}
                     required
@@ -363,92 +334,27 @@ export function ScheduleAddStudentDialog({
               </div>
 
               <div>
-                <label htmlFor="addScheduleClass" className={labelClassName}>
-                  {t("common.class")}
+                <label htmlFor="addScheduleSubject" className={labelClassName}>
+                  {t("common.instrument")}
                 </label>
-                <div className="relative mt-2">
-                  <select
-                    id="addScheduleClass"
-                    name="classId"
-                    value={
-                      creatingNewClass && classes.length === 0 && classId === ""
-                        ? "new"
-                        : classId
-                    }
-                    onChange={(event) => {
-                      const value = event.target.value;
-                      setClassId(value);
-                      if (value !== "new") {
-                        const match = classes.find((row) => String(row.id) === value);
-                        if (match?.duration_minutes) {
-                          setDurationMinutes(String(match.duration_minutes));
-                        }
-                        if (match) {
-                          setSubject(match.subject);
-                        }
-                      }
-                    }}
+                <div className="mt-2">
+                  <SubjectCombobox
+                    id="addScheduleSubject"
+                    subjects={instrumentSubjects}
+                    value={subject}
+                    onChange={setSubject}
                     required
-                    disabled={teacherId === "" || loadingOptions}
-                    className={selectClassName}
-                  >
-                    {classes.length === 0 ? (
-                      <option value="new">{t("common.createNewClass")}</option>
-                    ) : (
-                      <>
-                        <option value="">{t("common.selectClassFirst")}</option>
-                        {classes.map((option) => (
-                          <option key={option.id} value={option.id}>
-                            {formatClassOptionLabel(option, language, t)}
-                          </option>
-                        ))}
-                        <option value="new">{t("common.createNewClass")}</option>
-                      </>
-                    )}
-                  </select>
-                  <ChevronDownIcon
-                    aria-hidden="true"
-                    className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
                   />
                 </div>
               </div>
 
-              {creatingNewClass ? (
-                <>
-                  <div>
-                    <label htmlFor="addScheduleSubject" className={labelClassName}>
-                      {t("common.subject")}
-                    </label>
-                    <div className="mt-2">
-                      <SubjectCombobox
-                        id="addScheduleSubject"
-                        subjects={subjects}
-                        value={subject}
-                        onChange={setSubject}
-                        required
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label htmlFor="addScheduleDuration" className={labelClassName}>
-                      {t("common.duration")}
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        id="addScheduleDuration"
-                        name="durationMinutes"
-                        type="number"
-                        min={1}
-                        step={1}
-                        value={durationMinutes}
-                        onChange={(event) => setDurationMinutes(event.target.value)}
-                        required
-                        className={inputClassName}
-                      />
-                    </div>
-                  </div>
-                </>
-              ) : null}
+              <DurationMinutesField
+                id="addScheduleDuration"
+                value={durationMinutes}
+                onChange={setDurationMinutes}
+                required
+                help={t("common.lessonLengthHelp")}
+              />
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
@@ -522,7 +428,8 @@ export function ScheduleAddStudentDialog({
                     pendingSubmit ||
                     teacherId === "" ||
                     student == null ||
-                    (!creatingNewClass && classId === "")
+                    !subject.trim() ||
+                    !durationMinutes
                   }
                   className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
                 >

@@ -14,10 +14,13 @@ import {
   updateClassSchedule,
   type UpdateClassScheduleState,
 } from "@/app/(dashboard)/classes/actions";
+import { DurationMinutesField } from "@/components/duration-minutes-field";
+import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
 import { useLanguage } from "@/components/language-provider";
 import type { StudentOption } from "@/components/student-combobox";
 import {
   addMinutesToTimeInput,
+  minutesBetweenScheduleTimes,
   type ClassScheduleFields,
   type ClassScheduleRow,
   formatTime12Hour,
@@ -67,19 +70,21 @@ export function ClassScheduleDialog({
   const { t, language } = useLanguage();
   const isEdit = Boolean(schedule?.id);
   const scheduleValues = schedule ?? emptySchedule;
-  const usesClassDuration =
-    durationMinutes !== null &&
-    Number.isInteger(durationMinutes) &&
-    durationMinutes > 0;
   const initialStartTime = toTimeInputValue(scheduleValues.schedule_start_time);
+  const slotDuration =
+    minutesBetweenScheduleTimes(
+      scheduleValues.schedule_start_time,
+      scheduleValues.schedule_end_time,
+    ) ??
+    (durationMinutes && durationMinutes > 0
+      ? durationMinutes
+      : DEFAULT_SLOT_DURATION_MINUTES);
   const sortedStudents = sortStudents(enrolledStudents);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isRecurring, setIsRecurring] = useState(scheduleValues.is_recurring);
   const [startTime, setStartTime] = useState(initialStartTime);
-  const [endTime, setEndTime] = useState(
-    toTimeInputValue(scheduleValues.schedule_end_time),
-  );
+  const [selectedDuration, setSelectedDuration] = useState(String(slotDuration));
   const [studentId, setStudentId] = useState(
     scheduleValues.student_id?.toString() ?? "",
   );
@@ -91,18 +96,19 @@ export function ClassScheduleDialog({
   const buttonLabel =
     triggerLabel ?? (isEdit ? t("common.edit") : t("common.addMeetingTime"));
 
+  const parsedDuration = Number(selectedDuration);
   const computedEndTime = useMemo(() => {
-    if (!usesClassDuration || !startTime) {
+    if (!startTime || !Number.isInteger(parsedDuration) || parsedDuration <= 0) {
       return null;
     }
 
-    return addMinutesToTimeInput(startTime, durationMinutes);
-  }, [durationMinutes, startTime, usesClassDuration]);
+    return addMinutesToTimeInput(startTime, parsedDuration);
+  }, [parsedDuration, startTime]);
 
   function resetFormState() {
     setIsRecurring(scheduleValues.is_recurring);
     setStartTime(initialStartTime);
-    setEndTime(toTimeInputValue(scheduleValues.schedule_end_time));
+    setSelectedDuration(String(slotDuration));
     setStudentId(scheduleValues.student_id?.toString() ?? "");
   }
 
@@ -129,7 +135,7 @@ export function ClassScheduleDialog({
     }
   }, [state.error, state.success]);
 
-  const endTimeValue = usesClassDuration ? computedEndTime : endTime;
+  const endTimeValue = computedEndTime;
 
   return (
     <>
@@ -182,7 +188,7 @@ export function ClassScheduleDialog({
               </p>
 
               <form
-                key={`${classId}-${schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${scheduleValues.student_id ?? ""}-${durationMinutes}`}
+                key={`${classId}-${schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${scheduleValues.student_id ?? ""}-${slotDuration}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
@@ -196,7 +202,7 @@ export function ClassScheduleDialog({
                   name="isRecurring"
                   value={isRecurring ? "true" : "false"}
                 />
-                {usesClassDuration && endTimeValue ? (
+                {endTimeValue ? (
                   <input
                     type="hidden"
                     name="scheduleEndTime"
@@ -314,56 +320,40 @@ export function ClassScheduleDialog({
                   </div>
                 )}
 
-                <div className={usesClassDuration ? "" : "grid gap-5 sm:grid-cols-2"}>
-                  <div>
-                    <label htmlFor="scheduleStartTime" className={labelClassName}>
-                      {t("common.startTime")}
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        id="scheduleStartTime"
-                        name="scheduleStartTime"
-                        type="time"
-                        required
-                        value={startTime}
-                        onChange={(event) => setStartTime(event.target.value)}
-                        className={inputClassName}
-                      />
-                    </div>
-                  </div>
+                <DurationMinutesField
+                  id="scheduleDuration"
+                  value={selectedDuration}
+                  onChange={setSelectedDuration}
+                  required
+                  help={t("common.lessonLengthHelp")}
+                />
 
-                  {usesClassDuration ? (
-                    <div className="mt-5">
-                      <span className={labelClassName}>{t("common.endTime")}</span>
-                      <div className="mt-2">
-                        <p className={readOnlyClassName}>
-                          {computedEndTime
-                            ? formatTime12Hour(`${computedEndTime}:00`)
-                            : t("common.pickDate")}
-                        </p>
-                      </div>
-                      <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                        {t("common.minutes", { count: durationMinutes })}
-                      </p>
-                    </div>
-                  ) : (
-                    <div>
-                      <label htmlFor="scheduleEndTime" className={labelClassName}>
-                        {t("common.endTime")}
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="scheduleEndTime"
-                          name="scheduleEndTime"
-                          type="time"
-                          required
-                          value={endTime}
-                          onChange={(event) => setEndTime(event.target.value)}
-                          className={inputClassName}
-                        />
-                      </div>
-                    </div>
-                  )}
+                <div>
+                  <label htmlFor="scheduleStartTime" className={labelClassName}>
+                    {t("common.startTime")}
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      id="scheduleStartTime"
+                      name="scheduleStartTime"
+                      type="time"
+                      required
+                      value={startTime}
+                      onChange={(event) => setStartTime(event.target.value)}
+                      className={inputClassName}
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <span className={labelClassName}>{t("common.endTime")}</span>
+                  <div className="mt-2">
+                    <p className={readOnlyClassName}>
+                      {computedEndTime
+                        ? formatTime12Hour(`${computedEndTime}:00`)
+                        : t("common.pickDate")}
+                    </p>
+                  </div>
                 </div>
 
                 {error ? (
@@ -383,8 +373,7 @@ export function ClassScheduleDialog({
                   <button
                     type="submit"
                     disabled={
-                      pending ||
-                      (usesClassDuration && Boolean(startTime && !computedEndTime))
+                      pending || Boolean(startTime && !computedEndTime)
                     }
                     className="inline-flex justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-60 dark:bg-indigo-500 dark:shadow-none dark:hover:bg-indigo-400 dark:focus-visible:outline-indigo-500"
                   >

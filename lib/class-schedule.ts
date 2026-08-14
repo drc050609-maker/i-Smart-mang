@@ -78,6 +78,33 @@ export function addMinutesToScheduleTime(
   return result ? `${result}:00` : null;
 }
 
+function timeToMinutes(time: string) {
+  const [hoursStr, minutesStr] = time.slice(0, 5).split(":");
+  const hours = Number(hoursStr);
+  const minutes = Number(minutesStr);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) {
+    return null;
+  }
+  return hours * 60 + minutes;
+}
+
+export function minutesBetweenScheduleTimes(
+  startTime: string | null | undefined,
+  endTime: string | null | undefined,
+) {
+  if (!startTime || !endTime) {
+    return null;
+  }
+
+  const start = timeToMinutes(startTime);
+  const end = timeToMinutes(endTime);
+  if (start == null || end == null || end <= start) {
+    return null;
+  }
+
+  return end - start;
+}
+
 export function formatTime12Hour(time: string) {
   const [hoursStr, minutesStr] = time.slice(0, 5).split(":");
   let hours = Number(hoursStr);

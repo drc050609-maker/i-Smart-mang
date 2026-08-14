@@ -17,6 +17,7 @@ import {
 import type { RoomOption } from "@/components/add-class-dialog";
 import { ClassTrackField } from "@/components/class-track-field";
 import { LessonTypeField } from "@/components/lesson-type-field";
+import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { SubjectCombobox } from "@/components/subject-combobox";
 import { useLanguage } from "@/components/language-provider";
 
@@ -44,6 +45,7 @@ export function EditTeacherClassesDialog({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedSubject, setSelectedSubject] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState("");
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     createClass,
@@ -53,12 +55,14 @@ export function EditTeacherClassesDialog({
   function openDialog() {
     setError(null);
     setSelectedSubject("");
+    setDurationMinutes("");
     setOpen(true);
   }
 
   function closeDialog() {
     setError(null);
     setSelectedSubject("");
+    setDurationMinutes("");
     setOpen(false);
   }
 
@@ -70,6 +74,7 @@ export function EditTeacherClassesDialog({
     if (state.success) {
       formRef.current?.reset();
       setSelectedSubject("");
+      setDurationMinutes("");
       setError(null);
       setOpen(false);
       router.refresh();
@@ -177,26 +182,13 @@ export function EditTeacherClassesDialog({
                   ) : null}
                 </div>
 
-                <div>
-                  <label
-                    htmlFor="teacherClassDuration"
-                    className={labelClassName}
-                  >
-                    {t("common.duration")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="teacherClassDuration"
-                      name="durationMinutes"
-                      type="number"
-                      min={1}
-                      step={1}
-                      inputMode="numeric"
-                      required
-                      className={inputClassName}
-                    />
-                  </div>
-                </div>
+                <DurationMinutesField
+                  id="teacherClassDuration"
+                  value={durationMinutes}
+                  onChange={setDurationMinutes}
+                  allowEmpty
+                  help={t("common.typicalDurationHelp")}
+                />
 
                 {error ? (
                   <p className="text-sm text-red-600 dark:text-red-400">

@@ -138,10 +138,14 @@ export type TranslationKey =
   | "common.noResumeYet"
   | "common.room"
   | "common.subject"
+  | "common.instrument"
   | "common.track"
   | "common.type"
   | "common.schedule"
   | "common.duration"
+  | "common.typicalDurationOptional"
+  | "common.lessonLengthHelp"
+  | "common.typicalDurationHelp"
   | "common.student"
   | "common.class"
   | "common.date"
@@ -1038,10 +1042,16 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noResumeYet": "No resume uploaded yet.",
     "common.room": "Room",
     "common.subject": "Subject",
+    "common.instrument": "Instrument",
     "common.track": "Track",
     "common.type": "Type",
     "common.schedule": "Schedule",
     "common.duration": "Duration",
+    "common.typicalDurationOptional": "Optional typical length",
+    "common.lessonLengthHelp":
+      "How long this class time is. The same class can be 30, 45, or 60 minutes.",
+    "common.typicalDurationHelp":
+      "Typical length for this class. Each scheduled lesson can be a different length — you do not need a separate class for 30 vs 45 vs 60 minutes.",
     "common.student": "Student",
     "common.class": "Class",
     "common.date": "Date",
@@ -1290,7 +1300,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Pick a teacher and date to see every class and student that day.",
     "common.addStudentToSchedule": "Add student",
     "common.addStudentToScheduleHelp":
-      "Choose one of {name}'s students or add a new student, then pick a class time.",
+      "Choose a student, then pick the instrument and how long this class time is.",
     "common.selectTeacherToAddStudent":
       "Select a teacher, then choose an existing student or add a new one.",
     "common.teacherStudents": "This teacher's students",
@@ -1456,7 +1466,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addAddress": "Add address",
     "common.assignClasses": "Assign classes",
     "common.createClassForTeacherHelp":
-      "Create a new class for this teacher and set its duration.",
+      "Create a class for this teacher by instrument. Lesson length is chosen when you add a time to the schedule.",
     "common.firstName": "First name",
     "common.lastName": "Last name",
     "common.startingClassSessions": "Starting class sessions",
@@ -1484,7 +1494,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.sessionsOnDate": "Sessions on {date}",
     "common.purchases": "Purchases",
     "common.deleteClassSchedule": "Delete",
-    "common.scheduleHelp": "Pair each meeting time with a student when possible. A class can meet multiple times per week.",
+    "common.scheduleHelp":
+      "Pair each meeting time with a student when possible. Set how long that class time is — the same class can have 30, 45, or 60 minute slots.",
     "common.noMeetingTimes": "No meeting times set yet.",
     "common.activeEnrollment": "Active enrollment",
     "common.inactiveEnrollment": "Inactive enrollment",
@@ -2017,10 +2028,16 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noResumeYet": "尚未上传简历。",
     "common.room": "教室",
     "common.subject": "科目",
+    "common.instrument": "乐器",
     "common.track": "类别",
     "common.type": "类型",
     "common.schedule": "日程",
     "common.duration": "时长",
+    "common.typicalDurationOptional": "可选常用时长",
+    "common.lessonLengthHelp":
+      "本节课上多久。同一门课可以安排 30、45 或 60 分钟。",
+    "common.typicalDurationHelp":
+      "这门课的常用时长。每次排课时可以另选时长，不必为 30、45、60 分钟分别建课。",
     "common.student": "学生",
     "common.class": "课程",
     "common.date": "日期",
@@ -2266,7 +2283,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "选择老师和日期，查看当天所有课程与学生。",
     "common.addStudentToSchedule": "添加学生",
     "common.addStudentToScheduleHelp":
-      "从{name}的学生中选择，或添加新学生，然后安排上课时间。",
+      "选择学生，再选择乐器和本节课时长。",
     "common.selectTeacherToAddStudent":
       "请先选择老师，然后选择已有学生或添加新学生。",
     "common.teacherStudents": "该老师的学生",
@@ -2425,7 +2442,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editAddress": "编辑地址",
     "common.addAddress": "添加地址",
     "common.assignClasses": "分配课程",
-    "common.createClassForTeacherHelp": "为该老师创建新课程并设置时长。",
+    "common.createClassForTeacherHelp":
+      "按乐器为该老师创建课程。上课时长在排课时再选，不必为不同时长重复建课。",
     "common.firstName": "名",
     "common.lastName": "姓",
     "common.startingClassSessions": "初始课时",
@@ -2453,7 +2471,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.sessionsOnDate": "{date} 的课程",
     "common.purchases": "购买",
     "common.deleteClassSchedule": "删除",
-    "common.scheduleHelp": "尽量为每个上课时间关联学生。一门课程可以每周上多次。",
+    "common.scheduleHelp":
+      "尽量为每个上课时间关联学生。每次可单独选择时长，同一门课可以有 30、45 或 60 分钟的时段。",
     "common.noMeetingTimes": "暂无上课时间。",
     "common.activeEnrollment": "活跃报名",
     "common.inactiveEnrollment": "非活跃报名",
