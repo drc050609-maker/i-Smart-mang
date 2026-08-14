@@ -13,10 +13,12 @@ import {
   type ScheduleActionState,
 } from "@/app/(dashboard)/schedule/actions";
 import { useLanguage } from "@/components/language-provider";
+import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   formatScheduleEventStudentLabel,
+  scheduleEventUnassignedLabel,
   timeToMinutes,
   type ScheduleEventInstance,
 } from "@/lib/schedule-calendar";
@@ -110,15 +112,25 @@ export function ScheduleRescheduleDialog({
                   : t("common.updateClassTime")}
             </DialogTitle>
 
-            <p className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
+            <p className="mt-2 flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
               {formatScheduleEventStudentLabel(
                 instance.students,
-                instance.lesson_type === "group"
-                  ? t("enum.lessonType.group")
-                  : formatClassSubject(instance.subject, language),
+                scheduleEventUnassignedLabel(
+                  instance.lesson_type,
+                  formatClassSubject(instance.subject, language),
+                  {
+                    trial: t("common.trialLabel"),
+                    group: t("enum.lessonType.group"),
+                  },
+                ),
               )}
+              {instance.students.length > 0 ? (
+                <ScheduleTrialLabel lessonType={instance.lesson_type} />
+              ) : null}
             </p>
-            {instance.students.length > 0 || instance.lesson_type === "group" ? (
+            {instance.students.length > 0 ||
+            instance.lesson_type === "group" ||
+            instance.lesson_type === "trial" ? (
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                 {formatClassSubject(instance.subject, language)}
               </p>
