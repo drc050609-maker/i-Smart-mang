@@ -18,9 +18,11 @@ import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
   formatScheduleEventStudentLabel,
+  resolveScheduleEventStudents,
   scheduleEventUnassignedLabel,
   timeToMinutes,
   type ScheduleEventInstance,
+  type ScheduleStudent,
 } from "@/lib/schedule-calendar";
 
 export type PendingReschedule = {
@@ -49,10 +51,12 @@ function formatDurationLabel(
 
 export function ScheduleRescheduleDialog({
   pending,
+  students = [],
   onClose,
   onSuccess,
 }: {
   pending: PendingReschedule | null;
+  students?: ScheduleStudent[];
   onClose: () => void;
   onSuccess: () => void;
 }) {
@@ -97,6 +101,19 @@ export function ScheduleRescheduleDialog({
 
   const originalTimeLabel = `${formatTime12Hour(originalStart)} – ${formatTime12Hour(originalEnd)}`;
   const newTimeLabel = `${formatTime12Hour(newStartTime)} – ${formatTime12Hour(newEndTime)}`;
+  const studentsById = new Map(students.map((student) => [student.id, student]));
+  const labeledStudents = resolveScheduleEventStudents(instance, studentsById);
+  const studentLabel = formatScheduleEventStudentLabel(
+    labeledStudents,
+    scheduleEventUnassignedLabel(
+      instance.lesson_type,
+      formatClassSubject(instance.subject, language),
+      {
+        trial: t("common.trialLabel"),
+        group: t("enum.lessonType.group"),
+      },
+    ),
+  );
 
   return (
     <Dialog open onClose={() => !isPending && onClose()} className="relative z-50">
@@ -112,23 +129,13 @@ export function ScheduleRescheduleDialog({
                   : t("common.updateClassTime")}
             </DialogTitle>
 
-            <p className="mt-2 flex items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
-              {formatScheduleEventStudentLabel(
-                instance.students,
-                scheduleEventUnassignedLabel(
-                  instance.lesson_type,
-                  formatClassSubject(instance.subject, language),
-                  {
-                    trial: t("common.trialLabel"),
-                    group: t("enum.lessonType.group"),
-                  },
-                ),
-              )}
-              {instance.students.length > 0 ? (
+            <p className="mt-2 flex flex-wrap items-start gap-1 text-sm font-medium text-gray-900 dark:text-white">
+              {studentLabel}
+              {labeledStudents.length > 0 ? (
                 <ScheduleTrialLabel lessonType={instance.lesson_type} />
               ) : null}
             </p>
-            {instance.students.length > 0 ||
+            {labeledStudents.length > 0 ||
             instance.lesson_type === "group" ||
             instance.lesson_type === "trial" ? (
               <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">

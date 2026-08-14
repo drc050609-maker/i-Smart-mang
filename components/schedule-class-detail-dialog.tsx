@@ -20,11 +20,12 @@ import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
-import type {
-  ScheduleEventInstance,
-  ScheduleStudent,
+import {
+  resolveScheduleEventStudents,
+  type ScheduleEventInstance,
+  type ScheduleStudent,
 } from "@/lib/schedule-calendar";
-import { formatStudentName, sortStudents } from "@/lib/person-name";
+import { formatStudentName } from "@/lib/person-name";
 
 const initialDeleteState: ScheduleActionState = {};
 
@@ -67,25 +68,8 @@ export function ScheduleClassDetailDialog({
   }
 
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
-  // Prefer the slot-linked student(s). For group/unassigned slots, fall back to
-  // student_ids resolved against the active student list (class roster).
   const studentById = new Map(students.map((student) => [student.id, student]));
-  const slotStudents = sortStudents(instance.students).map((student) => {
-    const campus = studentById.get(student.id);
-    if (!campus?.notes?.trim()) return student;
-    return { ...student, notes: campus.notes };
-  });
-  const rosterStudents = sortStudents(
-    instance.student_ids
-      .map((id) => studentById.get(id))
-      .filter((student): student is ScheduleStudent => student !== undefined),
-  );
-  const displayStudents =
-    slotStudents.length > 0
-      ? slotStudents
-      : instance.schedule_student_id == null
-        ? rosterStudents
-        : [];
+  const displayStudents = resolveScheduleEventStudents(instance, studentById);
   const studentHeading =
     instance.schedule_student_id != null
       ? t("common.student")

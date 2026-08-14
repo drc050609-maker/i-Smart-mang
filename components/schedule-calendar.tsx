@@ -55,6 +55,7 @@ import {
   formatEasternDateYMD,
   formatHourLabel,
   formatScheduleEventStudentLabel,
+  resolveScheduleEventStudents,
   scheduleEventUnassignedLabel,
   withTrialStudentLabel,
   formatWeekRange,
@@ -161,11 +162,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
       group: t("enum.lessonType.group"),
     },
   );
-  const labeledStudents = instance.students.map((student) => {
-    const campus = studentsById?.get(student.id);
-    if (!campus?.notes?.trim()) return student;
-    return { ...student, notes: campus.notes };
-  });
+  const labeledStudents = resolveScheduleEventStudents(instance, studentsById);
   const studentLabel = formatScheduleEventStudentLabel(
     labeledStudents,
     unassignedLabel,
@@ -175,6 +172,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     instance.lesson_type,
     trialLabel,
   );
+  const wrapNames = showFullName || labeledStudents.length > 1;
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
   const showSecondary = displayHeight >= 40;
   const showSubjectTertiary =
@@ -218,10 +216,14 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
       <p
         className={classNames(
           "flex items-start gap-0.5 text-[11px] font-semibold leading-tight",
-          showFullName ? "break-words" : "truncate",
+          wrapNames ? "break-words" : "truncate",
         )}
       >
-        <span className={showFullName ? "min-w-0 break-words" : "min-w-0 truncate"}>
+        <span
+          className={
+            wrapNames ? "min-w-0 flex-1 break-words" : "min-w-0 truncate"
+          }
+        >
           {studentLabel}
         </span>
         {labeledStudents.length > 0 ? (
@@ -245,7 +247,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
         <p
           className={classNames(
             "text-[10px] leading-tight opacity-70",
-            showFullName ? "break-words" : "truncate",
+            wrapNames ? "break-words" : "truncate",
           )}
         >
           {subjectLabel}
@@ -1307,6 +1309,7 @@ export function ScheduleCalendar({
         <ScheduleRescheduleDialog
           key={`${pendingReschedule.instance.instanceKey}:${pendingReschedule.newDate}:${pendingReschedule.newStartTime}`}
           pending={pendingReschedule}
+          students={students}
           onClose={closeRescheduleDialog}
           onSuccess={handleRescheduleSuccess}
         />

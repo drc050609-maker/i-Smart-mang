@@ -72,7 +72,10 @@ export type ScheduleEvent = {
    * Slot student when set; otherwise enrolled roster (group/unassigned slots).
    */
   student_ids: number[];
-  /** Students shown on the calendar block — slot student only, not the full roster. */
+  /**
+   * Students shown on calendar blocks and related views.
+   * Slot student when set; for group lessons, the class roster.
+   */
   students: ScheduleStudent[];
 };
 
@@ -107,16 +110,52 @@ export function isTrialLessonType(lessonType: string | null | undefined) {
   return lessonType === "trial";
 }
 
-/** Compact calendar label: one name, two names, or "First +N". */
+/** Calendar label: every student name, comma-separated. */
 export function formatScheduleEventStudentLabel(
   students: ScheduleStudent[],
   fallback: string,
 ) {
   const names = sortStudents(students).map(formatStudentName);
   if (names.length === 0) return fallback;
-  if (names.length === 1) return names[0]!;
-  if (names.length === 2) return `${names[0]}, ${names[1]}`;
-  return `${names[0]} +${names.length - 1}`;
+  return names.join(", ");
+}
+
+/**
+ * Students to display for a schedule event.
+ * Prefers slot-linked students; for group/unassigned slots, the class roster
+ * from `student_ids` resolved against `studentsById`.
+ */
+export function resolveScheduleEventStudents(
+  event: Pick<
+    ScheduleEvent,
+    "students" | "student_ids" | "schedule_student_id"
+  >,
+  studentsById?: Map<number, ScheduleStudent>,
+): ScheduleStudent[] {
+  function withCampusNotes(student: ScheduleStudent): ScheduleStudent {
+    const campus = studentsById?.get(student.id);
+    if (!campus?.notes?.trim()) return student;
+    return { ...student, notes: campus.notes };
+  }
+
+  const slotStudents = sortStudents(event.students).map(withCampusNotes);
+  if (slotStudents.length > 0) {
+    return slotStudents;
+  }
+
+  if (event.schedule_student_id != null) {
+    return [];
+  }
+
+  if (!studentsById || event.student_ids.length === 0) {
+    return [];
+  }
+
+  return sortStudents(
+    event.student_ids
+      .map((id) => studentsById.get(id))
+      .filter((student): student is ScheduleStudent => student !== undefined),
+  );
 }
 
 /** Fallback title when a slot has no student: trial, group type, or subject. */
@@ -666,7 +705,9 @@ export function buildScheduleEvents(
       const scheduleStudentId = scheduleRow.student_id ?? null;
 
       let students: ScheduleStudent[] = [];
-      if (scheduleStudentId != null) {
+      if (classRow.lesson_type === "group" && enrolled.length > 0) {
+        students = enrolled;
+      } else if (scheduleStudentId != null) {
         const fromEmbed = scheduleRow.schedule_student;
         if (fromEmbed && fromEmbed.id === scheduleStudentId) {
           students = [fromEmbed];
@@ -706,9 +747,10 @@ export function buildScheduleEvents(
         lesson_type: classRow.lesson_type ?? null,
         schedule_student_id: scheduleStudentId,
         student_ids:
-          scheduleStudentId != null
-            ? [scheduleStudentId]
-            : enrolled.map((student) => student.id),
+          (classRow.lesson_type === "group" && enrolled.length > 0) ||
+          scheduleStudentId == null
+            ? enrolled.map((student) => student.id)
+            : [scheduleStudentId],
         students,
       };
     });
