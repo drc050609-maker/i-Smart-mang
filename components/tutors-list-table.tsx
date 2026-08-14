@@ -11,6 +11,7 @@ import {
 import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import type { TranslationKey } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 import {
@@ -293,7 +294,7 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                                   </span>
                                 ) : null}
                                 <Link
-                                  href={`/classes/${classRow.id}`}
+                                  href={classHref(classRow.id, "/tutors")}
                                   className="whitespace-nowrap text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                                 >
                                   {formatClassSubject(classRow.subject, language)}

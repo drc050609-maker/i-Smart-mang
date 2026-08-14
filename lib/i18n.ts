@@ -295,6 +295,11 @@ export type TranslationKey =
   | "common.backToStudents"
   | "common.backToClasses"
   | "common.backToTutors"
+  | "common.backToTeacher"
+  | "common.backToStudent"
+  | "common.backToSchedule"
+  | "common.backToLeads"
+  | "common.backToDashboard"
   | "common.backToStatements"
   | "common.redNamesNoCredits"
   | "common.lessonType"
@@ -1207,6 +1212,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.backToStudents": "← Back to students",
     "common.backToClasses": "← Back to classes",
     "common.backToTutors": "← Back to teachers",
+    "common.backToTeacher": "← Back to teacher",
+    "common.backToStudent": "← Back to student",
+    "common.backToSchedule": "← Back to schedule",
+    "common.backToLeads": "← Back to leads",
+    "common.backToDashboard": "← Back to dashboard",
     "common.backToStatements": "← All statements",
     "common.redNamesNoCredits": "Red names have no class credits remaining",
     "common.lessonType": "Lesson type",
@@ -2175,6 +2185,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.backToStudents": "← 返回学生列表",
     "common.backToClasses": "← 返回课程列表",
     "common.backToTutors": "← 返回老师列表",
+    "common.backToTeacher": "← 返回老师详情",
+    "common.backToStudent": "← 返回学生详情",
+    "common.backToSchedule": "← 返回课程表",
+    "common.backToLeads": "← 返回线索",
+    "common.backToDashboard": "← 返回首页",
     "common.backToStatements": "← 全部财务报表",
     "common.redNamesNoCredits": "红色姓名表示课时已用完",
     "common.lessonType": "课程类型",

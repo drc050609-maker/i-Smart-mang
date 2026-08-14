@@ -21,11 +21,8 @@ import {
   type TeacherGroupPayRates,
   type TeacherPaycheckPeriodData,
 } from "@/lib/teacher-paycheck";
-import {
-  formatClassSubject,
-  listKnownClassSubjects,
-  uniqueClassesBySubject,
-} from "@/lib/class-subject";
+import { formatClassSubject, listKnownClassSubjects } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 import { compareStudentNames, formatStudentName } from "@/lib/person-name";
 import { requireStaff } from "@/lib/auth";
@@ -299,7 +296,6 @@ export default async function TutorDetailPage({
   }
 
   const classRows = (classes as ClassEmbed[] | null) ?? [];
-  const displayClassRows = uniqueClassesBySubject(classRows);
   const subjectByClassId = new Map(
     classRows.map((row) => [row.id, row.subject]),
   );
@@ -511,7 +507,7 @@ export default async function TutorDetailPage({
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
             {t("common.error.loadFailed", { entity: t("common.classes"), message: classesError.message })}
           </p>
-        ) : displayClassRows.length === 0 ? (
+        ) : classRows.length === 0 ? (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             {t("common.noClassesYet")}
           </p>
@@ -555,14 +551,14 @@ export default async function TutorDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                    {displayClassRows.map((classRow) => {
+                    {classRows.map((classRow) => {
                       const room = firstOrNull(classRow.rooms);
 
                       return (
-                        <tr key={classRow.subject}>
+                        <tr key={classRow.id}>
                           <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                             <Link
-                              href={`/classes/${classRow.id}`}
+                              href={classHref(classRow.id, `/tutors/${teacherId}`)}
                               className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                             >
                               {formatClassSubject(classRow.subject, staff.preferred_language)}

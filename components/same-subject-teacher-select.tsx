@@ -7,6 +7,7 @@ import {
   SelectChevron,
   selectFieldClassName,
 } from "@/components/select-chevron";
+import { classHref } from "@/lib/return-to";
 import {
   compareTeacherNames,
   formatTeacherName,
@@ -26,9 +27,11 @@ function teacherKey(teacher: TeacherNameFields | null) {
 export function SameSubjectTeacherSelect({
   currentClassId,
   options,
+  returnTo,
 }: {
   currentClassId: number;
   options: SameSubjectClassOption[];
+  returnTo?: string | null;
 }) {
   const router = useRouter();
   const { t } = useLanguage();
@@ -68,7 +71,7 @@ export function SameSubjectTeacherSelect({
       (option) => teacherKey(option.teacher) === nextKey,
     )?.id;
     if (nextId == null || nextId === currentClassId) return;
-    router.push(`/classes/${nextId}`);
+    router.push(classHref(nextId, returnTo));
   }
 
   return (

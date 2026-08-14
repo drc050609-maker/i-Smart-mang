@@ -41,6 +41,10 @@ import {
   sortTeachers,
 } from "@/lib/person-name";
 import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
+import {
+  parseReturnToFromSearchParams,
+  returnToBackKey,
+} from "@/lib/return-to";
 
 import type { Database } from "@/types/database.types";
 
@@ -182,12 +186,15 @@ function formatEnrollmentStatus(
 
 export default async function ClassDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) {
   const staff = await requireStaff();
   const t = createTranslator(staff.preferred_language);
   const { id } = await params;
+  const returnTo = parseReturnToFromSearchParams(await searchParams);
   const classId = Number(id);
 
   if (!Number.isInteger(classId) || classId <= 0) {
@@ -449,10 +456,10 @@ export default async function ClassDetailPage({
     <div>
       <div className="mb-6">
         <Link
-          href="/classes"
+          href={returnTo ?? "/classes"}
           className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
         >
-          {t("common.backToClasses")}
+          {returnTo ? t(returnToBackKey(returnTo)) : t("common.backToClasses")}
         </Link>
       </div>
 
@@ -476,6 +483,7 @@ export default async function ClassDetailPage({
               teachers={teacherOptions}
               rooms={roomOptions}
               subjects={subjectOptions}
+              returnTo={returnTo}
             />
             <DeleteClassButton
               classId={classId}
@@ -493,6 +501,7 @@ export default async function ClassDetailPage({
                 <SameSubjectTeacherSelect
                   currentClassId={classId}
                   options={sameSubjectClasses}
+                  returnTo={returnTo}
                 />
               ) : (
                 assignedTeacherNames

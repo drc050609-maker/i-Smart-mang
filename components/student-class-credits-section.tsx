@@ -7,6 +7,7 @@ import { StudentCreditActionsDialog } from "@/components/student-credit-actions-
 import type { StudentOption } from "@/components/student-combobox";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import type { StudentClassCreditRow } from "@/lib/class-session-credits";
 
 function BalanceCell({ value, highlight }: { value: number; highlight?: boolean }) {
@@ -26,9 +27,11 @@ function BalanceCell({ value, highlight }: { value: number; highlight?: boolean 
 export function StudentClassCreditsSection({
   rows,
   studentOptions,
+  returnTo,
 }: {
   rows: StudentClassCreditRow[];
   studentOptions: StudentOption[];
+  returnTo?: string | null;
 }) {
   const { language, t } = useLanguage();
 
@@ -90,7 +93,7 @@ export function StudentClassCreditsSection({
                 <tr key={row.classId}>
                   <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                     <Link
-                      href={`/classes/${row.classId}`}
+                      href={classHref(row.classId, returnTo)}
                       className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                     >
                       {formatClassSubject(row.subject, language)}

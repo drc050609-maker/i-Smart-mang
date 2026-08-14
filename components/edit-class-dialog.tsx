@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -59,13 +60,16 @@ export function EditClassDialog({
   teachers,
   rooms,
   subjects,
+  returnTo,
 }: {
   classData: ClassFormData;
   teachers: TeacherOption[];
   rooms: RoomOption[];
   subjects: string[];
+  returnTo?: string | null;
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -119,8 +123,13 @@ export function EditClassDialog({
     if (state.success) {
       setError(null);
       setOpen(false);
+      if (returnTo) {
+        router.replace(returnTo);
+      } else {
+        router.refresh();
+      }
     }
-  }, [state.error, state.success]);
+  }, [state.error, state.success, state.savedAt, returnTo, router]);
 
   return (
     <>

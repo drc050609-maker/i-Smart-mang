@@ -19,6 +19,7 @@ import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
 import type {
   ScheduleEventInstance,
@@ -323,7 +324,7 @@ export function ScheduleClassDetailDialog({
                     {t("common.close")}
                   </button>
                   <Link
-                    href={`/classes/${instance.classId}`}
+                    href={classHref(instance.classId, "/schedule")}
                     className="rounded-md bg-violet-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-violet-500"
                   >
                     {t("common.viewClass")}

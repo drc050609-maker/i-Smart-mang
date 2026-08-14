@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -48,6 +49,7 @@ export function AddClassDialog({
   subjects: string[];
 }) {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,8 +102,9 @@ export function AddClassDialog({
       setSelectedSubject("");
       setError(null);
       setOpen(false);
+      router.refresh();
     }
-  }, [state.error, state.success]);
+  }, [state.error, state.success, state.savedAt, router]);
 
   return (
     <>

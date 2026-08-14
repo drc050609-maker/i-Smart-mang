@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import type { LiveClassItem } from "@/lib/live-classes";
 
 export function DashboardUpcomingClasses({
@@ -45,7 +46,7 @@ export function DashboardUpcomingClasses({
             >
               <div className="min-w-0">
                 <Link
-                  href={`/classes/${classItem.classId}`}
+                  href={classHref(classItem.classId, "/")}
                   className="font-medium text-gray-900 hover:text-indigo-600 dark:text-white dark:hover:text-indigo-300"
                 >
                   {formatClassSubject(classItem.subject, language)}

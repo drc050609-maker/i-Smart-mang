@@ -17,6 +17,7 @@ import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import {
   addDays,
   buildWeekEventInstances,
@@ -491,7 +492,7 @@ export function ScheduleTeacherDayDialog({
                             </td>
                             <td className="px-3 py-3 text-sm text-gray-700 dark:text-gray-300">
                               <Link
-                                href={`/classes/${instance.classId}`}
+                                href={classHref(instance.classId, "/schedule")}
                                 className="font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                               >
                                 {formatClassSubject(instance.subject, language)}
