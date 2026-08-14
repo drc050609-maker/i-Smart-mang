@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@headlessui/react";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/20/solid";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/actions";
@@ -86,6 +87,7 @@ export function ScheduleTeacherDayDialog({
   initialTeacherId,
   initialDate,
   scheduleRevision = 0,
+  onAddStudent,
 }: {
   open: boolean;
   onClose: () => void;
@@ -97,6 +99,7 @@ export function ScheduleTeacherDayDialog({
   initialDate: Date;
   /** Bump after calendar mutations so this table refetches fresh data. */
   scheduleRevision?: number;
+  onAddStudent?: (teacherId: number, date: Date) => void;
 }) {
   const { language, t } = useLanguage();
   const sortedTeachers = useMemo(() => sortTeachers(teachers), [teachers]);
@@ -268,13 +271,29 @@ export function ScheduleTeacherDayDialog({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
+                {onAddStudent ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (teacherId === "") {
+                        return;
+                      }
+                      onAddStudent(teacherId, parseDateYMD(dateYmd));
+                    }}
+                    disabled={teacherId === ""}
+                    className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  >
+                    <PlusIcon aria-hidden="true" className="size-4" />
+                    {t("common.addStudentToSchedule")}
+                  </button>
+                ) : null}
                 <button
                   type="button"
                   onClick={handleDownloadPdf}
                   disabled={
                     loading || teacherId === "" || selectedTeacher == null
                   }
-                  className="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                  className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
                 >
                   {t("common.downloadPdf")}
                 </button>

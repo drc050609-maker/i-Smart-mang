@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type MutableRefObject,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -24,12 +25,16 @@ import {
   ChevronRightIcon,
   XMarkIcon,
 } from "@heroicons/react/20/solid";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, PlusIcon } from "@heroicons/react/24/outline";
 
 import {
   ScheduleRescheduleDialog,
   type PendingReschedule,
 } from "@/components/schedule-reschedule-dialog";
+import {
+  ScheduleAddStudentDialog,
+  type PendingAddStudent,
+} from "@/components/schedule-add-student-dialog";
 import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-dialog";
 import { ScheduleTeacherDayDialog } from "@/components/schedule-teacher-day-dialog";
 import { StudentNoteStar } from "@/components/student-note-star";
@@ -78,6 +83,7 @@ import {
   formatStudentName,
   formatTeacherName,
   sortStudents,
+  sortTeachers,
 } from "@/lib/person-name";
 
 const DRAG_THRESHOLD_PX = 6;
@@ -175,6 +181,8 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
         containIntrinsicSize: `auto ${displayHeight}px`,
         ...columnStyle,
       }}
+      data-schedule-event="true"
+      onClick={(event) => event.stopPropagation()}
       onPointerDown={
         dimmed
           ? undefined
@@ -253,6 +261,7 @@ export function ScheduleCalendar({
   const gridRef = useRef<HTMLDivElement>(null);
   const dayColumnRefs = useRef<(HTMLDivElement | null)[]>([]);
   const dragMovedRef = useRef(false);
+  const suppressClickRef = useRef(false);
   const dragStateRef = useRef<DragState | null>(null);
   const dragPreviewElRef = useRef<HTMLDivElement | null>(null);
   const eventPointerDownRef = useRef<
@@ -300,6 +309,8 @@ export function ScheduleCalendar({
   const [pendingReschedule, setPendingReschedule] =
     useState<PendingReschedule | null>(null);
   const [teacherDayListOpen, setTeacherDayListOpen] = useState(false);
+  const [pendingAddStudent, setPendingAddStudent] =
+    useState<PendingAddStudent | null>(null);
 
   const closeRescheduleDialog = useCallback(() => {
     setPendingReschedule(null);
@@ -495,15 +506,15 @@ export function ScheduleCalendar({
 
   const teachersWithCounts = useMemo(() => {
     if (useServerTeacherCounts) {
-      return teachers.filter((teacher) => teacher.class_count > 0);
+      return teachers;
     }
 
-    return teachers
-      .map((teacher) => ({
+    return sortTeachers(
+      teachers.map((teacher) => ({
         ...teacher,
         class_count: teacherCounts.get(teacher.id) ?? 0,
-      }))
-      .filter((teacher) => teacher.class_count > 0);
+      })),
+    );
   }, [teachers, teacherCounts, useServerTeacherCounts]);
 
   const totalScheduleCount = useMemo(() => {
@@ -637,6 +648,7 @@ export function ScheduleCalendar({
       }
 
       if (dragMovedRef.current) {
+        suppressClickRef.current = true;
         resolveDrop(dragState.dayIndex, dragState.topPx, dragState.instance);
       } else {
         setSelectedInstance(dragState.instance);
@@ -702,6 +714,55 @@ export function ScheduleCalendar({
     next.setHours(0, 0, 0, 0);
     setFocusDate(next);
     setViewMode("day");
+  }
+
+  function openAddStudentDialog(date: Date, startTime = "15:00:00") {
+    setPendingAddStudent({
+      teacherId:
+        selectedTeacherIds.length === 1 ? selectedTeacherIds[0]! : null,
+      date: formatDateYMD(date),
+      startTime,
+    });
+  }
+
+  function handleDayColumnClick(
+    dayIndex: number,
+    event: ReactMouseEvent<HTMLDivElement>,
+  ) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    if (dragMovedRef.current || draggingKey) {
+      return;
+    }
+    if (
+      (event.target as HTMLElement).closest("[data-schedule-event='true']")
+    ) {
+      return;
+    }
+
+    const column = event.currentTarget;
+    const rect = column.getBoundingClientRect();
+    const relativeY = event.clientY - rect.top;
+    const rawMinutes = startHour * 60 + (relativeY / HOUR_HEIGHT_PX) * 60;
+    const snapped = snapMinutes(rawMinutes, SNAP_MINUTES);
+    const startTime = minutesToTimeString(snapped);
+    const day = weekDays[dayIndex];
+    if (!day) {
+      return;
+    }
+
+    openAddStudentDialog(day, startTime);
+  }
+
+  function closeAddStudentDialog() {
+    setPendingAddStudent(null);
+  }
+
+  function handleAddStudentSuccess() {
+    setPendingAddStudent(null);
+    onScheduleMutated?.();
   }
 
   function toggleTeacher(teacherId: number) {
@@ -926,6 +987,14 @@ export function ScheduleCalendar({
             </div>
             <button
               type="button"
+              onClick={() => openAddStudentDialog(focusDate)}
+              className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+            >
+              <PlusIcon aria-hidden="true" className="size-4" />
+              {t("common.addStudentToSchedule")}
+            </button>
+            <button
+              type="button"
               onClick={() => setTeacherDayListOpen(true)}
               className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
             >
@@ -1011,11 +1080,12 @@ export function ScheduleCalendar({
         ) : null}
 
         {events.length === 0 ? (
-          <p className="mt-6 text-sm text-gray-500 dark:text-gray-400">
-            {t("common.noScheduleAddOnClass")}
+          <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+            {t("common.clickEmptySlotToAdd")}
           </p>
-        ) : (
-          <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
+        ) : null}
+
+        <div className="mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-white/10 dark:bg-gray-900">
             <div className="max-h-[calc(100vh-16rem)] overflow-auto">
               <div
                 style={
@@ -1127,7 +1197,9 @@ export function ScheduleCalendar({
                           ref={(element) => {
                             dayColumnRefs.current[dayIndex] = element;
                           }}
-                          className="relative border-r border-gray-200 last:border-r-0 dark:border-white/10"
+                          onClick={(event) => handleDayColumnClick(dayIndex, event)}
+                          className="relative cursor-pointer border-r border-gray-200 last:border-r-0 dark:border-white/10"
+                          title={t("common.clickEmptySlotToAdd")}
                         >
                           {hours.map((hour, index) => (
                             <div
@@ -1185,10 +1257,11 @@ export function ScheduleCalendar({
               </div>
             </div>
           </div>
-        )}
 
         <div className="mt-4 flex flex-wrap gap-3 text-xs text-gray-600 dark:text-gray-400">
-          {teachersWithCounts.map((teacher) => {
+          {teachersWithCounts
+            .filter((teacher) => teacher.class_count > 0)
+            .map((teacher) => {
             const colors = getTeacherEventColors(teacher.id, teacherColorById);
             return (
               <span key={teacher.id} className="inline-flex items-center gap-1.5">
@@ -1228,6 +1301,17 @@ export function ScheduleCalendar({
         onDeleted={handleClassDetailDeleted}
       />
 
+      {pendingAddStudent ? (
+        <ScheduleAddStudentDialog
+          key={`${pendingAddStudent.teacherId ?? "none"}:${pendingAddStudent.date}:${pendingAddStudent.startTime}`}
+          pending={pendingAddStudent}
+          teachers={teachers}
+          students={students}
+          onClose={closeAddStudentDialog}
+          onSuccess={handleAddStudentSuccess}
+        />
+      ) : null}
+
       <ScheduleTeacherDayDialog
         open={teacherDayListOpen}
         onClose={() => setTeacherDayListOpen(false)}
@@ -1238,6 +1322,14 @@ export function ScheduleCalendar({
         initialTeacherId={selectedTeacherIds[0] ?? teachers[0]?.id ?? null}
         initialDate={focusDate}
         scheduleRevision={scheduleRevision}
+        onAddStudent={(teacherId, date) => {
+          setTeacherDayListOpen(false);
+          setPendingAddStudent({
+            teacherId,
+            date: formatDateYMD(date),
+            startTime: "15:00:00",
+          });
+        }}
       />
     </div>
   );

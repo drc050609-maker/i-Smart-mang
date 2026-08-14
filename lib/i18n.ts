@@ -19,14 +19,21 @@ export type TranslationKey =
   | "nav.events"
   | "nav.settings"
   | "nav.myHours"
+  | "nav.chat"
   | "brand.musicSchool"
   | "settings.title"
   | "settings.subtitleAdmin"
   | "settings.subtitleSelf"
   | "settings.yourAccount"
   | "settings.signedInAs"
+  | "settings.tabsAria"
+  | "settings.tabGeneral"
+  | "settings.tabStaff"
+  | "settings.tabTeachers"
   | "settings.staffAccounts"
   | "settings.staffAccountsDescription"
+  | "settings.teacherAccounts"
+  | "settings.teacherAccountsDescription"
   | "settings.trialPricing"
   | "settings.trialPricingDescription"
   | "settings.trialFee"
@@ -350,6 +357,14 @@ export type TranslationKey =
   | "common.dayView"
   | "common.teacherDayList"
   | "common.teacherDayListHelp"
+  | "common.addStudentToSchedule"
+  | "common.addStudentToScheduleHelp"
+  | "common.selectTeacherToAddStudent"
+  | "common.teacherStudents"
+  | "common.searchTeacherStudents"
+  | "common.createNewClass"
+  | "common.addToSchedule"
+  | "common.clickEmptySlotToAdd"
   | "common.downloadPdf"
   | "common.pdfPrintHint"
   | "common.pdfPopupBlocked"
@@ -410,7 +425,26 @@ export type TranslationKey =
   | "common.setManagerPasswordHint"
   | "common.addStaffAccount"
   | "common.addManager"
+  | "common.addTeacherAccount"
+  | "common.addTeacherAccountHelp"
+  | "common.linkTeacherProfile"
+  | "common.createNewTeacherProfile"
+  | "common.noTeacherProfiles"
   | "common.addStatenIslandManager"
+  | "chat.title"
+  | "chat.subtitle"
+  | "chat.pickTeacher"
+  | "chat.pickConversation"
+  | "chat.noTeachers"
+  | "chat.noConversations"
+  | "chat.noMessages"
+  | "chat.selectTeacherHint"
+  | "chat.selectConversationHint"
+  | "chat.fromTeacher"
+  | "chat.fromStudent"
+  | "chat.messageCount"
+  | "chat.conversationCount"
+  | "chat.lastActive"
   | "common.createAccount"
   | "common.creating"
   | "common.enrolling"
@@ -676,6 +710,7 @@ export type TranslationKey =
   | "enum.attendanceDescription.excused"
   | "enum.staffRole.admin"
   | "enum.staffRole.manager"
+  | "enum.staffRole.teacher"
   | "enum.staffRole.frontDesk"
   | "enum.staffLocation.brooklyn"
   | "enum.staffLocation.staten_island"
@@ -869,16 +904,24 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.events": "Events",
     "nav.settings": "Settings",
     "nav.myHours": "My hours",
+    "nav.chat": "Chat",
     "brand.musicSchool": "Music School",
     "settings.title": "Settings",
     "settings.subtitleAdmin":
-      "Manage admin and manager accounts for Brooklyn and Staten Island.",
+      "Manage staff, campus managers, and teacher app logins for Brooklyn and Staten Island.",
     "settings.subtitleSelf": "Manage your account settings.",
     "settings.yourAccount": "Your account",
     "settings.signedInAs": "Signed in as",
+    "settings.tabsAria": "Settings sections",
+    "settings.tabGeneral": "General",
+    "settings.tabStaff": "Staff",
+    "settings.tabTeachers": "Teachers",
     "settings.staffAccounts": "Staff accounts",
     "settings.staffAccountsDescription":
-      "Admins and managers who use the admin console.",
+      "Admins, campus managers, and front desk accounts who use the admin console.",
+    "settings.teacherAccounts": "Teacher accounts",
+    "settings.teacherAccountsDescription":
+      "Teachers with app logins. Create accounts here so they can sign in and chat with students.",
     "settings.language": "Language",
     "settings.languageDescription":
       "Choose the language for the admin console. Your choice is saved to your account.",
@@ -1231,6 +1274,17 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.teacherDayList": "Teacher day list",
     "common.teacherDayListHelp":
       "Pick a teacher and date to see every class and student that day.",
+    "common.addStudentToSchedule": "Add student",
+    "common.addStudentToScheduleHelp":
+      "Choose one of {name}'s students or add a new student, then pick a class time.",
+    "common.selectTeacherToAddStudent":
+      "Select a teacher, then choose an existing student or add a new one.",
+    "common.teacherStudents": "This teacher's students",
+    "common.searchTeacherStudents": "Search this teacher's students, or type to find anyone",
+    "common.createNewClass": "Create a new class…",
+    "common.addToSchedule": "Add to schedule",
+    "common.clickEmptySlotToAdd":
+      "Select a teacher and click an empty time to add a student.",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint":
       "In the print dialog, choose “Save as PDF” to download a copy.",
@@ -1292,10 +1346,32 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.setPassword": "Set password",
     "common.setManagerPasswordHelp": "Set a new password for {name}.",
     "common.setManagerPasswordHint":
-      "To reset a manager login, open their campus tab and click Set password under their name.",
+      "To reset a manager or teacher login, open their campus tab and click Set password under their name.",
     "common.addStaffAccount": "Add staff account",
     "common.addManager": "Add manager",
+    "common.addTeacherAccount": "Add teacher",
+    "common.addTeacherAccountHelp":
+      "Creates an app login for a teacher (separate from campus managers). You can link an existing teacher profile or create a new one.",
+    "common.linkTeacherProfile": "Teacher profile",
+    "common.createNewTeacherProfile": "Create new teacher profile",
+    "common.noTeacherProfiles":
+      "No unlinked teacher profiles for this campus. Create a new one with this account.",
     "common.addStatenIslandManager": "Add Staten Island manager",
+    "chat.title": "Teacher chat",
+    "chat.subtitle":
+      "Review conversations between teachers and students. Pick a teacher, then a student thread.",
+    "chat.pickTeacher": "Teachers",
+    "chat.pickConversation": "Conversations",
+    "chat.noTeachers": "No teachers with app logins yet. Add them in Settings → Teachers.",
+    "chat.noConversations": "This teacher has no student conversations yet.",
+    "chat.noMessages": "No messages in this conversation yet.",
+    "chat.selectTeacherHint": "Select a teacher to see their student chats.",
+    "chat.selectConversationHint": "Select a conversation to read messages.",
+    "chat.fromTeacher": "Teacher",
+    "chat.fromStudent": "Student",
+    "chat.messageCount": "{count} messages",
+    "chat.conversationCount": "{count} conversations",
+    "chat.lastActive": "Last active {when}",
     "common.createAccount": "Create account",
     "common.creating": "Creating…",
     "common.enrolling": "Enrolling…",
@@ -1444,7 +1520,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchasesSubtitle": "Books, materials, and other student purchases.",
     "common.statementsSubtitle": "Monthly income and expense summaries.",
     "common.attendanceSubtitle": "Mark daily attendance for enrolled students.",
-    "common.scheduleSubtitle": "Drag or click to view and reschedule class sessions.",
+    "common.scheduleSubtitle":
+      "Select a teacher, then click an empty time to add a student. Drag to reschedule.",
     "common.eventsSubtitle": "Share school news, photos, and video highlights.",
     "common.attendanceFooter": "Use the student profile to grant make-up credits for excused absences.",
     "common.rescheduleThisOccurrence": "This occurrence only",
@@ -1572,6 +1649,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendanceDescription.excused": "Excused absence — no credit used",
     "enum.staffRole.admin": "Admin",
     "enum.staffRole.manager": "Manager",
+    "enum.staffRole.teacher": "Teacher",
     "enum.staffRole.frontDesk": "Front desk",
     "enum.staffLocation.brooklyn": "Brooklyn",
     "enum.staffLocation.staten_island": "Staten Island",
@@ -1801,14 +1879,22 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "nav.events": "活动",
     "nav.settings": "设置",
     "nav.myHours": "我的工时",
+    "nav.chat": "聊天",
     "brand.musicSchool": "音乐学校",
     "settings.title": "设置",
-    "settings.subtitleAdmin": "管理布鲁克林和史泰登岛的管理员与经理账户。",
+    "settings.subtitleAdmin": "管理员工、校区经理以及老师 App 登录（布鲁克林与史泰登岛）。",
     "settings.subtitleSelf": "管理您的账户设置。",
     "settings.yourAccount": "您的账户",
     "settings.signedInAs": "当前登录",
+    "settings.tabsAria": "设置分区",
+    "settings.tabGeneral": "常规",
+    "settings.tabStaff": "员工",
+    "settings.tabTeachers": "老师",
     "settings.staffAccounts": "员工账户",
-    "settings.staffAccountsDescription": "使用管理后台的管理员和经理。",
+    "settings.staffAccountsDescription": "使用管理后台的管理员、校区经理和前台账户。",
+    "settings.teacherAccounts": "老师账户",
+    "settings.teacherAccountsDescription":
+      "拥有 App 登录的老师。在此创建账户，方便他们登录并与学生聊天。",
     "settings.language": "语言",
     "settings.languageDescription":
       "选择管理后台的显示语言。您的选择会保存到账户，下次登录仍然有效。",
@@ -2154,6 +2240,16 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.teacherDayList": "老师当日课表",
     "common.teacherDayListHelp":
       "选择老师和日期，查看当天所有课程与学生。",
+    "common.addStudentToSchedule": "添加学生",
+    "common.addStudentToScheduleHelp":
+      "从{name}的学生中选择，或添加新学生，然后安排上课时间。",
+    "common.selectTeacherToAddStudent":
+      "请先选择老师，然后选择已有学生或添加新学生。",
+    "common.teacherStudents": "该老师的学生",
+    "common.searchTeacherStudents": "搜索该老师的学生，或输入以查找所有学生",
+    "common.createNewClass": "创建新课程…",
+    "common.addToSchedule": "添加到日程",
+    "common.clickEmptySlotToAdd": "选择老师后，点击空白时间即可添加学生。",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”即可下载。",
     "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",
@@ -2212,10 +2308,31 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.setPassword": "设置密码",
     "common.setManagerPasswordHelp": "为 {name} 设置新密码。",
     "common.setManagerPasswordHint":
-      "重置经理登录密码：打开对应校区标签，点击姓名下方的“设置密码”。",
+      "重置经理或老师登录密码：打开对应校区标签，点击姓名下方的“设置密码”。",
     "common.addStaffAccount": "添加员工账户",
     "common.addManager": "添加经理",
+    "common.addTeacherAccount": "添加老师",
+    "common.addTeacherAccountHelp":
+      "为老师创建 App 登录（与校区经理不同）。可关联已有老师资料，或一并新建。",
+    "common.linkTeacherProfile": "老师资料",
+    "common.createNewTeacherProfile": "创建新老师资料",
+    "common.noTeacherProfiles":
+      "此校区暂无未关联的老师资料。可在创建账户时一并新建。",
     "common.addStatenIslandManager": "添加史泰登岛经理",
+    "chat.title": "老师聊天",
+    "chat.subtitle": "查看老师与学生的对话。先选老师，再选学生会话。",
+    "chat.pickTeacher": "老师",
+    "chat.pickConversation": "会话",
+    "chat.noTeachers": "还没有老师 App 登录。请在 设置 → 老师 中添加。",
+    "chat.noConversations": "这位老师还没有与学生的会话。",
+    "chat.noMessages": "此会话暂无消息。",
+    "chat.selectTeacherHint": "选择一位老师以查看其学生聊天。",
+    "chat.selectConversationHint": "选择一个会话以阅读消息。",
+    "chat.fromTeacher": "老师",
+    "chat.fromStudent": "学生",
+    "chat.messageCount": "{count} 条消息",
+    "chat.conversationCount": "{count} 个会话",
+    "chat.lastActive": "最近活动 {when}",
     "common.createAccount": "创建账户",
     "common.creating": "创建中…",
     "common.enrolling": "报名中…",
@@ -2362,7 +2479,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchasesSubtitle": "书籍、材料和其他学生购买。",
     "common.statementsSubtitle": "月度收支汇总。",
     "common.attendanceSubtitle": "为报名学生标记每日考勤。",
-    "common.scheduleSubtitle": "拖动或点击以查看和改期课程。",
+    "common.scheduleSubtitle": "选择老师后，点击空白时间即可添加学生。拖动可改期。",
     "common.eventsSubtitle": "分享学校新闻、照片和视频亮点。",
     "common.attendanceFooter": "使用学生档案为请假缺勤授予补课课时。",
     "common.rescheduleThisOccurrence": "仅此次",
@@ -2488,6 +2605,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendanceDescription.excused": "请假 — 不扣课时",
     "enum.staffRole.admin": "管理员",
     "enum.staffRole.manager": "经理",
+    "enum.staffRole.teacher": "老师",
     "enum.staffRole.frontDesk": "前台",
     "enum.staffLocation.brooklyn": "布鲁克林",
     "enum.staffLocation.staten_island": "史泰登岛",
@@ -2732,7 +2850,11 @@ export function getNavTranslationKey(href: string): TranslationKey {
       return "nav.myHours";
     case "/events":
       return "nav.events";
+    case "/chat":
+      return "nav.chat";
     case "/settings":
+    case "/settings/staff":
+    case "/settings/teachers":
       return "nav.settings";
     default:
       return "nav.dashboard";
