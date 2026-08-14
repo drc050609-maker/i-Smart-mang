@@ -33,6 +33,7 @@ import {
   summarizeStudentClassesTaken,
 } from "@/lib/student-attendance-history";
 import { compareStudentNames } from "@/lib/person-name";
+import { classHref } from "@/lib/return-to";
 import {
   buildStudentClassCreditRows,
   findTodayScheduleId,
@@ -542,7 +543,7 @@ export default async function StudentDetailPage({
                         <tr key={enrollment.id}>
                           <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
                             <Link
-                              href={`/classes/${classRow.id}`}
+                              href={classHref(classRow.id, `/students/${studentId}`)}
                               className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                             >
                               {subjectWithGrade}
@@ -633,6 +634,7 @@ export default async function StudentDetailPage({
           <StudentClassCreditsSection
             rows={creditRows}
             studentOptions={studentOptions}
+            returnTo={`/students/${studentId}`}
           />
         )}
       </section>
@@ -654,7 +656,7 @@ export default async function StudentDetailPage({
               {classesTakenByClass.map((summary) => (
                 <li key={summary.classId}>
                   <Link
-                    href={`/classes/${summary.classId}`}
+                    href={classHref(summary.classId, `/students/${studentId}`)}
                     className="inline-flex items-center gap-2 rounded-full bg-gray-100 px-3 py-1.5 text-sm text-gray-700 transition hover:bg-indigo-50 hover:text-indigo-700 dark:bg-white/10 dark:text-gray-300 dark:hover:bg-indigo-500/10 dark:hover:text-indigo-300"
                   >
                     <span>
@@ -678,7 +680,10 @@ export default async function StudentDetailPage({
             })}
           </p>
         ) : (
-          <StudentAttendanceHistorySection rows={attendanceHistoryRows} />
+          <StudentAttendanceHistorySection
+            rows={attendanceHistoryRows}
+            returnTo={`/students/${studentId}`}
+          />
         )}
       </section>
     </div>

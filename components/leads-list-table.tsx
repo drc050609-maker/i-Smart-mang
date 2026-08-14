@@ -15,6 +15,7 @@ import {
   filterProspectsByQuery,
   type LeadProspectRow,
 } from "@/lib/leads-overview";
+import { classHref } from "@/lib/return-to";
 
 function TypeBadge({ kind }: { kind: LeadProspectRow["kind"] }) {
   const { t } = useLanguage();
@@ -78,7 +79,7 @@ function RowActions({ lead }: { lead: LeadProspectRow }) {
         {lead.classId ? (
           <div>
             <Link
-              href={`/classes/${lead.classId}`}
+              href={classHref(lead.classId, "/leads")}
               className="text-xs font-medium text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
             >
               {t("common.viewClass")}

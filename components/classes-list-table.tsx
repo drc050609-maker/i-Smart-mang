@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 
 import { ListSearchInput } from "@/components/list-search-input";
@@ -14,6 +14,7 @@ import {
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import {
+  classSubjectKey,
   filterClassesByQuery,
   groupClassesBySubject,
   sortClassesBySubject,
@@ -196,6 +197,25 @@ export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
   const [expandedSubjects, setExpandedSubjects] = useState<Set<string>>(
     () => new Set(),
   );
+  const seenClassIdsRef = useRef<Set<number> | null>(null);
+
+  useEffect(() => {
+    const nextIds = new Set(classes.map((classRow) => classRow.id));
+    const previousIds = seenClassIdsRef.current;
+    if (previousIds) {
+      const added = classes.filter((classRow) => !previousIds.has(classRow.id));
+      if (added.length > 0) {
+        setExpandedSubjects((current) => {
+          const next = new Set(current);
+          for (const classRow of added) {
+            next.add(classSubjectKey(classRow.subject));
+          }
+          return next;
+        });
+      }
+    }
+    seenClassIdsRef.current = nextIds;
+  }, [classes]);
 
   const statusFilteredClasses = useMemo(
     () =>

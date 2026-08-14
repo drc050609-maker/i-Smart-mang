@@ -15,7 +15,12 @@ import { parseDollarsToCents } from "@/lib/money";
 export type ActionState = {
   error?: string;
   success?: boolean;
+  savedAt?: number;
 };
+
+function successState(): ActionState {
+  return { success: true, savedAt: Date.now() };
+}
 
 export type CreateClassState = ActionState;
 export type UpdateClassState = ActionState;
@@ -285,7 +290,7 @@ export async function createClass(
     revalidatePath(`/tutors/${teacherId}`);
   }
   revalidatePath("/tuitions");
-  return { success: true };
+  return successState();
 }
 
 export async function createClassWithPricing(
@@ -400,7 +405,7 @@ export async function createClassWithPricing(
     revalidatePath(`/tutors/${teacherId}`);
   }
   revalidatePath("/tuitions");
-  return { success: true };
+  return successState();
 }
 
 export async function updateClassSubject(
@@ -514,7 +519,7 @@ export async function updateClass(
   for (const teacherId of fields.teacherIds ?? []) {
     revalidatePath(`/tutors/${teacherId}`);
   }
-  return { success: true };
+  return successState();
 }
 
 function parseDayOfWeek(value: FormDataEntryValue | null) {

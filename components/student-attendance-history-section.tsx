@@ -10,6 +10,7 @@ import {
 } from "@/lib/attendance";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
+import { classHref } from "@/lib/return-to";
 import { useLanguage } from "@/components/language-provider";
 import { translate, type TranslationKey } from "@/lib/i18n";
 import { appLanguageLocale } from "@/lib/language";
@@ -269,8 +270,10 @@ function AttendanceHistoryCalendar({
 
 export function StudentAttendanceHistorySection({
   rows,
+  returnTo,
 }: {
   rows: StudentAttendanceHistoryRow[];
+  returnTo?: string | null;
 }) {
   const { language, t } = useLanguage();
   const { dates, byDate } = useMemo(
@@ -321,7 +324,7 @@ export function StudentAttendanceHistorySection({
               >
                 <div className="min-w-0 flex-1">
                   <Link
-                    href={`/classes/${session.classId}`}
+                    href={classHref(session.classId, returnTo)}
                     className="text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
                   >
                     {formatClassSubject(session.classSubject, language)}

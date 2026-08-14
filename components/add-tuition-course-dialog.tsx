@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogBackdrop,
@@ -33,6 +34,7 @@ const DURATION_OPTIONS = [30, 45, 60, 90] as const;
 
 export function AddTuitionCourseDialog() {
   const { t } = useLanguage();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
   const [lessonType, setLessonType] = useState<"private" | "group" | "trial">(
@@ -45,6 +47,7 @@ export function AddTuitionCourseDialog() {
         setOpen(false);
         formRef.current?.reset();
         setLessonType("private");
+        router.refresh();
       }
       return result;
     },
