@@ -28,9 +28,10 @@ import { SubjectCombobox } from "@/components/subject-combobox";
 import type { StudentOption } from "@/components/student-combobox";
 import { StudentMultiCombobox } from "@/components/student-multi-combobox";
 import { DurationMinutesField } from "@/components/duration-minutes-field";
+import { TimeTextField } from "@/components/time-text-field";
 import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
 import type { LessonType } from "@/lib/class-lesson-type";
-import { formatTime12Hour } from "@/lib/class-schedule";
+import { formatTimeInputDisplay } from "@/lib/class-schedule";
 import {
   filterStudentsByQuery,
   formatStudentName,
@@ -60,10 +61,6 @@ const SCHEDULE_LESSON_TYPES = ["private", "group"] as const;
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
-}
-
-function toTimeInputValue(time: string) {
-  return time.slice(0, 5);
 }
 
 export function ScheduleAddStudentDialog({
@@ -127,7 +124,7 @@ export function ScheduleAddStudentDialog({
     setDurationMinutes(String(DEFAULT_SLOT_DURATION_MINUTES));
     setIsRecurring(true);
     setDate(pending.date);
-    setStartTime(toTimeInputValue(pending.startTime));
+    setStartTime(formatTimeInputDisplay(pending.startTime));
     setTeacherStudentIds([]);
     setClasses([]);
     setSubjects([]);
@@ -259,7 +256,6 @@ export function ScheduleAddStudentDialog({
     teacherId === ""
       ? null
       : (sortedTeachers.find((teacher) => teacher.id === teacherId) ?? null);
-  const timePreview = startTime ? formatTime12Hour(`${startTime}:00`) : "";
 
   return (
     <Dialog
@@ -478,27 +474,14 @@ export function ScheduleAddStudentDialog({
                     />
                   </div>
                 </div>
-                <div>
-                  <label htmlFor="addScheduleStartTime" className={labelClassName}>
-                    {t("common.startTime")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="addScheduleStartTime"
-                      name="startTime"
-                      type="time"
-                      value={startTime}
-                      onChange={(event) => setStartTime(event.target.value)}
-                      required
-                      className={inputClassName}
-                    />
-                  </div>
-                  {timePreview ? (
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                      {timePreview}
-                    </p>
-                  ) : null}
-                </div>
+                <TimeTextField
+                  id="addScheduleStartTime"
+                  name="startTime"
+                  value={startTime}
+                  onChange={setStartTime}
+                  required
+                  label={t("common.startTime")}
+                />
               </div>
 
               <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">

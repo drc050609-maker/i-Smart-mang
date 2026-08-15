@@ -8,7 +8,7 @@ import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { deactivateClassesWithNoActiveEnrollments } from "@/lib/class-active";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
-import { addMinutesToScheduleTime } from "@/lib/class-schedule";
+import { addMinutesToScheduleTime, parseTypedTime } from "@/lib/class-schedule";
 import { parseLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { parseClassTrack, type ClassTrack } from "@/lib/class-track";
 import { pickReusableClass } from "@/lib/find-reusable-class";
@@ -592,12 +592,7 @@ function parseScheduleTime(value: FormDataEntryValue | null) {
     return null;
   }
 
-  const time = value.toString().trim();
-  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
-    return undefined;
-  }
-
-  return time.length === 5 ? `${time}:00` : time;
+  return parseTypedTime(value.toString()) ?? undefined;
 }
 
 function parseClassScheduleFields(formData: FormData) {
