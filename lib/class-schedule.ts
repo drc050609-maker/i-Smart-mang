@@ -47,68 +47,117 @@ function formatHms(hours: number, minutes: number, seconds: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
+function isValidHms(hours: number, minutes: number, seconds: number) {
+  return (
+    Number.isInteger(hours) &&
+    Number.isInteger(minutes) &&
+    Number.isInteger(seconds) &&
+    hours >= 0 &&
+    hours <= 23 &&
+    minutes >= 0 &&
+    minutes <= 59 &&
+    seconds >= 0 &&
+    seconds <= 59
+  );
+}
+
+function fromAmpm(
+  hours: number,
+  minutes: number,
+  seconds: number,
+  periodRaw: string,
+) {
+  const period = periodRaw.replace(/\./g, "").toLowerCase();
+  const isPm = period.startsWith("p");
+  if (
+    !Number.isInteger(hours) ||
+    hours < 0 ||
+    !isValidHms(Math.min(hours, 23), minutes, seconds)
+  ) {
+    return null;
+  }
+  if (hours > 12) {
+    if (!isPm || hours > 23) {
+      return null;
+    }
+    return formatHms(hours, minutes, seconds);
+  }
+  if (hours === 0 && isPm) {
+    return null;
+  }
+  let resolved = hours;
+  if (!isPm) {
+    resolved = hours === 12 ? 0 : hours;
+  } else {
+    resolved = hours === 12 ? 12 : hours + 12;
+  }
+  return formatHms(resolved, minutes, seconds);
+}
+
 /** Parse typed 12-hour (3:30 PM) or 24-hour (15:30) times to HH:MM:SS. */
 export function parseTypedTime(value: string | null | undefined): string | null {
   if (value == null) {
     return null;
   }
 
-  const compact = value.trim().replace(/\s+/g, " ");
+  const compact = value
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/(\d)\.(\d)/g, "$1:$2");
   if (!compact) {
     return null;
   }
 
-  const ampmMatch =
-    /^(\d{1,2})(?::(\d{2})(?::(\d{2}))?)?\s*(a\.?m\.?|p\.?m\.?)$/i.exec(
-      compact,
-    );
+  const periodPattern = "(a\\.?m?\\.?|p\\.?m?\\.?)";
+
+  const ampmMatch = new RegExp(
+    `^(\\d{1,2})(?::(\\d{2})(?::(\\d{2}))?)?\\s*${periodPattern}$`,
+    "i",
+  ).exec(compact);
   if (ampmMatch) {
-    let hours = Number(ampmMatch[1]);
-    const minutes = Number(ampmMatch[2] ?? "0");
-    const seconds = Number(ampmMatch[3] ?? "0");
-    const period = ampmMatch[4]!.replace(/\./g, "").toLowerCase();
-    if (
-      !Number.isInteger(hours) ||
-      !Number.isInteger(minutes) ||
-      !Number.isInteger(seconds) ||
-      hours < 0 ||
-      hours > 12 ||
-      minutes > 59 ||
-      seconds > 59
-    ) {
+    return fromAmpm(
+      Number(ampmMatch[1]),
+      Number(ampmMatch[2] ?? "0"),
+      Number(ampmMatch[3] ?? "0"),
+      ampmMatch[4]!,
+    );
+  }
+
+  const compactAmpm = new RegExp(
+    `^(\\d{1,2})(\\d{2})\\s*${periodPattern}$`,
+    "i",
+  ).exec(compact);
+  if (compactAmpm) {
+    return fromAmpm(
+      Number(compactAmpm[1]),
+      Number(compactAmpm[2]),
+      0,
+      compactAmpm[3]!,
+    );
+  }
+
+  const h24Match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(compact);
+  if (h24Match) {
+    const hours = Number(h24Match[1]);
+    const minutes = Number(h24Match[2]);
+    const seconds = Number(h24Match[3] ?? "0");
+    if (!isValidHms(hours, minutes, seconds)) {
       return null;
-    }
-    if (hours === 0 && period === "pm") {
-      return null;
-    }
-    if (period === "am") {
-      hours = hours === 12 ? 0 : hours;
-    } else {
-      hours = hours === 12 ? 12 : hours + 12;
     }
     return formatHms(hours, minutes, seconds);
   }
 
-  const h24Match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(compact);
-  if (!h24Match) {
+  const h24Compact = /^(\d{2})(\d{2})$/.exec(compact);
+  if (!h24Compact) {
     return null;
   }
 
-  const hours = Number(h24Match[1]);
-  const minutes = Number(h24Match[2]);
-  const seconds = Number(h24Match[3] ?? "0");
-  if (
-    !Number.isInteger(hours) ||
-    !Number.isInteger(minutes) ||
-    !Number.isInteger(seconds) ||
-    hours > 23 ||
-    minutes > 59 ||
-    seconds > 59
-  ) {
+  const hours = Number(h24Compact[1]);
+  const minutes = Number(h24Compact[2]);
+  if (!isValidHms(hours, minutes, 0)) {
     return null;
   }
-
-  return formatHms(hours, minutes, seconds);
+  return formatHms(hours, minutes, 0);
 }
 
 /** Friendly 12-hour display for a stored or typed time, or empty if unparsed. */

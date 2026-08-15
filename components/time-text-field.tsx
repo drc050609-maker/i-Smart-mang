@@ -84,18 +84,22 @@ export function TimeTextField({
         <input
           ref={inputRef}
           id={inputId}
-          name={name}
           type="text"
           inputMode="text"
           autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
           spellCheck={false}
+          role="textbox"
           value={displayValue}
           onChange={(event) => handleChange(event.target.value)}
+          onFocus={(event) => event.currentTarget.select()}
           required={required}
           placeholder={t("common.timePlaceholder")}
           aria-invalid={isInvalid || undefined}
           className={inputClassName}
         />
+        <input type="hidden" name={name} value={parsed ?? ""} />
       </div>
       {isInvalid ? (
         <p className="mt-1 text-xs text-red-600 dark:text-red-400">

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { parseTypedTime } from "@/lib/class-schedule";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   TRIAL_CLASS_SUBJECTS,
@@ -35,11 +36,7 @@ function parseDate(value: FormDataEntryValue | null) {
 }
 
 function parseTime(value: FormDataEntryValue | null) {
-  const time = value?.toString().trim();
-  if (!time || !/^\d{2}:\d{2}$/.test(time)) {
-    return undefined;
-  }
-  return `${time}:00`;
+  return parseTypedTime(value?.toString()) ?? undefined;
 }
 
 function parseOptionalText(value: FormDataEntryValue | null) {
@@ -119,7 +116,7 @@ export async function bookTrialClass(
   }
 
   if (!scheduleStartTime) {
-    return { error: "Select a start time." };
+    return { error: "Enter a start time such as 3:30 PM." };
   }
 
   const today = new Date();
