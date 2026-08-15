@@ -6,7 +6,7 @@ import { cookies } from "next/headers";
 import { requireStaff } from "@/lib/auth";
 import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
-import { addMinutesToScheduleTime, minutesBetweenScheduleTimes } from "@/lib/class-schedule";
+import { addMinutesToScheduleTime, minutesBetweenScheduleTimes, parseTypedTime } from "@/lib/class-schedule";
 import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { inferClassTrackFromSubject } from "@/lib/class-track";
 import { parseLessonType } from "@/lib/class-lesson-type";
@@ -95,12 +95,7 @@ function parseScheduleTime(value: FormDataEntryValue | null) {
     return undefined;
   }
 
-  const time = value.toString().trim();
-  if (!/^\d{2}:\d{2}(:\d{2})?$/.test(time)) {
-    return undefined;
-  }
-
-  return time.length === 5 ? `${time}:00` : time;
+  return parseTypedTime(value.toString()) ?? undefined;
 }
 
 function parseDayOfWeek(value: FormDataEntryValue | null) {

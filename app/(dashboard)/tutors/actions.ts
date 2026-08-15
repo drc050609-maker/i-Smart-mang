@@ -13,6 +13,7 @@ import {
   TEACHER_RESUME_BUCKET,
 } from "@/lib/teacher-resume";
 import { parseDollarsToCents } from "@/lib/money";
+import { parseTypedTime } from "@/lib/class-schedule";
 import {
   isStaffPosition,
   minutesToHoursDecimal,
@@ -827,21 +828,7 @@ export async function removeTeacherResume(
 export type FrontDeskHourLogState = ActionState;
 
 function normalizeClockTime(value: string) {
-  const match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(value.trim());
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (
-    !Number.isInteger(hours) ||
-    !Number.isInteger(minutes) ||
-    hours < 0 ||
-    hours > 23 ||
-    minutes < 0 ||
-    minutes > 59
-  ) {
-    return null;
-  }
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:00`;
+  return parseTypedTime(value);
 }
 
 function parseHourLogFields(formData: FormData) {

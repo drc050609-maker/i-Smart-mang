@@ -43,6 +43,83 @@ export function toTimeInputValue(time: string | null) {
   return time.slice(0, 5);
 }
 
+function formatHms(hours: number, minutes: number, seconds: number) {
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+/** Parse typed 12-hour (3:30 PM) or 24-hour (15:30) times to HH:MM:SS. */
+export function parseTypedTime(value: string | null | undefined): string | null {
+  if (value == null) {
+    return null;
+  }
+
+  const compact = value.trim().replace(/\s+/g, " ");
+  if (!compact) {
+    return null;
+  }
+
+  const ampmMatch =
+    /^(\d{1,2})(?::(\d{2})(?::(\d{2}))?)?\s*(a\.?m\.?|p\.?m\.?)$/i.exec(
+      compact,
+    );
+  if (ampmMatch) {
+    let hours = Number(ampmMatch[1]);
+    const minutes = Number(ampmMatch[2] ?? "0");
+    const seconds = Number(ampmMatch[3] ?? "0");
+    const period = ampmMatch[4]!.replace(/\./g, "").toLowerCase();
+    if (
+      !Number.isInteger(hours) ||
+      !Number.isInteger(minutes) ||
+      !Number.isInteger(seconds) ||
+      hours < 0 ||
+      hours > 12 ||
+      minutes > 59 ||
+      seconds > 59
+    ) {
+      return null;
+    }
+    if (hours === 0 && period === "pm") {
+      return null;
+    }
+    if (period === "am") {
+      hours = hours === 12 ? 0 : hours;
+    } else {
+      hours = hours === 12 ? 12 : hours + 12;
+    }
+    return formatHms(hours, minutes, seconds);
+  }
+
+  const h24Match = /^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(compact);
+  if (!h24Match) {
+    return null;
+  }
+
+  const hours = Number(h24Match[1]);
+  const minutes = Number(h24Match[2]);
+  const seconds = Number(h24Match[3] ?? "0");
+  if (
+    !Number.isInteger(hours) ||
+    !Number.isInteger(minutes) ||
+    !Number.isInteger(seconds) ||
+    hours > 23 ||
+    minutes > 59 ||
+    seconds > 59
+  ) {
+    return null;
+  }
+
+  return formatHms(hours, minutes, seconds);
+}
+
+/** Friendly 12-hour display for a stored or typed time, or empty if unparsed. */
+export function formatTimeInputDisplay(time: string | null | undefined) {
+  const parsed = parseTypedTime(time);
+  if (!parsed) {
+    return "";
+  }
+  return formatTime12Hour(parsed);
+}
+
 export function toDateInputValue(date: string | null) {
   if (!date) return "";
   return date.slice(0, 10);
@@ -52,13 +129,13 @@ export function addMinutesToTimeInput(
   startTimeInput: string,
   durationMinutes: number,
 ): string | null {
-  const match = /^(\d{2}):(\d{2})$/.exec(startTimeInput.trim());
-  if (!match || !Number.isInteger(durationMinutes) || durationMinutes <= 0) {
+  const parsed = parseTypedTime(startTimeInput);
+  if (!parsed || !Number.isInteger(durationMinutes) || durationMinutes <= 0) {
     return null;
   }
 
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
+  const hours = Number(parsed.slice(0, 2));
+  const minutes = Number(parsed.slice(3, 5));
   const totalMinutes = hours * 60 + minutes + durationMinutes;
 
   if (totalMinutes >= 24 * 60) {
@@ -74,7 +151,7 @@ export function addMinutesToScheduleTime(
   startTime: string,
   durationMinutes: number,
 ): string | null {
-  const result = addMinutesToTimeInput(startTime.slice(0, 5), durationMinutes);
+  const result = addMinutesToTimeInput(startTime, durationMinutes);
   return result ? `${result}:00` : null;
 }
 
