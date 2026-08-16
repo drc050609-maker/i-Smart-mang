@@ -160,15 +160,6 @@ export function parseTypedTime(value: string | null | undefined): string | null 
   return formatHms(hours, minutes, 0);
 }
 
-/** Friendly 12-hour display for a stored or typed time, or empty if unparsed. */
-export function formatTimeInputDisplay(time: string | null | undefined) {
-  const parsed = parseTypedTime(time);
-  if (!parsed) {
-    return "";
-  }
-  return formatTime12Hour(parsed);
-}
-
 export function toDateInputValue(date: string | null) {
   if (!date) return "";
   return date.slice(0, 10);

@@ -648,9 +648,6 @@ export type TranslationKey =
   | "common.oneTime"
   | "common.startTime"
   | "common.endTime"
-  | "common.timePlaceholder"
-  | "common.timeHelp"
-  | "common.timeInvalid"
   | "common.noLocation"
   | "common.location"
   | "common.noStaffAccounts"
@@ -1612,11 +1609,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.oneTime": "One-time",
     "common.startTime": "Start time",
     "common.endTime": "End time",
-    "common.timePlaceholder": "3:30 PM",
-    "common.timeHelp":
-      "Type the time in this text box, for example 3:30 PM or 15:30.",
-    "common.timeInvalid":
-      "Enter a valid time, such as 3:30 PM or 15:30.",
     "common.noLocation": "No location",
     "common.location": "Location",
     "common.noStaffAccounts": "No staff accounts yet.",
@@ -2597,9 +2589,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.oneTime": "单次",
     "common.startTime": "开始时间",
     "common.endTime": "结束时间",
-    "common.timePlaceholder": "3:30 PM",
-    "common.timeHelp": "请在此文本框中输入时间，例如 3:30 PM 或 15:30。",
-    "common.timeInvalid": "请输入有效时间，例如 3:30 PM 或 15:30。",
     "common.noLocation": "无地点",
     "common.location": "地点",
     "common.noStaffAccounts": "暂无员工账户。",
