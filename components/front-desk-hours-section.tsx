@@ -21,7 +21,6 @@ import {
 } from "@/app/(dashboard)/tutors/front-desk-paycheck-actions";
 import { useLanguage } from "@/components/language-provider";
 import { DeleteFrontDeskHourButton } from "@/components/delete-front-desk-hour-button";
-import { TimeTextField } from "@/components/time-text-field";
 import { formatCentsAsCurrency } from "@/lib/money";
 import {
   formatClockTime,
@@ -156,22 +155,36 @@ function HoursFormFields({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <TimeTextField
-          id={`${idPrefix}-clockIn`}
-          name="clockIn"
-          required
-          defaultValue={clockInDefault}
-          label={t("common.clockIn")}
-          help=""
-        />
-        <TimeTextField
-          id={`${idPrefix}-clockOut`}
-          name="clockOut"
-          required
-          defaultValue={clockOutDefault}
-          label={t("common.clockOut")}
-          help=""
-        />
+        <div>
+          <label htmlFor={`${idPrefix}-clockIn`} className={labelClassName}>
+            {t("common.clockIn")}
+          </label>
+          <div className="mt-2">
+            <input
+              id={`${idPrefix}-clockIn`}
+              name="clockIn"
+              type="time"
+              required
+              defaultValue={clockInDefault}
+              className={inputClassName}
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor={`${idPrefix}-clockOut`} className={labelClassName}>
+            {t("common.clockOut")}
+          </label>
+          <div className="mt-2">
+            <input
+              id={`${idPrefix}-clockOut`}
+              name="clockOut"
+              type="time"
+              required
+              defaultValue={clockOutDefault}
+              className={inputClassName}
+            />
+          </div>
+        </div>
       </div>
 
       <div>

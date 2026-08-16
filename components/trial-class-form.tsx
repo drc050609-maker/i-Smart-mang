@@ -275,14 +275,9 @@ export function TrialClassForm({
               <input
                 id="scheduleStartTime"
                 name="scheduleStartTime"
-                type="text"
-                inputMode="text"
-                autoComplete="off"
-                autoCorrect="off"
-                autoCapitalize="off"
-                spellCheck={false}
+                type="time"
                 required
-                placeholder="3:30 PM"
+                step={900}
                 className={inputClassName}
               />
             </div>
