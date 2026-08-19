@@ -59,6 +59,7 @@ export function ClassScheduleDialog({
   enrolledStudents = [],
   triggerLabel,
   triggerVariant = "primary",
+  copy = false,
 }: {
   classId: number;
   schedule?: ClassScheduleRow;
@@ -66,9 +67,10 @@ export function ClassScheduleDialog({
   enrolledStudents?: StudentOption[];
   triggerLabel?: string;
   triggerVariant?: "primary" | "text";
+  copy?: boolean;
 }) {
   const { t, language } = useLanguage();
-  const isEdit = Boolean(schedule?.id);
+  const isEdit = Boolean(schedule?.id) && !copy;
   const scheduleValues = schedule ?? emptySchedule;
   const initialStartTime = toTimeInputValue(scheduleValues.schedule_start_time);
   const slotDuration =
@@ -94,7 +96,12 @@ export function ClassScheduleDialog({
     initialState,
   );
   const buttonLabel =
-    triggerLabel ?? (isEdit ? t("common.edit") : t("common.addMeetingTime"));
+    triggerLabel ??
+    (copy
+      ? t("common.copy")
+      : isEdit
+        ? t("common.edit")
+        : t("common.addMeetingTime"));
 
   const parsedDuration = Number(selectedDuration);
   const computedEndTime = useMemo(() => {
@@ -181,20 +188,24 @@ export function ClassScheduleDialog({
                 as="h3"
                 className="text-lg font-semibold text-gray-900 dark:text-white"
               >
-                {isEdit ? t("common.editMeetingTime") : t("common.addMeetingTime")}
+                {copy
+                  ? t("common.copyMeetingTime")
+                  : isEdit
+                    ? t("common.editMeetingTime")
+                    : t("common.addMeetingTime")}
               </DialogTitle>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {t("common.scheduleHelp")}
+                {copy ? t("common.copyClassHelp") : t("common.scheduleHelp")}
               </p>
 
               <form
-                key={`${classId}-${schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${scheduleValues.student_id ?? ""}-${slotDuration}`}
+                key={`${classId}-${copy ? "copy" : schedule?.id ?? "new"}-${scheduleValues.is_recurring}-${scheduleValues.schedule_day_of_week}-${scheduleValues.schedule_date}-${scheduleValues.schedule_start_time}-${scheduleValues.schedule_end_time}-${scheduleValues.student_id ?? ""}-${slotDuration}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
               >
                 <input type="hidden" name="classId" value={classId} />
-                {schedule?.id ? (
+                {isEdit && schedule?.id ? (
                   <input type="hidden" name="scheduleId" value={schedule.id} />
                 ) : null}
                 <input
@@ -379,9 +390,11 @@ export function ClassScheduleDialog({
                   >
                     {pending
                       ? t("common.saving")
-                      : isEdit
-                        ? t("common.saveChanges")
-                        : t("common.addTime")}
+                      : copy
+                        ? t("common.copy")
+                        : isEdit
+                          ? t("common.saveChanges")
+                          : t("common.addTime")}
                   </button>
                 </div>
               </form>

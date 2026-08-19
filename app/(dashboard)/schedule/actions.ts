@@ -253,6 +253,119 @@ export async function rescheduleFromCalendar(
   return { success: true };
 }
 
+export async function copyFromCalendar(
+  _prevState: ScheduleActionState,
+  formData: FormData,
+): Promise<ScheduleActionState> {
+  const staff = await requireStaff();
+  if (isFrontDeskStaffRole(staff.role)) {
+    return { error: "Front desk accounts cannot change the schedule." };
+  }
+
+  const scheduleId = Number(formData.get("scheduleId"));
+  const classId = Number(formData.get("classId"));
+  const newDate = parseDate(formData.get("newDate"));
+  const newStartTime = parseScheduleTime(formData.get("newStartTime"));
+  const newDayOfWeek = parseDayOfWeek(formData.get("newDayOfWeek"));
+  const isRecurringRaw = formData.get("isRecurring")?.toString();
+
+  if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+    return { error: "Invalid schedule." };
+  }
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  if (!newDate || !newStartTime) {
+    return { error: "Invalid new time." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: scheduleRow, error: scheduleError } = await client.supabase
+    .from("class_schedules")
+    .select(
+      "id, class_id, is_recurring, schedule_start_time, schedule_end_time, student_id",
+    )
+    .eq("id", scheduleId)
+    .eq("class_id", classId)
+    .maybeSingle();
+
+  if (scheduleError) {
+    return { error: scheduleError.message };
+  }
+
+  if (!scheduleRow) {
+    return { error: "Schedule not found." };
+  }
+
+  const isRecurring =
+    isRecurringRaw === "true"
+      ? true
+      : isRecurringRaw === "false"
+        ? false
+        : scheduleRow.is_recurring;
+
+  const durationMinutes =
+    minutesBetweenScheduleTimes(
+      scheduleRow.schedule_start_time,
+      scheduleRow.schedule_end_time,
+    ) ?? 45;
+
+  const computedEnd = addMinutesToScheduleTime(newStartTime, durationMinutes);
+  const newEndTime =
+    parseScheduleTime(formData.get("newEndTime")) ?? computedEnd;
+
+  if (!newEndTime || newEndTime <= newStartTime) {
+    return { error: "End time must be after start time." };
+  }
+
+  if (isRecurring) {
+    if (newDayOfWeek === undefined) {
+      return { error: "Invalid day of week." };
+    }
+
+    const { error: insertError } = await client.supabase
+      .from("class_schedules")
+      .insert({
+        class_id: classId,
+        is_recurring: true,
+        schedule_day_of_week: newDayOfWeek,
+        schedule_date: null,
+        schedule_start_time: newStartTime,
+        schedule_end_time: newEndTime,
+        student_id: scheduleRow.student_id,
+      });
+
+    if (insertError) {
+      return { error: insertError.message };
+    }
+  } else {
+    const { error: insertError } = await client.supabase
+      .from("class_schedules")
+      .insert({
+        class_id: classId,
+        is_recurring: false,
+        schedule_day_of_week: null,
+        schedule_date: newDate,
+        schedule_start_time: newStartTime,
+        schedule_end_time: newEndTime,
+        student_id: scheduleRow.student_id,
+      });
+
+    if (insertError) {
+      return { error: insertError.message };
+    }
+  }
+
+  revalidateSchedule(classId);
+  return { success: true };
+}
+
 export async function deleteFromCalendar(
   _prevState: ScheduleActionState,
   formData: FormData,

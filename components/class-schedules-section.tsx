@@ -139,6 +139,15 @@ export function ClassSchedulesSection({
                               durationMinutes={durationMinutes}
                               schedule={schedule}
                               enrolledStudents={enrolledStudents}
+                              copy
+                              triggerLabel={t("common.copy")}
+                              triggerVariant="text"
+                            />
+                            <ClassScheduleDialog
+                              classId={classId}
+                              durationMinutes={durationMinutes}
+                              schedule={schedule}
+                              enrolledStudents={enrolledStudents}
                               triggerLabel={t("common.edit")}
                               triggerVariant="text"
                             />

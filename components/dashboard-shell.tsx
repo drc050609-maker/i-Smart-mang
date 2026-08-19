@@ -132,11 +132,32 @@ function visibleNavigation(role: StaffRole, teacherId: number | null) {
   });
 }
 
-/** Default expanded width (~w-72). */
-const SIDEBAR_DEFAULT_WIDTH = 288;
+const SIDEBAR_STORAGE_KEY = "ismart-dashboard-sidebar-width";
+/** Default expanded width — enough for nav labels without wrapping. */
+const SIDEBAR_DEFAULT_WIDTH = 304;
 /** Compact icon rail — same size as the old collapsed sidebar (w-20). */
 const SIDEBAR_MIN_WIDTH = 80;
+/** Narrowest expanded width that still shows full nav labels. */
+const SIDEBAR_EXPANDED_MIN_WIDTH = 248;
 const SIDEBAR_MAX_WIDTH = 420;
+
+function readStoredSidebarWidth() {
+  if (typeof window === "undefined") return SIDEBAR_DEFAULT_WIDTH;
+  const raw = window.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+  const parsed = Number(raw);
+  if (!Number.isFinite(parsed)) return SIDEBAR_DEFAULT_WIDTH;
+  return snapSidebarWidth(parsed);
+}
+
+function snapSidebarWidth(width: number) {
+  const compactCutoff =
+    (SIDEBAR_MIN_WIDTH + SIDEBAR_EXPANDED_MIN_WIDTH) / 2;
+  if (width < compactCutoff) return SIDEBAR_MIN_WIDTH;
+  return Math.min(
+    SIDEBAR_MAX_WIDTH,
+    Math.max(SIDEBAR_EXPANDED_MIN_WIDTH, width),
+  );
+}
 
 function classNames(...classes: (string | false | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -178,7 +199,7 @@ function NavLinks({
                   ? "bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-200"
                   : "text-gray-700 hover:bg-violet-50/70 hover:text-violet-800 dark:text-gray-300 dark:hover:bg-white/5 dark:hover:text-white",
                 compact ? "justify-center px-2" : "gap-x-3 px-2",
-                "group flex rounded-lg p-2 text-sm/6 font-semibold transition-colors",
+                "group flex rounded-lg px-2 py-1.5 text-sm/6 font-semibold transition-colors",
               )}
             >
               <item.icon
@@ -195,7 +216,9 @@ function NavLinks({
                   {t(getNavTranslationKey(item.href))}
                 </span>
               ) : (
-                t(getNavTranslationKey(item.href))
+                <span className="whitespace-nowrap">
+                  {t(getNavTranslationKey(item.href))}
+                </span>
               )}
             </Link>
           </li>
@@ -268,6 +291,10 @@ export function DashboardShell({
   const closeMobile = () => setSidebarOpen(false);
   const compact = sidebarWidth <= SIDEBAR_MIN_WIDTH + 24;
 
+  useEffect(() => {
+    setSidebarWidth(readStoredSidebarWidth());
+  }, []);
+
   const visibleNav = visibleNavigation(staff.role, staff.teacherId);
   const homeHref = isFrontDeskStaffRole(staff.role)
     ? frontDeskHomePath()
@@ -296,6 +323,11 @@ export function DashboardShell({
 
   const stopResize = useCallback(() => {
     setIsResizing(false);
+    setSidebarWidth((current) => {
+      const next = snapSidebarWidth(current);
+      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      return next;
+    });
   }, []);
 
   useEffect(() => {
