@@ -92,7 +92,8 @@ import {
 
 const DRAG_THRESHOLD_PX = 6;
 const SNAP_MINUTES = 15;
-const COMPACT_MIN_HEIGHT = 40;
+const WEEK_MIN_HEIGHT = 40;
+const DAY_MIN_HEIGHT = 56;
 const TIME_GUTTER_WIDTH_PX = 64;
 
 function classNames(...classes: (string | false | undefined)[]) {
@@ -113,6 +114,7 @@ type DragState = {
   topPx: number;
   heightPx: number;
   moved: boolean;
+  copy: boolean;
 };
 
 const DEFAULT_EVENT_LAYOUT: ScheduleEventColumnLayout = {
@@ -126,7 +128,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   layout,
   dimmed,
   isDragging,
-  showFullName = false,
+  separated = false,
   colorByTeacherId,
   studentsById,
   onPointerDownRef,
@@ -136,7 +138,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   layout: ScheduleEventColumnLayout;
   dimmed?: boolean;
   isDragging: boolean;
-  showFullName?: boolean;
+  separated?: boolean;
   colorByTeacherId?: Map<number, EventColorSet>;
   studentsById?: Map<number, ScheduleStudent>;
   onPointerDownRef: MutableRefObject<
@@ -150,8 +152,11 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   const { language, t } = useLanguage();
   const colors = getTeacherEventColors(instance.teacher_id, colorByTeacherId);
   const { top, height } = getInstancePosition(instance, startHour);
-  const displayHeight = Math.max(height, COMPACT_MIN_HEIGHT);
-  const columnStyle = getEventColumnStyle(layout);
+  const displayHeight = Math.max(
+    height,
+    separated ? DAY_MIN_HEIGHT : WEEK_MIN_HEIGHT,
+  );
+  const columnStyle = getEventColumnStyle(layout, { separated });
   const subjectLabel = formatClassSubject(instance.subject, language);
   const trialLabel = t("common.trialLabel");
   const unassignedLabel = scheduleEventUnassignedLabel(
@@ -172,11 +177,13 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     instance.lesson_type,
     trialLabel,
   );
-  const wrapNames = showFullName || labeledStudents.length > 1;
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
   const showSecondary = displayHeight >= 40;
   const showSubjectTertiary =
-    displayHeight >= 58 && studentLabel !== subjectLabel;
+    displayHeight >= (separated ? 72 : 58) && studentLabel !== subjectLabel;
+  const soleStudent =
+    separated && labeledStudents.length === 1 ? labeledStudents[0] : null;
+  const wrapNames = separated || labeledStudents.length > 1;
   const tooltip =
     displayStudentLabel === subjectLabel
       ? `${subjectLabel} · ${timeLabel}`
@@ -200,7 +207,10 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
           : (event) => onPointerDownRef.current?.(instance, event)
       }
       className={classNames(
-        "absolute z-10 overflow-hidden rounded border-l-4 px-1.5 py-0.5 text-left shadow-sm transition",
+        "absolute overflow-hidden border-l-4 text-left shadow-sm transition",
+        separated
+          ? "rounded-md px-2 py-1 ring-1 ring-black/10 hover:!z-[80] hover:shadow-md dark:ring-white/10"
+          : "z-10 rounded px-1.5 py-0.5",
         dimmed
           ? "pointer-events-none"
           : "cursor-grab active:cursor-grabbing",
@@ -224,7 +234,20 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
             wrapNames ? "min-w-0 flex-1 break-words" : "min-w-0 truncate"
           }
         >
-          {studentLabel}
+          {soleStudent ? (
+            <>
+              <span className="block leading-tight">
+                {soleStudent["first name"]}
+              </span>
+              {soleStudent["last name"] ? (
+                <span className="block leading-tight">
+                  {soleStudent["last name"]}
+                </span>
+              ) : null}
+            </>
+          ) : (
+            studentLabel
+          )}
         </span>
         {labeledStudents.length > 0 ? (
           <ScheduleTrialLabel
@@ -351,6 +374,21 @@ export function ScheduleCalendar({
     onScheduleMutated?.();
   }, [onScheduleMutated]);
 
+  const openTimeDialog = useCallback(
+    (instance: ScheduleEventInstance, intent: "copy" | "edit") => {
+      setSelectedInstance(null);
+      setPendingReschedule({
+        instance,
+        newDate: instance.displayDate,
+        newDayIndex: instance.displayDayIndex,
+        newStartTime: instance.display_start_time,
+        newEndTime: instance.display_end_time,
+        intent,
+      });
+    },
+    [],
+  );
+
   const teacherColorById = useMemo(
     () =>
       buildTeacherEventColorLookup([
@@ -450,7 +488,7 @@ export function ScheduleCalendar({
   }, [highlightStudentFilter, allInstancesByDay, instancesByDay]);
 
   const dayColumnWidthsPx = useMemo(() => {
-    // Week view must fit Mon–Sun in the viewport; overlapping events share the day column.
+    // Week view fits Mon–Sun in the viewport. Day view expands so names stay readable.
     if (viewMode !== "day") return null;
 
     return displayDays.map(({ dayIndex }) => {
@@ -581,12 +619,20 @@ export function ScheduleCalendar({
       preview.style.left = `${columnRect.left - gridRect.left + 4}px`;
       preview.style.width = `${Math.max(0, columnRect.width - 8)}px`;
       preview.style.height = `${heightPx}px`;
+      preview.className = dragStateRef.current?.copy
+        ? "pointer-events-none absolute z-[90] rounded-md border-2 border-dashed border-emerald-500 bg-emerald-500/20"
+        : "pointer-events-none absolute z-[90] rounded-md border-2 border-dashed border-indigo-500 bg-indigo-500/20";
     },
     [],
   );
 
   const resolveDrop = useCallback(
-    (dayIndex: number, topPx: number, instance: ScheduleEventInstance) => {
+    (
+      dayIndex: number,
+      topPx: number,
+      instance: ScheduleEventInstance,
+      copy: boolean,
+    ) => {
       const gridStartMinutes = startHour * 60;
       const rawMinutes = gridStartMinutes + (topPx / HOUR_HEIGHT_PX) * 60;
       const snapped = snapMinutes(rawMinutes, SNAP_MINUTES);
@@ -603,6 +649,7 @@ export function ScheduleCalendar({
         newDayIndex: dayIndex,
         newStartTime,
         newEndTime,
+        intent: copy ? "copy" : "move",
       });
     },
     [startHour, weekDays],
@@ -626,6 +673,8 @@ export function ScheduleCalendar({
         dragMovedRef.current = true;
         dragState.moved = true;
       }
+
+      dragState.copy = event.altKey || event.ctrlKey;
 
       let dayIndex = dragState.dayIndex;
       for (let index = 0; index < dayColumnRefs.current.length; index += 1) {
@@ -670,7 +719,12 @@ export function ScheduleCalendar({
 
       if (dragMovedRef.current) {
         suppressClickRef.current = true;
-        resolveDrop(dragState.dayIndex, dragState.topPx, dragState.instance);
+        resolveDrop(
+          dragState.dayIndex,
+          dragState.topPx,
+          dragState.instance,
+          dragState.copy || event.altKey || event.ctrlKey,
+        );
       } else {
         setSelectedInstance(dragState.instance);
       }
@@ -813,8 +867,12 @@ export function ScheduleCalendar({
         originY: event.clientY,
         dayIndex: instance.displayDayIndex,
         topPx: top,
-        heightPx: Math.max(height, COMPACT_MIN_HEIGHT),
+        heightPx: Math.max(
+          height,
+          viewMode === "day" ? DAY_MIN_HEIGHT : WEEK_MIN_HEIGHT,
+        ),
         moved: false,
+        copy: event.altKey || event.ctrlKey,
       };
       dragStateRef.current = nextDrag;
       setDraggingKey(instance.instanceKey);
@@ -830,7 +888,7 @@ export function ScheduleCalendar({
 
       event.currentTarget.setPointerCapture(event.pointerId);
     },
-    [startHour, syncDragPreviewDom],
+    [startHour, syncDragPreviewDom, viewMode],
   );
 
   useEffect(() => {
@@ -840,7 +898,7 @@ export function ScheduleCalendar({
   return (
     <div className="mt-6 flex flex-col gap-6 xl:flex-row">
       {showTeacherFilters ? (
-      <aside className="w-full shrink-0 xl:w-56">
+      <aside className="w-full shrink-0 xl:w-72">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("common.teachers")}
@@ -911,7 +969,9 @@ export function ScheduleCalendar({
                       />
                     )}
                   </span>
-                  <span className="truncate">{formatTeacherName(teacher)}</span>
+                  <span className="min-w-0 break-words">
+                    {formatTeacherName(teacher)}
+                  </span>
                 </span>
                 <span className="ml-2 shrink-0 text-xs text-gray-500 dark:text-gray-400">
                   {teacher.class_count}
@@ -1241,7 +1301,7 @@ export function ScheduleCalendar({
                               }
                               dimmed
                               isDragging={false}
-                              showFullName={viewMode === "day"}
+                              separated={viewMode === "day"}
                               colorByTeacherId={teacherColorById}
                               studentsById={studentsById}
                               onPointerDownRef={eventPointerDownRef}
@@ -1258,7 +1318,7 @@ export function ScheduleCalendar({
                                 DEFAULT_EVENT_LAYOUT
                               }
                               isDragging={draggingKey === instance.instanceKey}
-                              showFullName={viewMode === "day"}
+                              separated={viewMode === "day"}
                               colorByTeacherId={teacherColorById}
                               studentsById={studentsById}
                               onPointerDownRef={eventPointerDownRef}
@@ -1270,7 +1330,7 @@ export function ScheduleCalendar({
                   </div>
                   <div
                     ref={dragPreviewElRef}
-                    className="pointer-events-none absolute z-30 rounded border-2 border-dashed border-indigo-500 bg-indigo-500/20"
+                    className="pointer-events-none absolute z-[90] rounded-md border-2 border-dashed border-indigo-500 bg-indigo-500/20"
                     style={{ display: "none" }}
                     aria-hidden="true"
                   />
@@ -1307,7 +1367,7 @@ export function ScheduleCalendar({
 
       {pendingReschedule ? (
         <ScheduleRescheduleDialog
-          key={`${pendingReschedule.instance.instanceKey}:${pendingReschedule.newDate}:${pendingReschedule.newStartTime}`}
+          key={`${pendingReschedule.instance.instanceKey}:${pendingReschedule.intent ?? "move"}:${pendingReschedule.newDate}:${pendingReschedule.newStartTime}`}
           pending={pendingReschedule}
           students={students}
           onClose={closeRescheduleDialog}
@@ -1321,6 +1381,8 @@ export function ScheduleCalendar({
         students={students}
         onClose={closeClassDetail}
         onDeleted={handleClassDetailDeleted}
+        onCopy={(instance) => openTimeDialog(instance, "copy")}
+        onChangeTime={(instance) => openTimeDialog(instance, "edit")}
       />
 
       {pendingAddStudent ? (

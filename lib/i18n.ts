@@ -400,6 +400,11 @@ export type TranslationKey =
   | "common.addTime"
   | "common.addMeetingTime"
   | "common.editMeetingTime"
+  | "common.copy"
+  | "common.copyMeetingTime"
+  | "common.copyClass"
+  | "common.copyClassHelp"
+  | "common.changeTime"
   | "common.removeMeetingTime"
   | "common.removeMeetingTimeConfirm"
   | "common.recordPayment"
@@ -1343,6 +1348,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addTime": "Add time",
     "common.addMeetingTime": "Add meeting time",
     "common.editMeetingTime": "Edit meeting time",
+    "common.copy": "Copy",
+    "common.copyMeetingTime": "Copy meeting time",
+    "common.copyClass": "Copy class",
+    "common.copyClassHelp":
+      "Creates another meeting time for the same class. Change the day or time, then save.",
+    "common.changeTime": "Change time",
     "common.removeMeetingTime": "Remove meeting time?",
     "common.removeMeetingTimeConfirm": "This will remove the meeting time from the class schedule.",
     "common.recordPayment": "Record payment",
@@ -1559,7 +1570,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.statementsSubtitle": "Monthly income and expense summaries.",
     "common.attendanceSubtitle": "Mark daily attendance for enrolled students.",
     "common.scheduleSubtitle":
-      "Select a teacher, then click an empty time to add a student. Drag to reschedule.",
+      "Select a teacher, then click an empty time to add a student. Drag to change the time. Hold Option (Alt) and drag to copy.",
     "common.eventsSubtitle": "Share school news, photos, and video highlights.",
     "common.attendanceFooter": "Use the student profile to grant make-up credits for excused absences.",
     "common.rescheduleThisOccurrence": "This occurrence only",
@@ -2328,6 +2339,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addTime": "添加时间",
     "common.addMeetingTime": "添加上课时间",
     "common.editMeetingTime": "编辑上课时间",
+    "common.copy": "复制",
+    "common.copyMeetingTime": "复制上课时间",
+    "common.copyClass": "复制课表",
+    "common.copyClassHelp":
+      "为同一课程再添加一个上课时间。修改日期或时间后保存。",
+    "common.changeTime": "修改时间",
     "common.removeMeetingTime": "移除上课时间？",
     "common.removeMeetingTimeConfirm": "这将从课程日程中移除该上课时间。",
     "common.recordPayment": "记录付款",
@@ -2541,7 +2558,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchasesSubtitle": "书籍、材料和其他学生购买。",
     "common.statementsSubtitle": "月度收支汇总。",
     "common.attendanceSubtitle": "为报名学生标记每日考勤。",
-    "common.scheduleSubtitle": "选择老师后，点击空白时间即可添加学生。拖动可改期。",
+    "common.scheduleSubtitle":
+      "选择老师后，点击空白时间即可添加学生。拖动可改时间。按住 Option（Alt）再拖动可复制课表。",
     "common.eventsSubtitle": "分享学校新闻、照片和视频亮点。",
     "common.attendanceFooter": "使用学生档案为请假缺勤授予补课课时。",
     "common.rescheduleThisOccurrence": "仅此次",

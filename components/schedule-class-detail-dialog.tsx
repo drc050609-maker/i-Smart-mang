@@ -35,11 +35,15 @@ export function ScheduleClassDetailDialog({
   students,
   onClose,
   onDeleted,
+  onCopy,
+  onChangeTime,
 }: {
   instance: ScheduleEventInstance | null;
   students: ScheduleStudent[];
   onClose: () => void;
   onDeleted?: () => void;
+  onCopy?: (instance: ScheduleEventInstance) => void;
+  onChangeTime?: (instance: ScheduleEventInstance) => void;
 }) {
   const { t, language } = useLanguage();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -309,6 +313,24 @@ export function ScheduleClassDetailDialog({
                   >
                     {t("common.close")}
                   </button>
+                  {onCopy ? (
+                    <button
+                      type="button"
+                      onClick={() => onCopy(instance)}
+                      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 dark:bg-white/10 dark:text-white dark:inset-ring-white/5"
+                    >
+                      {t("common.copy")}
+                    </button>
+                  ) : null}
+                  {onChangeTime ? (
+                    <button
+                      type="button"
+                      onClick={() => onChangeTime(instance)}
+                      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-violet-700 shadow-xs inset-ring inset-ring-violet-200 hover:bg-violet-50 dark:bg-violet-500/10 dark:text-violet-200 dark:inset-ring-violet-400/30 dark:hover:bg-violet-500/20"
+                    >
+                      {t("common.changeTime")}
+                    </button>
+                  ) : null}
                   <Link
                     href={classHref(instance.classId, "/schedule")}
                     className="rounded-md bg-violet-600 px-3 py-2 text-center text-sm font-semibold text-white hover:bg-violet-500"

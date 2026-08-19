@@ -551,7 +551,7 @@ export type ScheduleEventColumnLayout = {
 };
 
 /**
- * Pack overlapping day events into side-by-side columns (Google Calendar style).
+ * Pack overlapping day events into cascade columns (later columns sit on top).
  */
 export function layoutDayEventColumns(
   instances: Array<
@@ -637,20 +637,50 @@ export function layoutDayEventColumns(
   return result;
 }
 
-export function getEventColumnStyle(layout: ScheduleEventColumnLayout) {
-  const gapPx = 2;
-  const edgePx = 4;
-  const widthPercent = 100 / layout.columnCount;
-  const leftPercent = widthPercent * layout.columnIndex;
+const EVENT_EDGE_PX = 4;
+const WEEK_COLUMN_GAP_PX = 2;
+/** Small overlap so concurrent classes still layer without covering names. */
+const DAY_COLUMN_OVERLAP_PX = 12;
 
+/**
+ * Week view: equal-width columns that fit the day.
+ * Day view: separated columns with a slight cascade so names stay readable.
+ */
+export function getEventColumnStyle(
+  layout: ScheduleEventColumnLayout,
+  options: { separated?: boolean } = {},
+) {
+  if (layout.columnCount <= 1) {
+    return {
+      left: `${EVENT_EDGE_PX}px`,
+      width: `calc(100% - ${EVENT_EDGE_PX * 2}px)`,
+      zIndex: 10,
+    };
+  }
+
+  const slotPercent = 100 / layout.columnCount;
+  const leftPercent = slotPercent * layout.columnIndex;
+
+  if (!options.separated) {
+    return {
+      left: `calc(${leftPercent}% + ${EVENT_EDGE_PX / 2}px)`,
+      width: `calc(${slotPercent}% - ${EVENT_EDGE_PX}px - ${WEEK_COLUMN_GAP_PX}px)`,
+      zIndex: 10,
+    };
+  }
+
+  const isLast = layout.columnIndex === layout.columnCount - 1;
   return {
-    left: `calc(${leftPercent}% + ${edgePx / 2}px)`,
-    width: `calc(${widthPercent}% - ${edgePx}px - ${gapPx}px)`,
+    left: `calc(${leftPercent}% + ${EVENT_EDGE_PX / 2}px)`,
+    width: isLast
+      ? `calc(${slotPercent}% - ${EVENT_EDGE_PX}px)`
+      : `calc(${slotPercent}% - ${EVENT_EDGE_PX}px + ${DAY_COLUMN_OVERLAP_PX}px)`,
+    zIndex: 10 + layout.columnIndex,
   };
 }
 
-/** Minimum width (px) for one side-by-side event column so student names stay readable. */
-export const MIN_EVENT_COLUMN_WIDTH_PX = 140;
+/** Minimum width (px) for one event column so first/last name can stack. */
+export const MIN_EVENT_COLUMN_WIDTH_PX = 128;
 
 /** Floor width for a day column even with a single event. */
 export const MIN_DAY_COLUMN_WIDTH_PX = 180;
