@@ -576,16 +576,6 @@ export function ScheduleCalendar({
     );
   }, [teachers, teacherCounts, useServerTeacherCounts]);
 
-  const totalScheduleCount = useMemo(() => {
-    if (useServerTeacherCounts) {
-      return teachersWithCounts.reduce(
-        (sum, teacher) => sum + teacher.class_count,
-        0,
-      );
-    }
-    return events.length;
-  }, [useServerTeacherCounts, teachersWithCounts, events.length]);
-
   const visibleInstanceCount = useMemo(() => {
     if (viewMode === "day") {
       return (
@@ -913,7 +903,7 @@ export function ScheduleCalendar({
               selectedTeacherIds.length === 0
                 ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
                 : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5",
-              "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium",
+              "flex w-full items-center rounded-md px-3 py-2 text-left text-sm font-medium",
             )}
           >
             <span className="flex items-center gap-2 whitespace-nowrap">
@@ -931,9 +921,6 @@ export function ScheduleCalendar({
               </span>
               {t("common.allTeachers")}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              {totalScheduleCount}
-            </span>
           </button>
 
           {teachersWithCounts.map((teacher) => {
@@ -949,7 +936,7 @@ export function ScheduleCalendar({
                   isSelected
                     ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-300"
                     : "text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-white/5",
-                  "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm",
+                  "flex w-full items-center rounded-md px-3 py-2 text-left text-sm",
                 )}
               >
                 <span className="flex items-center gap-2 whitespace-nowrap">
@@ -970,9 +957,6 @@ export function ScheduleCalendar({
                     )}
                   </span>
                   <span>{formatTeacherName(teacher)}</span>
-                </span>
-                <span className="ml-2 shrink-0 text-xs text-gray-500 dark:text-gray-400">
-                  {teacher.class_count}
                 </span>
               </button>
             );
