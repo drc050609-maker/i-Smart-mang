@@ -896,9 +896,9 @@ export function ScheduleCalendar({
   }, [handleEventPointerDown]);
 
   return (
-    <div className="mt-6 flex flex-col gap-6 xl:flex-row">
+    <div className="mt-6 flex flex-col gap-6 xl:flex-row xl:gap-2">
       {showTeacherFilters ? (
-      <aside className="w-full shrink-0 xl:w-72">
+      <aside className="w-full shrink-0 xl:w-max">
         <div>
           <h2 className="text-sm font-semibold text-gray-900 dark:text-white">
             {t("common.teachers")}
@@ -916,7 +916,7 @@ export function ScheduleCalendar({
               "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm font-medium",
             )}
           >
-            <span className="flex items-center gap-2">
+            <span className="flex items-center gap-2 whitespace-nowrap">
               <span
                 className={classNames(
                   selectedTeacherIds.length === 0
@@ -952,7 +952,7 @@ export function ScheduleCalendar({
                   "flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm",
                 )}
               >
-                <span className="flex min-w-0 items-center gap-2">
+                <span className="flex items-center gap-2 whitespace-nowrap">
                   <span
                     className={classNames(
                       isSelected
@@ -969,9 +969,7 @@ export function ScheduleCalendar({
                       />
                     )}
                   </span>
-                  <span className="min-w-0 break-words">
-                    {formatTeacherName(teacher)}
-                  </span>
+                  <span>{formatTeacherName(teacher)}</span>
                 </span>
                 <span className="ml-2 shrink-0 text-xs text-gray-500 dark:text-gray-400">
                   {teacher.class_count}
