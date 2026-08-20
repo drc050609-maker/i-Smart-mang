@@ -268,6 +268,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
           {labeledStudents.length > 0 && !largeGroup ? (
             <ScheduleTrialLabel
               lessonType={instance.lesson_type}
+              trialFormat={instance.trial_format}
               className="shrink-0 font-medium opacity-80"
             />
           ) : null}

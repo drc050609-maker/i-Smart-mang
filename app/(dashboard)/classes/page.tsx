@@ -52,6 +52,7 @@ type ClassWithDetails = {
   subject: string;
   duration_minutes: number | null;
   lesson_type: string | null;
+  trial_format: string | null;
   class_track: string | null;
   is_active: boolean;
   teacher_id: number | null;
@@ -103,6 +104,7 @@ export default async function ClassesPage() {
       subject,
       duration_minutes,
       lesson_type,
+      trial_format,
       class_track,
       is_active,
       teacher_id,
@@ -203,6 +205,7 @@ export default async function ClassesPage() {
           schedule_end_time: schedule.schedule_end_time,
         })),
         lesson_type: classRow.lesson_type,
+        trial_format: classRow.trial_format,
         class_track: classRow.class_track,
         is_active: classRow.is_active,
         teacher: assignedTeachers[0] ?? ownerTeacher,

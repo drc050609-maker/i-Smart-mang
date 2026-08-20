@@ -45,6 +45,8 @@ type RoomEmbed = {
 type ClassEmbed = {
   id: number;
   subject: string;
+  lesson_type: string | null;
+  trial_format: string | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
 };
@@ -136,6 +138,8 @@ export default async function StudentDetailPage({
         classes (
           id,
           subject,
+          lesson_type,
+          trial_format,
           teachers!classes_teacher_id_fkey ( first_name, last_name ),
           rooms ( room_number )
         )
@@ -326,6 +330,8 @@ export default async function StudentDetailPage({
             id: enrollment.id,
             classId: classRow.id,
             subject: classRow.subject,
+            lessonType: classRow.lesson_type,
+            trialFormat: classRow.trial_format,
             teacherName: teacher ? formatTeacherName(teacher) : null,
             roomNumber: room?.room_number ?? null,
             gradeLevel: enrollment.grade_level,

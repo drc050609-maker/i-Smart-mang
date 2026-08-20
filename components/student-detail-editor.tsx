@@ -37,6 +37,7 @@ import {
   formatClassSubject,
   formatClassSubjectWithGrade,
 } from "@/lib/class-subject";
+import { formatTrialFormat } from "@/lib/class-lesson-type";
 import type { StudentClassCreditRow } from "@/lib/class-session-credits";
 import {
   PHONE_OWNER_ROLES,
@@ -98,6 +99,8 @@ export type StudentDetailEnrollment = {
   id: number;
   classId: number;
   subject: string;
+  lessonType: string | null;
+  trialFormat: string | null;
   teacherName: string | null;
   roomNumber: string | null;
   gradeLevel: string | null;
@@ -1461,6 +1464,10 @@ function EnrollmentTable({
               enrollment.gradeLevel,
               language,
             );
+            const trialFormatLabel = formatTrialFormat(
+              enrollment.trialFormat,
+              language,
+            );
             return (
               <tr key={enrollment.id}>
                 <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
@@ -1470,6 +1477,15 @@ function EnrollmentTable({
                   >
                     {subjectWithGrade}
                   </Link>
+                  {enrollment.lessonType === "trial" && trialFormatLabel ? (
+                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                      · {trialFormatLabel}
+                    </span>
+                  ) : enrollment.lessonType === "trial" ? (
+                    <span className="ml-1 font-normal text-gray-500 dark:text-gray-400">
+                      · {t("common.trialLabel")}
+                    </span>
+                  ) : null}
                 </td>
                 <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                   {enrollment.teacherName ?? "—"}

@@ -284,6 +284,12 @@ export type TranslationKey =
   | "common.selectStudent"
   | "common.selectTeacher"
   | "common.selectClass"
+  | "common.selectSubject"
+  | "common.selectType"
+  | "common.selectTime"
+  | "common.noClassTypesAvailable"
+  | "common.noClassTimesAvailable"
+  | "common.noScheduledTime"
   | "common.noStudentsYet"
   | "common.noStudentsFound"
   | "common.noTutorsYet"
@@ -435,6 +441,9 @@ export type TranslationKey =
   | "common.selectStudentFirst"
   | "common.selectTeacherFirst"
   | "common.selectClassFirst"
+  | "common.selectSubjectFirst"
+  | "common.selectTypeFirst"
+  | "common.selectTimeFirst"
   | "common.createEvent"
   | "common.postEvent"
   | "common.posting"
@@ -730,6 +739,9 @@ export type TranslationKey =
   | "enum.lessonType.private"
   | "enum.lessonType.group"
   | "enum.lessonType.trial"
+  | "enum.paymentClassType.trial"
+  | "enum.paymentClassType.private"
+  | "enum.paymentClassType.group"
   | "enum.paymentStatus.completed"
   | "enum.paymentStatus.refunded"
   | "enum.paymentStatus.exchanged"
@@ -929,6 +941,8 @@ export type TranslationKey =
   | "trial.phone"
   | "trial.address"
   | "trial.subject"
+  | "trial.oneToOne"
+  | "trial.groupClass"
   | "trial.haveStudied"
   | "trial.haveStudiedPlaceholder"
   | "trial.suitableTime"
@@ -1134,6 +1148,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "trial.phone": "Phone Number",
     "trial.address": "Address",
     "trial.subject": "Study Subjects",
+    "trial.oneToOne": "1-to-1",
+    "trial.groupClass": "Group class",
     "trial.haveStudied": "Have you Studied",
     "trial.haveStudiedPlaceholder": "e.g. played piano for 2 years, first lesson",
     "trial.suitableTime": "Suitable trial time",
@@ -1306,6 +1322,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectStudent": "Select a student",
     "common.selectTeacher": "Select a teacher",
     "common.selectClass": "Select a class",
+    "common.selectSubject": "Select a subject",
+    "common.selectType": "Select a type",
+    "common.selectTime": "Select a time",
+    "common.noClassTypesAvailable": "No class types for this subject.",
+    "common.noClassTimesAvailable": "No class times for this subject and type.",
+    "common.noScheduledTime": "No scheduled time",
     "common.noStudentsYet": "No students yet.",
     "common.noStudentsFound": "No students found.",
     "common.noTutorsYet": "No teachers yet.",
@@ -1473,6 +1495,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectStudentFirst": "Select a student first.",
     "common.selectTeacherFirst": "Select a teacher first.",
     "common.selectClassFirst": "Select a class first.",
+    "common.selectSubjectFirst": "Select a subject first.",
+    "common.selectTypeFirst": "Select a type first.",
+    "common.selectTimeFirst": "Select a time first.",
     "common.createEvent": "Create event",
     "common.postEvent": "Post",
     "common.posting": "Posting…",
@@ -1788,6 +1813,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.lessonType.private": "Private lesson",
     "enum.lessonType.group": "Group lesson",
     "enum.lessonType.trial": "Trial lesson",
+    "enum.paymentClassType.trial": "Trial",
+    "enum.paymentClassType.private": "One-to-one",
+    "enum.paymentClassType.group": "Group class",
     "enum.paymentStatus.completed": "Completed",
     "enum.paymentStatus.refunded": "Refunded",
     "enum.paymentStatus.exchanged": "Exchanged",
@@ -1937,7 +1965,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "This payment option is not available for this class.",
     "common.noActiveClassesFor": "No active classes for {name}.",
     "common.recordPaymentDialogHelp":
-      "Choose the student, teacher, class, and how many classes they are paying for. Income is added to Statements automatically.",
+      "Choose the student, teacher, subject, type, time, and how many classes they are paying for. Income is added to Statements automatically.",
     "common.confirmPaymentBeforeRecord":
       "Confirm this payment before it is recorded.",
     "common.paidFor": "paid for",
@@ -2186,6 +2214,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "trial.phone": "联系电话",
     "trial.address": "居住地址",
     "trial.subject": "学习科目",
+    "trial.oneToOne": "一对一",
+    "trial.groupClass": "小组课",
     "trial.haveStudied": "是否学过",
     "trial.haveStudiedPlaceholder": "例如：学过两年钢琴，或第一次上课",
     "trial.suitableTime": "合适的试课时间",
@@ -2355,6 +2385,12 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectStudent": "选择学生",
     "common.selectTeacher": "选择老师",
     "common.selectClass": "选择课程",
+    "common.selectSubject": "选择科目",
+    "common.selectType": "选择类型",
+    "common.selectTime": "选择时间",
+    "common.noClassTypesAvailable": "该科目暂无课程类型。",
+    "common.noClassTimesAvailable": "该科目和类型暂无上课时间。",
+    "common.noScheduledTime": "暂无排课时间",
     "common.noStudentsYet": "暂无学生。",
     "common.noStudentsFound": "未找到学生。",
     "common.noTutorsYet": "暂无老师。",
@@ -2516,6 +2552,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectStudentFirst": "请先选择学生。",
     "common.selectTeacherFirst": "请先选择老师。",
     "common.selectClassFirst": "请先选择课程。",
+    "common.selectSubjectFirst": "请先选择科目。",
+    "common.selectTypeFirst": "请先选择类型。",
+    "common.selectTimeFirst": "请先选择时间。",
     "common.createEvent": "创建活动",
     "common.postEvent": "发布",
     "common.posting": "发布中…",
@@ -2826,6 +2865,9 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.lessonType.private": "一对一课程",
     "enum.lessonType.group": "小组课程",
     "enum.lessonType.trial": "试课",
+    "enum.paymentClassType.trial": "试课",
+    "enum.paymentClassType.private": "一对一",
+    "enum.paymentClassType.group": "小组课",
     "enum.paymentStatus.completed": "已完成",
     "enum.paymentStatus.refunded": "已退款",
     "enum.paymentStatus.exchanged": "已换课",
@@ -2968,7 +3010,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.paymentOptionUnavailable": "此课程不支持该付款选项。",
     "common.noActiveClassesFor": "{name} 暂无活跃课程。",
     "common.recordPaymentDialogHelp":
-      "选择学生、老师、课程和付款课时数。收入会自动添加到财务报表。",
+      "选择学生、老师、科目、类型、时间和付款课时数。收入会自动添加到财务报表。",
     "common.confirmPaymentBeforeRecord": "记录前请确认此付款。",
     "common.paidFor": "为",
     "common.addedToStatementsIncome": "这将添加到本月财务报表的收入中。",

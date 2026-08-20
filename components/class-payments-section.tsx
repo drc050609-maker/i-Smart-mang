@@ -21,9 +21,9 @@ import { EditAmountDialog } from "@/components/edit-amount-dialog";
 import { EditClassPaymentDialog } from "@/components/edit-class-payment-dialog";
 import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import {
-  ClassCombobox,
-  type ClassOption,
-} from "@/components/class-combobox";
+  PaymentClassFields,
+  resolvedPaymentClassFromPicker,
+} from "@/components/payment-class-fields";
 import {
   StudentCombobox,
   type StudentOption,
@@ -35,6 +35,12 @@ import {
 } from "@/components/teacher-combobox";
 import { formatClassSubject } from "@/lib/class-subject";
 import { appLanguageLocale } from "@/lib/language";
+import {
+  formatPaymentClassType,
+  paymentClassTimeOptions,
+  type PaymentClassPickerValue,
+  type PaymentClassSchedule,
+} from "@/lib/payment-class-picker";
 import {
   availablePaymentPlans,
   paymentPlanLabel,
@@ -65,6 +71,7 @@ export type PayableClassRow = {
   lesson_type: string | null;
   class_track: string | null;
   teacher: TeacherNameFields | null;
+  schedules: PaymentClassSchedule[];
   pricing: TuitionPricing;
 };
 
@@ -79,14 +86,18 @@ export type PaymentHistoryRow = {
   student: StudentOption;
   classSubject: string;
   classId: number;
+  classLessonType: string | null;
   notes: string | null;
 };
 
-const inputClassName =
-  "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500";
-
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
+
+const emptyClassPicker: PaymentClassPickerValue = {
+  subject: "",
+  lessonType: "",
+  timeKey: "",
+};
 
 const initialState: RecordPaymentState = {};
 
@@ -96,6 +107,7 @@ type PendingPayment = {
   classRow: PayableClassRow;
   plan: PaymentPlan;
   amount: number;
+  timeLabel: string;
 };
 
 function formatPaidAt(iso: string, language: "en" | "zh") {
@@ -159,7 +171,8 @@ export function ClassPaymentsSection({
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
     null,
   );
-  const [selectedClassId, setSelectedClassId] = useState<number | "">("");
+  const [classPicker, setClassPicker] =
+    useState<PaymentClassPickerValue>(emptyClassPicker);
   const [selectedPlan, setSelectedPlan] = useState<PaymentPlan | "">("");
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingPayment, setPendingPayment] = useState<PendingPayment | null>(
@@ -200,34 +213,24 @@ export function ClassPaymentsSection({
     );
   }, [classes, selectedTeacher]);
 
-  const classOptionsForTeacher = useMemo<ClassOption[]>(
-    () =>
-      classesForTeacher.map((classRow) => ({
-        id: classRow.id,
-        subject: classRow.subject,
-        teacher: classRow.teacher,
-        lesson_type: classRow.lesson_type,
-      })),
-    [classesForTeacher],
-  );
-
   const selectedClass = useMemo(
-    () =>
-      typeof selectedClassId === "number"
-        ? (classes.find((classRow) => classRow.id === selectedClassId) ?? null)
-        : null,
-    [classes, selectedClassId],
+    () => resolvedPaymentClassFromPicker(classesForTeacher, classPicker),
+    [classPicker, classesForTeacher],
   );
 
-  const selectedClassOption = useMemo(
-    () =>
-      selectedClass
-        ? (classOptionsForTeacher.find(
-            (classRow) => classRow.id === selectedClass.id,
-          ) ?? null)
-        : null,
-    [classOptionsForTeacher, selectedClass],
-  );
+  const selectedTimeLabel = useMemo(() => {
+    if (!classPicker.subject || classPicker.lessonType === "" || !classPicker.timeKey) {
+      return "";
+    }
+    return (
+      paymentClassTimeOptions(
+        classesForTeacher,
+        classPicker.subject,
+        classPicker.lessonType,
+        language,
+      ).find((option) => option.key === classPicker.timeKey)?.label ?? ""
+    );
+  }, [classPicker, classesForTeacher, language]);
 
   const availablePlans = useMemo(() => {
     if (!selectedClass) return [];
@@ -279,7 +282,7 @@ export function ClassPaymentsSection({
     setPendingPayment(null);
     setSelectedStudent(null);
     setSelectedTeacher(null);
-    setSelectedClassId("");
+    setClassPicker(emptyClassPicker);
     setSelectedPlan("");
     setFormError(null);
   }
@@ -307,7 +310,12 @@ export function ClassPaymentsSection({
 
   function handleTeacherChange(teacher: TeacherOption | null) {
     setSelectedTeacher(teacher);
-    setSelectedClassId("");
+    setClassPicker(emptyClassPicker);
+    setSelectedPlan("");
+  }
+
+  function handleClassPickerChange(next: PaymentClassPickerValue) {
+    setClassPicker(next);
     setSelectedPlan("");
   }
 
@@ -322,8 +330,18 @@ export function ClassPaymentsSection({
       return;
     }
 
-    if (!selectedClass) {
-      setFormError(t("common.selectClassFirst"));
+    if (!classPicker.subject) {
+      setFormError(t("common.selectSubjectFirst"));
+      return;
+    }
+
+    if (!classPicker.lessonType) {
+      setFormError(t("common.selectTypeFirst"));
+      return;
+    }
+
+    if (!classPicker.timeKey || !selectedClass) {
+      setFormError(t("common.selectTimeFirst"));
       return;
     }
 
@@ -343,6 +361,7 @@ export function ClassPaymentsSection({
       classRow: selectedClass,
       plan: selectedPlan,
       amount,
+      timeLabel: selectedTimeLabel,
     });
     setDialogStep("confirm");
   }
@@ -588,32 +607,20 @@ export function ClassPaymentsSection({
                     </div>
 
                     {selectedTeacher ? (
-                      <div>
-                        <label htmlFor="payment-class" className={labelClassName}>
-                          {t("common.class")}
-                        </label>
-                        {classesForTeacher.length === 0 ? (
-                          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                            {t("common.noActiveClassesFor", {
-                              name: formatTeacherName(selectedTeacher),
-                            })}
-                          </p>
-                        ) : (
-                          <div className="mt-2">
-                            <ClassCombobox
-                              id="payment-class"
-                              classes={classOptionsForTeacher}
-                              value={selectedClassOption}
-                              onChange={(classRow) => {
-                                setSelectedClassId(classRow?.id ?? "");
-                                setSelectedPlan("");
-                              }}
-                              name={null}
-                              placeholder={t("common.searchClasses")}
-                            />
-                          </div>
-                        )}
-                      </div>
+                      classesForTeacher.length === 0 ? (
+                        <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                          {t("common.noActiveClassesFor", {
+                            name: formatTeacherName(selectedTeacher),
+                          })}
+                        </p>
+                      ) : (
+                        <PaymentClassFields
+                          idPrefix="payment"
+                          classes={classesForTeacher}
+                          value={classPicker}
+                          onChange={handleClassPickerChange}
+                        />
+                      )
                     ) : null}
 
                     {selectedClass ? (
@@ -712,11 +719,17 @@ export function ClassPaymentsSection({
                     </span>
                   </p>
                   <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    {formatClassSubject(pendingPayment.classRow.subject, language)} ·{" "}
-                    {paymentPlanLabel(pendingPayment.plan, language)}
+                    {formatClassSubject(pendingPayment.classRow.subject, language)}
+                    {classPicker.lessonType
+                      ? ` · ${formatPaymentClassType(classPicker.lessonType, language)}`
+                      : ""}
+                    {pendingPayment.timeLabel
+                      ? ` · ${pendingPayment.timeLabel}`
+                      : ""}
                     {pendingPayment.classRow.teacher
                       ? ` · ${formatTeacherName(pendingPayment.classRow.teacher)}`
                       : ""}
+                    {` · ${paymentPlanLabel(pendingPayment.plan, language)}`}
                   </p>
                   <p className="mt-3 text-2xl font-semibold text-gray-900 dark:text-white">
                     {formatTuition(pendingPayment.amount)}

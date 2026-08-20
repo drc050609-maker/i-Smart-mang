@@ -21,6 +21,7 @@ import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
+import { formatTrialFormat } from "@/lib/class-lesson-type";
 import {
   resolveScheduleEventStudents,
   type ScheduleEventInstance,
@@ -191,6 +192,18 @@ export function ScheduleClassDetailDialog({
               </div>
 
               {isTrial ? (
+                <div>
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {t("common.type")}
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                    {formatTrialFormat(instance.trial_format, language) ??
+                      t("common.trialLabel")}
+                  </dd>
+                </div>
+              ) : null}
+
+              {isTrial ? (
                 <div className="sm:col-span-2">
                   <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
                     {t("common.birthday")}
@@ -226,7 +239,10 @@ export function ScheduleClassDetailDialog({
                     >
                       {formatStudentName(student)}
                     </Link>
-                    <ScheduleTrialLabel lessonType={instance.lesson_type} />
+                    <ScheduleTrialLabel
+                      lessonType={instance.lesson_type}
+                      trialFormat={instance.trial_format}
+                    />
                     <StudentNoteStar students={[student]} />
                   </li>
                 ))}

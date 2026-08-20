@@ -9,6 +9,7 @@ import type { StudentOption } from "@/components/student-combobox";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
+import type { PaymentClassSchedule } from "@/lib/payment-class-picker";
 import { buildTuitionPricing } from "@/lib/tuition";
 import type { PaymentPlan } from "@/lib/payment-plan";
 import { createClient } from "@/utils/supabase/server";
@@ -17,6 +18,15 @@ type TeacherEmbed = {
   first_name: string;
   last_name: string | null;
   is_active?: boolean | null;
+};
+
+type ClassScheduleEmbed = {
+  id: number;
+  is_recurring: boolean;
+  schedule_day_of_week: number | null;
+  schedule_date: string | null;
+  schedule_start_time: string;
+  schedule_end_time: string;
 };
 
 type ClassRow = {
@@ -31,6 +41,7 @@ type ClassRow = {
   package_20_price_cents: number | null;
   package_50_price_cents: number | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
+  class_schedules: ClassScheduleEmbed | ClassScheduleEmbed[] | null;
 };
 
 type PaymentRow = {
@@ -57,10 +68,12 @@ type PaymentRow = {
     | {
         id: number;
         subject: string;
+        lesson_type: string | null;
       }
     | {
         id: number;
         subject: string;
+        lesson_type: string | null;
       }[]
     | null;
   notes: string | null;
@@ -69,6 +82,24 @@ type PaymentRow = {
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+function listOrEmpty<T>(value: T | T[] | null | undefined): T[] {
+  if (!value) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function toPaymentSchedules(
+  schedules: ClassScheduleEmbed | ClassScheduleEmbed[] | null,
+): PaymentClassSchedule[] {
+  return listOrEmpty(schedules).map((schedule) => ({
+    id: schedule.id,
+    is_recurring: schedule.is_recurring,
+    schedule_day_of_week: schedule.schedule_day_of_week,
+    schedule_date: schedule.schedule_date,
+    schedule_start_time: schedule.schedule_start_time,
+    schedule_end_time: schedule.schedule_end_time,
+  }));
 }
 
 export default async function PaymentsPage() {
@@ -108,7 +139,15 @@ export default async function PaymentsPage() {
         single_price_cents,
         package_20_price_cents,
         package_50_price_cents,
-        teachers!classes_teacher_id_fkey ( first_name, last_name, is_active )
+        teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
+        class_schedules (
+          id,
+          is_recurring,
+          schedule_day_of_week,
+          schedule_date,
+          schedule_start_time,
+          schedule_end_time
+        )
       `,
       )
       .eq("is_active", true)
@@ -132,7 +171,7 @@ export default async function PaymentsPage() {
         session_count,
         status,
         students!inner ( id, "first name", "last name", location_id ),
-        classes ( id, subject ),
+        classes ( id, subject, lesson_type ),
         notes
       `,
       )
@@ -155,6 +194,7 @@ export default async function PaymentsPage() {
         lesson_type: classRow.lesson_type,
         class_track: classRow.class_track,
         teacher,
+        schedules: toPaymentSchedules(classRow.class_schedules),
         pricing: buildTuitionPricing(
           classRow.duration_minutes,
           classRow.lesson_type,
@@ -190,6 +230,7 @@ export default async function PaymentsPage() {
           student,
           classSubject: classRow.subject,
           classId: classRow.id,
+          classLessonType: classRow.lesson_type,
           notes: payment.notes,
         };
       })

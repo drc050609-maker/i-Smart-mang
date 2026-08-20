@@ -242,6 +242,32 @@ export function TrialClassForm({
         </div>
       </div>
 
+      <fieldset>
+        <legend className={labelClassName}>{t("common.type")}</legend>
+        <div className="mt-2 flex gap-4">
+          <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+            <input
+              type="radio"
+              name="trialFormat"
+              value="private"
+              required
+              className="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+            />
+            {t("trial.oneToOne")}
+          </label>
+          <label className="flex items-center gap-2 text-sm text-gray-900 dark:text-white">
+            <input
+              type="radio"
+              name="trialFormat"
+              value="group"
+              required
+              className="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+            />
+            {t("trial.groupClass")}
+          </label>
+        </div>
+      </fieldset>
+
       <div>
         <label htmlFor="experience" className={labelClassName}>
           {t("trial.haveStudied")}

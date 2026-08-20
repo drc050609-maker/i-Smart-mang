@@ -51,6 +51,55 @@ export function parseLessonType(value: FormDataEntryValue | null) {
   return lessonType as LessonType;
 }
 
+export const TRIAL_FORMATS = ["private", "group"] as const;
+
+export type TrialFormat = (typeof TRIAL_FORMATS)[number];
+
+const TRIAL_FORMAT_LABEL_KEYS = {
+  private: "trial.oneToOne",
+  group: "trial.groupClass",
+} as const;
+
+export function parseTrialFormat(value: FormDataEntryValue | null) {
+  const trialFormat = value?.toString().trim().toLowerCase();
+  if (!trialFormat) {
+    return undefined;
+  }
+
+  if (!TRIAL_FORMATS.includes(trialFormat as TrialFormat)) {
+    return null;
+  }
+
+  return trialFormat as TrialFormat;
+}
+
+export function formatTrialFormat(
+  trialFormat: string | null | undefined,
+  language: AppLanguage = "en",
+) {
+  if (!trialFormat) return null;
+  if (TRIAL_FORMATS.includes(trialFormat as TrialFormat)) {
+    return translate(language, TRIAL_FORMAT_LABEL_KEYS[trialFormat as TrialFormat]);
+  }
+  return trialFormat;
+}
+
+/** Trial stays "trial"; append 1-to-1 / group when that discriminator is set. */
+export function formatLessonTypeWithFormat(
+  lessonType: LessonType | string | null | undefined,
+  trialFormat: string | null | undefined,
+  language: AppLanguage = "en",
+) {
+  const base = formatLessonType(
+    (lessonType as LessonType | null | undefined) ?? null,
+    language,
+  );
+  if (lessonType !== "trial") return base;
+  const formatLabel = formatTrialFormat(trialFormat, language);
+  if (!formatLabel) return base;
+  return `${base} · ${formatLabel}`;
+}
+
 /** Trial bookings stay on the schedule; they are hidden from the class catalog. */
 export function isCatalogTrialClass(row: {
   lesson_type?: string | null;
