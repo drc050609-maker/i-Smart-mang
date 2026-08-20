@@ -11,10 +11,6 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 
 import { TrialClassForm } from "@/components/trial-class-form";
 import { useLanguage } from "@/components/language-provider";
-import {
-  formatTrialPrice,
-  TRIAL_CLASS_PRICE_USD,
-} from "@/lib/trial-class";
 
 type TeacherOption = {
   id: number;
@@ -24,12 +20,10 @@ type TeacherOption = {
 export function TrialClassDialog({
   subjects,
   teachers,
-  trialPriceUsd = TRIAL_CLASS_PRICE_USD,
   triggerStyle = "link",
 }: {
   subjects: string[];
   teachers: TeacherOption[];
-  trialPriceUsd?: number;
   triggerStyle?: "link" | "button";
 }) {
   const { language, t } = useLanguage();
@@ -94,7 +88,7 @@ export function TrialClassDialog({
                     {t("trial.title")}
                   </DialogTitle>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {t("trial.fee")}: {formatTrialPrice(trialPriceUsd)}
+                    {t("trial.feePromoHelp")}
                   </p>
                 </div>
 
@@ -109,7 +103,6 @@ export function TrialClassDialog({
                       subjects={subjects}
                       teachers={teachers}
                       language={language}
-                      trialPriceUsd={trialPriceUsd}
                       onBookAnother={handleBookAnother}
                     />
                   )}

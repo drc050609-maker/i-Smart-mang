@@ -13,6 +13,8 @@ import {
   formatTrialPrice,
   TRIAL_CLASS_DURATION_MINUTES,
   TRIAL_CLASS_PRICE_USD,
+  TRIAL_FEE_OPTIONS_USD,
+  TRIAL_FEE_PROMO_USD,
 } from "@/lib/trial-class";
 
 const inputClassName =
@@ -43,13 +45,11 @@ export function TrialClassForm({
   subjects,
   teachers,
   language = "en",
-  trialPriceUsd = TRIAL_CLASS_PRICE_USD,
   onBookAnother,
 }: {
   subjects: string[];
   teachers: TeacherOption[];
   language?: AppLanguage;
-  trialPriceUsd?: number;
   onBookAnother?: () => void;
 }) {
   const t = (key: Parameters<typeof translate>[1]) => translate(language, key);
@@ -57,6 +57,7 @@ export function TrialClassForm({
   const [durationMinutes, setDurationMinutes] = useState(
     String(TRIAL_CLASS_DURATION_MINUTES),
   );
+  const [trialFeeUsd, setTrialFeeUsd] = useState(String(TRIAL_CLASS_PRICE_USD));
   const [state, formAction, pending] = useActionState(
     bookTrialClass,
     initialState,
@@ -66,6 +67,7 @@ export function TrialClassForm({
     if (state.success) {
       formRef.current?.reset();
       setDurationMinutes(String(TRIAL_CLASS_DURATION_MINUTES));
+      setTrialFeeUsd(String(TRIAL_CLASS_PRICE_USD));
     }
   }, [state.success]);
 
@@ -94,8 +96,6 @@ export function TrialClassForm({
       </div>
     );
   }
-
-  const feeLabel = formatTrialPrice(trialPriceUsd);
 
   return (
     <form ref={formRef} action={formAction} className="space-y-5">
@@ -330,11 +330,36 @@ export function TrialClassForm({
         </p>
       </div>
 
-      <div className="rounded-md border border-indigo-100 bg-indigo-50 px-4 py-3 dark:border-indigo-500/20 dark:bg-indigo-500/10">
-        <p className="text-sm text-indigo-900 dark:text-indigo-100">
-          {t("trial.fee")}: <span className="font-semibold">{feeLabel}</span>
+      <fieldset>
+        <legend className={labelClassName}>{t("trial.fee")}</legend>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {t("trial.feePromoHelp")}
         </p>
-      </div>
+        <div className="mt-2 flex gap-4">
+          {TRIAL_FEE_OPTIONS_USD.map((amount) => (
+            <label
+              key={amount}
+              className="flex items-center gap-2 text-sm text-gray-900 dark:text-white"
+            >
+              <input
+                type="radio"
+                name="trialFeeUsd"
+                value={amount}
+                required
+                checked={trialFeeUsd === String(amount)}
+                onChange={(event) => setTrialFeeUsd(event.target.value)}
+                className="size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600"
+              />
+              {formatTrialPrice(amount)}
+              {amount === TRIAL_FEE_PROMO_USD ? (
+                <span className="text-xs text-gray-500 dark:text-gray-400">
+                  ({t("trial.feePromo")})
+                </span>
+              ) : null}
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div>
         <label htmlFor="teacherId" className={labelClassName}>

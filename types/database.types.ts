@@ -2042,6 +2042,7 @@ export type Database = {
           p_trial_time_preference?: string
           p_duration_minutes?: number
           p_trial_format?: string
+          p_trial_price_cents?: number
         }
         Returns: {
           class_id: number
@@ -2069,6 +2070,10 @@ export type Database = {
       }
       deduct_class_credits: {
         Args: { p_class_id: number; p_count: number; p_student_id: number }
+        Returns: undefined
+      }
+      delete_class: {
+        Args: { p_class_id: number }
         Returns: undefined
       }
       delete_statement_entry: {

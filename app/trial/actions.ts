@@ -6,6 +6,8 @@ import { parseTypedTime } from "@/lib/class-schedule";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { parseTrialFormat } from "@/lib/class-lesson-type";
 import {
+  parseTrialFeeUsd,
+  TRIAL_CLASS_PRICE_USD,
   TRIAL_CLASS_SUBJECTS,
   type TrialClassSubject,
 } from "@/lib/trial-class";
@@ -105,6 +107,7 @@ export async function bookTrialClass(
   const durationMinutes =
     durationRaw === "" ? undefined : Number(durationRaw);
   const trialFormat = parseTrialFormat(formData.get("trialFormat"));
+  const trialFeeUsd = parseTrialFeeUsd(formData.get("trialFeeUsd"));
 
   if (!firstName) {
     return { error: "Student first name is required." };
@@ -133,6 +136,10 @@ export async function bookTrialClass(
 
   if (!trialFormat) {
     return { error: "Select 1-to-1 or group class." };
+  }
+
+  if (trialFeeUsd === null) {
+    return { error: "Select a trial fee of $25 or $0." };
   }
 
   if (subject === undefined) {
@@ -185,6 +192,7 @@ export async function bookTrialClass(
     p_trial_time_preference: trialTimePreference ?? undefined,
     p_duration_minutes: durationMinutes,
     p_trial_format: trialFormat,
+    p_trial_price_cents: (trialFeeUsd ?? TRIAL_CLASS_PRICE_USD) * 100,
   });
 
   if (error) {

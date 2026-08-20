@@ -9,6 +9,7 @@ import { ClassesListTable } from "@/components/classes-list-table";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { isCatalogTrialClass } from "@/lib/class-lesson-type";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { listKnownClassSubjects } from "@/lib/class-subject";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -246,6 +247,7 @@ export default async function ClassesPage() {
           classes={classRows}
           teachers={teacherOptions}
           rooms={roomOptions}
+          canDelete={!isFrontDeskStaffRole(staff.role)}
         />
       ) : null}
     </div>

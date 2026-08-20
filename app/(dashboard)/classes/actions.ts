@@ -5,6 +5,7 @@ import { redirect, RedirectType } from "next/navigation";
 
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { deactivateClassesWithNoActiveEnrollments } from "@/lib/class-active";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
@@ -1142,6 +1143,7 @@ async function deleteClassById(classId: number): Promise<ActionState> {
     return { error: "Invalid class." };
   }
 
+  const staff = await requireStaff();
   const client = getServiceClient();
   if ("error" in client) {
     return { error: client.error };
@@ -1164,58 +1166,16 @@ async function deleteClassById(classId: number): Promise<ActionState> {
   const isTrial =
     classRow.lesson_type?.trim().toLowerCase() === "trial";
 
-  if (isTrial) {
-    const { error: trialDeleteError } = await client.supabase.rpc(
-      "delete_trial_class",
-      { p_class_id: classId },
-    );
-
-    if (trialDeleteError) {
-      return { error: trialDeleteError.message };
-    }
-
-    revalidatePath("/classes");
-    revalidatePath("/tuitions");
-    revalidatePath("/payments");
-    revalidatePath("/schedule");
-    revalidatePath("/tutors", "layout");
-    revalidatePath("/students", "layout");
-    return { success: true };
-  } else {
-    const { count: paymentCount, error: paymentCountError } =
-      await client.supabase
-        .from("class_payments")
-        .select("id", { count: "exact", head: true })
-        .eq("class_id", classId);
-
-    if (paymentCountError) {
-      return { error: paymentCountError.message };
-    }
-
-    if ((paymentCount ?? 0) > 0) {
-      return {
-        error:
-          "This course has payment records and cannot be deleted. Clear or reassign those payments first.",
-      };
-    }
+  if (isFrontDeskStaffRole(staff.role) && !isTrial) {
+    return { error: "Front desk accounts cannot delete classes." };
   }
 
-  const { error: enrollmentError } = await client.supabase
-    .from("enrollments")
-    .delete()
-    .eq("class id", classId);
+  const { error: deleteError } = await client.supabase.rpc("delete_class", {
+    p_class_id: classId,
+  });
 
-  if (enrollmentError) {
-    return { error: enrollmentError.message };
-  }
-
-  const { error: classError } = await client.supabase
-    .from("classes")
-    .delete()
-    .eq("id", classId);
-
-  if (classError) {
-    return { error: classError.message };
+  if (deleteError) {
+    return { error: deleteError.message };
   }
 
   revalidatePath("/classes");

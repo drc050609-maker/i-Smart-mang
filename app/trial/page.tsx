@@ -4,8 +4,6 @@ import { createTranslator } from "@/lib/i18n";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatTeacherName, sortTeachers } from "@/lib/person-name";
 import {
-  formatTrialPrice,
-  TRIAL_CLASS_PRICE_USD,
   TRIAL_CLASS_SUBJECTS,
   type TrialTeacherOption,
 } from "@/lib/trial-class";
@@ -13,23 +11,19 @@ import {
 export default async function TrialPage() {
   const t = createTranslator("en");
   let teachers: TrialTeacherOption[] = [];
-  let trialPriceUsd: number | undefined;
   let loadError: string | null = null;
 
   try {
     const supabase = createSupabaseServiceClient();
     const { data: campus, error: campusError } = await supabase
       .from("locations")
-      .select("id, trial_price_cents")
+      .select("id")
       .eq("slug", "brooklyn")
       .maybeSingle();
 
     if (campusError) {
       loadError = campusError.message;
     } else {
-      trialPriceUsd = campus?.trial_price_cents
-        ? campus.trial_price_cents / 100
-        : undefined;
       const query = supabase
         .from("teachers")
         .select("id, first_name, last_name")
@@ -69,7 +63,7 @@ export default async function TrialPage() {
           {t("trial.title")}
         </h1>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          {t("trial.fee")}: {formatTrialPrice(trialPriceUsd ?? TRIAL_CLASS_PRICE_USD)}
+          {t("trial.feePromoHelp")}
         </p>
       </div>
 
@@ -89,7 +83,6 @@ export default async function TrialPage() {
                 name: formatTeacherName(teacher),
               }))}
               language="en"
-              trialPriceUsd={trialPriceUsd ?? TRIAL_CLASS_PRICE_USD}
             />
           )}
         </div>
