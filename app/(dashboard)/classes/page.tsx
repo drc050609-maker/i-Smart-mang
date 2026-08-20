@@ -172,23 +172,23 @@ export default async function ClassesPage() {
       ?.filter((classRow) => !isCatalogTrialClass(classRow))
       .map((classRow) => {
       const teacherEmbed = firstOrNull(classRow.teachers);
-      const teacher =
-        teacherEmbed && teacherEmbed.is_active !== false && teacherEmbed.id != null
+      const ownerTeacher =
+        teacherEmbed &&
+        teacherEmbed.is_active !== false &&
+        teacherEmbed.id != null
           ? {
               id: teacherEmbed.id,
               first_name: teacherEmbed.first_name,
               last_name: teacherEmbed.last_name,
             }
-          : teacherEmbed && teacherEmbed.is_active !== false
-            ? teacherEmbed
-            : null;
+          : null;
       const room = firstOrNull(classRow.rooms);
       const assignedFromJoin = teachersByClassId.get(classRow.id) ?? [];
       const assignedTeachers =
         assignedFromJoin.length > 0
           ? assignedFromJoin
-          : teacher && "id" in teacher && teacher.id != null
-            ? [teacher]
+          : ownerTeacher
+            ? [ownerTeacher]
             : [];
 
       return {
@@ -205,7 +205,7 @@ export default async function ClassesPage() {
         lesson_type: classRow.lesson_type,
         class_track: classRow.class_track,
         is_active: classRow.is_active,
-        teacher: assignedTeachers[0] ?? teacher,
+        teacher: assignedTeachers[0] ?? ownerTeacher,
         assignedTeachers,
         room_id: classRow.room_id,
         room_number: room?.room_number ?? null,
