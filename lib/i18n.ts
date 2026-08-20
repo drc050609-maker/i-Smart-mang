@@ -951,6 +951,8 @@ export type TranslationKey =
   | "trial.duration"
   | "trial.durationUnit"
   | "trial.fee"
+  | "trial.feePromoHelp"
+  | "trial.feePromo"
   | "trial.teacher"
   | "trial.date"
   | "trial.startTime"
@@ -1158,6 +1160,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "trial.duration": "Trial time",
     "trial.durationUnit": "minutes",
     "trial.fee": "Trial Fee",
+    "trial.feePromoHelp": "Choose $25 or $0 (current promotion).",
+    "trial.feePromo": "promo",
     "trial.teacher": "Teacher",
     "trial.date": "Date",
     "trial.startTime": "Start time",
@@ -1583,7 +1587,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.renameCourse": "Rename course",
     "common.deleteCourse": "Delete course",
     "common.deleteCourseConfirm":
-      "This permanently deletes this tuition course and related enrollments. Courses with payment history cannot be deleted.",
+      "This permanently deletes this tuition course, including its schedules, enrollments, credits, and payments for this course only. Student records are not deleted.",
     "common.saveStudent": "Save student",
     "common.saveTutor": "Save teacher",
     "common.saveClass": "Save class",
@@ -1601,7 +1605,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteTeacherConfirm":
       "This will permanently delete {name}, their class assignments, hour logs, and paycheck records.",
     "common.deleteClass": "Delete class",
-    "common.deleteClassConfirm": "This will permanently delete this class and all related records.",
+    "common.deleteClassConfirm":
+      "This will permanently delete this class, including its schedules, enrollments, credits, and payments for this class only. Student records are not deleted.",
     "common.deleteTrialConfirm":
       "This will permanently delete this trial lesson, including its schedule, enrollment, credits, and trial payment.",
     "common.deleteAddress": "Delete address",
@@ -2224,6 +2229,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "trial.duration": "试课时长",
     "trial.durationUnit": "分钟",
     "trial.fee": "试课费用",
+    "trial.feePromoHelp": "可选 $25 或 $0（当前优惠）。",
+    "trial.feePromo": "优惠",
     "trial.teacher": "老师",
     "trial.date": "日期",
     "trial.startTime": "开始时间",
@@ -2638,7 +2645,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.renameCourse": "重命名课程",
     "common.deleteCourse": "删除课程",
     "common.deleteCourseConfirm":
-      "这将永久删除此学费课程及相关报名。有付款记录的课程无法删除。",
+      "这将永久删除此学费课程，包括该课程的课表、报名、课时和付款记录。学生档案不会被删除。",
     "common.saveStudent": "保存学生",
     "common.saveTutor": "保存老师",
     "common.saveClass": "保存课程",
@@ -2656,7 +2663,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.deleteTeacherConfirm":
       "这将永久删除 {name}，以及其课程分配、工时记录和工资记录。",
     "common.deleteClass": "删除课程",
-    "common.deleteClassConfirm": "这将永久删除此课程及所有相关记录。",
+    "common.deleteClassConfirm":
+      "这将永久删除此课程，包括该课程的课表、报名、课时和付款记录。学生档案不会被删除。",
     "common.deleteTrialConfirm":
       "这将永久删除此试课，包括课表、报名、课时和试课付款记录。",
     "common.deleteAddress": "删除地址",

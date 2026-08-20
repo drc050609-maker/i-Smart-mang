@@ -13,6 +13,7 @@ import { AssignClassRoomDialog } from "@/components/assign-class-room-dialog";
 import { EditClassTeachersDialog, AssignedTeachersList } from "@/components/edit-class-teachers-dialog";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
+import { isFrontDeskStaffRole } from "@/lib/staff-role";
 import { createClient } from "@/utils/supabase/server";
 import {
   emptyBalance,
@@ -423,11 +424,13 @@ export default async function ClassDetailPage({
               subjects={subjectOptions}
               returnTo={returnTo}
             />
-            <DeleteClassButton
-              classId={classId}
-              classSubject={formatClassSubject(detail.subject, staff.preferred_language)}
-              lessonType={detail.lesson_type}
-            />
+            {isFrontDeskStaffRole(staff.role) ? null : (
+              <DeleteClassButton
+                classId={classId}
+                classSubject={formatClassSubject(detail.subject, staff.preferred_language)}
+                lessonType={detail.lesson_type}
+              />
+            )}
           </div>
         </div>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

@@ -1,7 +1,27 @@
-/** Trial class duration — price/pay may be overridden per campus in `locations`. */
+/** Trial class duration — paid trial is $25; $0 is the current promo. */
 export const TRIAL_CLASS_PRICE_USD = 25;
+export const TRIAL_FEE_PROMO_USD = 0;
+export const TRIAL_FEE_OPTIONS_USD = [TRIAL_CLASS_PRICE_USD, TRIAL_FEE_PROMO_USD] as const;
 export const TRIAL_CLASS_DURATION_MINUTES = 45;
 export const TRIAL_TEACHER_PAY_USD = 15;
+
+export type TrialFeeUsd = (typeof TRIAL_FEE_OPTIONS_USD)[number];
+
+export function parseTrialFeeUsd(
+  value: FormDataEntryValue | string | null | undefined,
+): TrialFeeUsd | null | undefined {
+  const raw = value?.toString().trim();
+  if (!raw) {
+    return undefined;
+  }
+
+  const amount = Number(raw);
+  if (amount === TRIAL_CLASS_PRICE_USD || amount === TRIAL_FEE_PROMO_USD) {
+    return amount;
+  }
+
+  return null;
+}
 
 /** Subjects families can book for a one-time trial lesson. */
 export const TRIAL_CLASS_SUBJECTS = [

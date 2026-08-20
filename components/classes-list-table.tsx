@@ -7,6 +7,7 @@ import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { ListSearchInput } from "@/components/list-search-input";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { AssignClassRoomDialog } from "@/components/assign-class-room-dialog";
+import { DeleteClassButton } from "@/components/delete-class-button";
 import {
   EditClassTeachersDialog,
 } from "@/components/edit-class-teachers-dialog";
@@ -105,6 +106,7 @@ function ClassTableRow({
   indented = false,
   teachers,
   rooms,
+  canDelete,
 }: {
   classRow: ClassSearchRow;
   language: AppLanguage;
@@ -112,6 +114,7 @@ function ClassTableRow({
   indented?: boolean;
   teachers: TeacherOption[];
   rooms: RoomOption[];
+  canDelete: boolean;
 }) {
   const assignedTeachers = classRow.assignedTeachers.map((teacher) => ({
     id: teacher.id,
@@ -190,6 +193,16 @@ function ClassTableRow({
       <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
         {classRow.id}
       </td>
+      {canDelete ? (
+        <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
+          <DeleteClassButton
+            classId={classRow.id}
+            classSubject={classRow.subject}
+            lessonType={classRow.lesson_type}
+            compact
+          />
+        </td>
+      ) : null}
     </tr>
   );
 }
@@ -242,10 +255,12 @@ export function ClassesListTable({
   classes,
   teachers,
   rooms,
+  canDelete = true,
 }: {
   classes: ClassSearchRow[];
   teachers: TeacherOption[];
   rooms: RoomOption[];
+  canDelete?: boolean;
 }) {
   const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
@@ -308,6 +323,7 @@ export function ClassesListTable({
   );
 
   const isSearching = query.trim().length > 0;
+  const subjectColSpan = canDelete ? 9 : 8;
 
   function isSubjectExpanded(subjectKey: string) {
     return isSearching || expandedSubjects.has(subjectKey);
@@ -465,6 +481,14 @@ export function ClassesListTable({
                     >
                       {t("common.id")}
                     </th>
+                    {canDelete ? (
+                      <th
+                        scope="col"
+                        className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-0 dark:text-white"
+                      >
+                        {t("common.actions")}
+                      </th>
+                    ) : null}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10">
@@ -478,6 +502,7 @@ export function ClassesListTable({
                           t={t}
                           teachers={teachers}
                           rooms={rooms}
+                          canDelete={canDelete}
                         />
                       );
                     }
@@ -492,7 +517,7 @@ export function ClassesListTable({
                       <Fragment key={group.subjectKey}>
                         <tr className="bg-gray-50/80 dark:bg-white/5">
                           <td
-                            colSpan={8}
+                            colSpan={subjectColSpan}
                             className="py-3 pr-4 pl-4 text-sm sm:pl-0 sm:pr-0"
                           >
                             <div className="flex items-start gap-2">
@@ -547,6 +572,7 @@ export function ClassesListTable({
                                 indented
                                 teachers={teachers}
                                 rooms={rooms}
+                                canDelete={canDelete}
                               />
                             ))
                           : null}
