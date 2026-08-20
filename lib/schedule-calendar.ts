@@ -66,6 +66,7 @@ export type ScheduleEvent = {
   is_active: boolean;
   class_track: ClassTrack | string | null;
   lesson_type: string | null;
+  trial_format: string | null;
   /** Student linked to this schedule slot (private lessons). Null for group/shared. */
   schedule_student_id: number | null;
   /**
@@ -736,6 +737,7 @@ export function buildScheduleEvents(
         is_active: boolean;
         class_track: string | null;
         lesson_type?: string | null;
+        trial_format?: string | null;
         teachers: { first_name: string; last_name: string | null; is_active?: boolean | null } | null;
         rooms: { room_number: string } | null;
       } | null;
@@ -795,6 +797,7 @@ export function buildScheduleEvents(
         is_active: classRow.is_active,
         class_track: classRow.class_track,
         lesson_type: classRow.lesson_type ?? null,
+        trial_format: classRow.trial_format ?? null,
         schedule_student_id: scheduleStudentId,
         student_ids:
           (classRow.lesson_type === "group" && enrolled.length > 0) ||

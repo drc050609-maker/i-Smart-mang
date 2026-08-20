@@ -26,7 +26,7 @@ import {
   type ClassSearchRow,
   type SubjectClassGroup,
 } from "@/lib/class-list";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
+import { formatLessonTypeWithFormat, type LessonType } from "@/lib/class-lesson-type";
 import {
   CLASS_TRACK_OPTIONS,
   formatClassTrack,
@@ -143,7 +143,11 @@ function ClassTableRow({
         {formatClassTrack(classRow.class_track as ClassTrack | null, language)}
       </td>
       <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-        {formatLessonType(classRow.lesson_type as LessonType | null, language)}
+        {formatLessonTypeWithFormat(
+          classRow.lesson_type as LessonType | null,
+          classRow.trial_format,
+          language,
+        )}
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
         <div className="flex flex-col items-start gap-1">

@@ -12,11 +12,11 @@ import {
   updateClassPayment,
   type RecordPaymentState,
 } from "@/app/(dashboard)/payments/actions";
-import {
-  ClassCombobox,
-  type ClassOption,
-} from "@/components/class-combobox";
 import { useLanguage } from "@/components/language-provider";
+import {
+  PaymentClassFields,
+  resolvedPaymentClassFromPicker,
+} from "@/components/payment-class-fields";
 import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import {
   StudentCombobox,
@@ -27,6 +27,11 @@ import {
   paymentPlanLabel,
   type PaymentPlan,
 } from "@/lib/payment-plan";
+import {
+  paymentClassPickerValueFromClass,
+  type PaymentClassPickerValue,
+  type PaymentClassSchedule,
+} from "@/lib/payment-class-picker";
 import { centsToDollarsInput } from "@/lib/money";
 import { formatStudentName } from "@/lib/person-name";
 import type { TeacherNameFields } from "@/lib/person-name";
@@ -38,6 +43,12 @@ const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
 
 const initialState: RecordPaymentState = {};
+
+const emptyClassPicker: PaymentClassPickerValue = {
+  subject: "",
+  lessonType: "",
+  timeKey: "",
+};
 
 function toDateTimeLocal(iso: string) {
   const date = new Date(iso);
@@ -55,6 +66,7 @@ type EditablePayment = {
   notes: string | null;
   classId: number;
   classSubject: string;
+  classLessonType?: string | null;
   student: StudentOption;
 };
 
@@ -63,6 +75,7 @@ type PayableClass = {
   subject: string;
   lesson_type: string | null;
   teacher: TeacherNameFields | null;
+  schedules: PaymentClassSchedule[];
 };
 
 export function EditClassPaymentDialog({
@@ -80,20 +93,39 @@ export function EditClassPaymentDialog({
   const [student, setStudent] = useState<StudentOption | null>(payment.student);
   const [extraStudents, setExtraStudents] = useState<StudentOption[]>([]);
   const [quickAddOpen, setQuickAddOpen] = useState(false);
-  const [classId, setClassId] = useState<number>(payment.classId);
+  const [classPicker, setClassPicker] =
+    useState<PaymentClassPickerValue>(emptyClassPicker);
   const [plan, setPlan] = useState<PaymentPlan>(payment.payment_plan);
   const [state, formAction, pending] = useActionState(
     updateClassPayment,
     initialState,
   );
 
+  const classRows = useMemo(() => {
+    if (classes.some((row) => row.id === payment.classId)) {
+      return classes;
+    }
+    return [
+      {
+        id: payment.classId,
+        subject: payment.classSubject,
+        lesson_type: payment.classLessonType ?? null,
+        teacher: null,
+        schedules: [],
+      },
+      ...classes,
+    ];
+  }, [classes, payment.classId, payment.classLessonType, payment.classSubject]);
+
   useEffect(() => {
     if (!open) return;
     setStudent(payment.student);
-    setClassId(payment.classId);
     setPlan(payment.payment_plan);
     setError(null);
-  }, [open, payment]);
+    const currentClass =
+      classRows.find((row) => row.id === payment.classId) ?? null;
+    setClassPicker(paymentClassPickerValueFromClass(currentClass, language));
+  }, [classRows, language, open, payment]);
 
   useEffect(() => {
     if (state.error) setError(state.error);
@@ -124,34 +156,9 @@ export function EditClassPaymentDialog({
     setStudent(created);
   }
 
-  const classRows = useMemo(() => {
-    if (classes.some((row) => row.id === payment.classId)) {
-      return classes;
-    }
-    return [
-      {
-        id: payment.classId,
-        subject: payment.classSubject,
-        lesson_type: null,
-        teacher: null,
-      },
-      ...classes,
-    ];
-  }, [classes, payment.classId, payment.classSubject]);
-
-  const classOptions: ClassOption[] = useMemo(
-    () =>
-      classRows.map((row) => ({
-        id: row.id,
-        subject: row.subject,
-        teacher: row.teacher,
-        lesson_type: row.lesson_type,
-      })),
-    [classRows],
-  );
-  const selectedClass = classOptions.find((row) => row.id === classId) ?? null;
-  const lessonType =
-    classRows.find((row) => row.id === classId)?.lesson_type ?? null;
+  const selectedClass = resolvedPaymentClassFromPicker(classRows, classPicker);
+  const classId = selectedClass?.id ?? "";
+  const lessonType = selectedClass?.lesson_type ?? null;
   const plans = [
     ...new Set([...availablePaymentPlans(lessonType), payment.payment_plan]),
   ];
@@ -212,20 +219,29 @@ export function EditClassPaymentDialog({
                   </div>
                 </div>
 
-                <div>
-                  <label className={labelClassName}>{t("common.class")}</label>
-                  <div className="mt-2">
-                    <ClassCombobox
-                      id={`edit-payment-class-${payment.id}`}
-                      classes={classOptions}
-                      value={selectedClass}
-                      onChange={(row) => {
-                        if (row) setClassId(row.id);
-                      }}
-                      name={null}
-                    />
-                  </div>
-                </div>
+                <PaymentClassFields
+                  idPrefix={`edit-payment-${payment.id}`}
+                  classes={classRows}
+                  value={classPicker}
+                  onChange={(next) => {
+                    setClassPicker(next);
+                    const nextClass = resolvedPaymentClassFromPicker(
+                      classRows,
+                      next,
+                    );
+                    if (
+                      nextClass &&
+                      !availablePaymentPlans(nextClass.lesson_type).includes(
+                        plan,
+                      )
+                    ) {
+                      setPlan(
+                        availablePaymentPlans(nextClass.lesson_type)[0] ??
+                          payment.payment_plan,
+                      );
+                    }
+                  }}
+                />
 
                 <div>
                   <label htmlFor={`edit-payment-plan-${payment.id}`} className={labelClassName}>
@@ -314,7 +330,7 @@ export function EditClassPaymentDialog({
                   </button>
                   <button
                     type="submit"
-                    disabled={pending || student == null}
+                    disabled={pending || student == null || selectedClass == null}
                     className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
                   >
                     {pending ? t("common.saving") : t("common.savePayment")}

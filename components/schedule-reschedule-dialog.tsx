@@ -201,7 +201,10 @@ export function ScheduleRescheduleDialog({
             <p className="mt-2 flex flex-wrap items-start gap-1 text-sm font-medium text-gray-900 dark:text-white">
               {studentLabel}
               {labeledStudents.length > 0 ? (
-                <ScheduleTrialLabel lessonType={instance.lesson_type} />
+                <ScheduleTrialLabel
+                  lessonType={instance.lesson_type}
+                  trialFormat={instance.trial_format}
+                />
               ) : null}
             </p>
             {labeledStudents.length > 0 ||

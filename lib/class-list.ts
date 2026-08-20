@@ -2,7 +2,7 @@ import {
   formatClassSchedules,
   type ClassScheduleFields,
 } from "@/lib/class-schedule";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
+import { formatLessonType, formatLessonTypeWithFormat, type LessonType } from "@/lib/class-lesson-type";
 import { classSubjectSearchText, formatClassSubject } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
 import {
@@ -18,6 +18,7 @@ export type ClassSearchRow = {
   duration_minutes: number | null;
   schedules: ClassScheduleFields[];
   lesson_type: string | null;
+  trial_format: string | null;
   class_track: string | null;
   is_active: boolean;
   teacher: TeacherNameFields | null;
@@ -170,7 +171,11 @@ function classSearchText(classRow: ClassSearchRow, language: AppLanguage = "en")
     classRow.teacher ? formatTeacherName(classRow.teacher) : "",
     ...classRow.assignedTeachers.map((teacher) => formatTeacherName(teacher)),
     classRow.room_number ? `room ${classRow.room_number}` : "",
-    formatLessonType(classRow.lesson_type as LessonType | null, language),
+    formatLessonTypeWithFormat(
+      classRow.lesson_type as LessonType | null,
+      classRow.trial_format,
+      language,
+    ),
     formatClassTrack(classRow.class_track as ClassTrack | null, language),
     schedule ?? "",
     classRow.duration_minutes ? `${classRow.duration_minutes} min` : "",

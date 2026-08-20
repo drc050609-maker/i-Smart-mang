@@ -237,6 +237,7 @@ export default async function TutorDetailPage({
 
   const [
     { data: classTeacherLinks },
+    { data: ownedClassRows },
     { data: campusClassSubjects },
     { data: rooms },
   ] = await Promise.all([
@@ -246,6 +247,9 @@ export default async function TutorDetailPage({
           .from("class_teachers")
           .select("class_id")
           .eq("teacher_id", teacherId),
+    frontDesk
+      ? Promise.resolve({ data: [] as { id: number }[] })
+      : supabase.from("classes").select("id").eq("teacher_id", teacherId),
     locationId && !frontDesk
       ? supabase.from("classes").select("subject").eq("location_id", locationId)
       : Promise.resolve({ data: [] as { subject: string }[] }),
@@ -259,11 +263,14 @@ export default async function TutorDetailPage({
   ]);
 
   const linkedClassIds = [
-    ...new Set(
-      ((classTeacherLinks as { class_id: number }[] | null) ?? []).map(
+    ...new Set([
+      ...((classTeacherLinks as { class_id: number }[] | null) ?? []).map(
         (row) => row.class_id,
       ),
-    ),
+      ...((ownedClassRows as { id: number }[] | null) ?? []).map(
+        (row) => row.id,
+      ),
+    ]),
   ];
 
   let classes: ClassEmbed[] | null = null;
@@ -281,23 +288,6 @@ export default async function TutorDetailPage({
       `,
       )
       .in("id", linkedClassIds)
-      .order("id");
-    classes = result.data as ClassEmbed[] | null;
-    classesError = result.error;
-  } else {
-    // Fallback for any rows not yet backfilled into class_teachers.
-    const result = await supabase
-      .from("classes")
-      .select(
-        `
-        id,
-        subject,
-        duration_minutes,
-        lesson_type,
-        rooms ( room_number )
-      `,
-      )
-      .eq("teacher_id", teacherId)
       .order("id");
     classes = result.data as ClassEmbed[] | null;
     classesError = result.error;

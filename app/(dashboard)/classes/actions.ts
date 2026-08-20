@@ -11,9 +11,7 @@ import { DEFAULT_STARTING_CLASS_CREDITS } from "@/lib/class-session-credits";
 import { addMinutesToScheduleTime, parseTypedTime } from "@/lib/class-schedule";
 import { parseLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { parseClassTrack, type ClassTrack } from "@/lib/class-track";
-import { pickReusableClass } from "@/lib/find-reusable-class";
 import { parseDollarsToCents } from "@/lib/money";
-import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
 export type ActionState = {
   error?: string;
   success?: boolean;
@@ -242,10 +240,27 @@ export async function createClass(
     return { error: client.error };
   }
 
-  const locationId = await getActiveCampusLocationId(
+  let locationId = await getActiveCampusLocationId(
     client.supabase,
     staff,
   );
+
+  // Pin the class to the assigned teacher's campus so an extra class still
+  // saves when the admin campus switcher is on the other location.
+  if (fields.teacherId) {
+    const { data: teacherRow, error: teacherLoadError } = await client.supabase
+      .from("teachers")
+      .select("location_id")
+      .eq("id", fields.teacherId)
+      .maybeSingle();
+    if (teacherLoadError) {
+      return { error: teacherLoadError.message };
+    }
+    if (teacherRow?.location_id != null) {
+      locationId = teacherRow.location_id;
+    }
+  }
+
   if (!locationId) {
     return { error: "Campus location could not be resolved." };
   }
@@ -257,43 +272,6 @@ export async function createClass(
   );
   if (teacherLocationError) {
     return { error: teacherLocationError };
-  }
-
-  if (fields.teacherId) {
-    const { error: existingLookupError, classes: existingClasses } =
-      await loadTeacherClassRows(
-        client.supabase,
-        fields.teacherId,
-        locationId,
-      );
-    if (existingLookupError) {
-      return { error: existingLookupError };
-    }
-
-    const existing = pickReusableClass(existingClasses, {
-      subject: fields.subject!,
-      lessonType: fields.lessonType,
-      durationMinutes: fields.durationMinutes,
-    });
-
-    if (existing) {
-      const syncExistingError = await syncClassTeachers(
-        client.supabase,
-        existing.id,
-        fields.teacherIds ?? [],
-      );
-      if (syncExistingError) {
-        return { error: syncExistingError };
-      }
-
-      revalidatePath("/classes");
-      revalidatePath("/tutors", "layout");
-      for (const teacherId of fields.teacherIds ?? []) {
-        revalidatePath(`/tutors/${teacherId}`);
-      }
-      revalidatePath("/tuitions");
-      return successState();
-    }
   }
 
   const { data: createdClass, error: classError } = await client.supabase

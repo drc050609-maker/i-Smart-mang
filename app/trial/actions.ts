@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { parseTypedTime } from "@/lib/class-schedule";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
+import { parseTrialFormat } from "@/lib/class-lesson-type";
 import {
   TRIAL_CLASS_SUBJECTS,
   type TrialClassSubject,
@@ -103,6 +104,7 @@ export async function bookTrialClass(
   const durationRaw = formData.get("durationMinutes")?.toString().trim() ?? "";
   const durationMinutes =
     durationRaw === "" ? undefined : Number(durationRaw);
+  const trialFormat = parseTrialFormat(formData.get("trialFormat"));
 
   if (!firstName) {
     return { error: "Student first name is required." };
@@ -127,6 +129,10 @@ export async function bookTrialClass(
       durationMinutes > 180)
   ) {
     return { error: "Duration must be between 15 and 180 minutes." };
+  }
+
+  if (!trialFormat) {
+    return { error: "Select 1-to-1 or group class." };
   }
 
   if (subject === undefined) {
@@ -178,6 +184,7 @@ export async function bookTrialClass(
     p_address: address ?? undefined,
     p_trial_time_preference: trialTimePreference ?? undefined,
     p_duration_minutes: durationMinutes,
+    p_trial_format: trialFormat,
   });
 
   if (error) {

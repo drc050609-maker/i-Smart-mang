@@ -732,6 +732,7 @@ export type Database = {
           id: number
           is_active: boolean
           lesson_type: string | null
+          trial_format: string | null
           location_id: number | null
           package_20_price_cents: number | null
           package_50_price_cents: number | null
@@ -746,6 +747,7 @@ export type Database = {
           id?: number
           is_active?: boolean
           lesson_type?: string | null
+          trial_format?: string | null
           location_id?: number | null
           package_20_price_cents?: number | null
           package_50_price_cents?: number | null
@@ -760,6 +762,7 @@ export type Database = {
           id?: number
           is_active?: boolean
           lesson_type?: string | null
+          trial_format?: string | null
           location_id?: number | null
           package_20_price_cents?: number | null
           package_50_price_cents?: number | null
@@ -2038,6 +2041,7 @@ export type Database = {
           p_address?: string
           p_trial_time_preference?: string
           p_duration_minutes?: number
+          p_trial_format?: string
         }
         Returns: {
           class_id: number

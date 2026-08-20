@@ -29,7 +29,7 @@ import {
   formatClassSchedule,
   sortClassSchedules,
 } from "@/lib/class-schedule";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
+import { formatLessonTypeWithFormat, type LessonType } from "@/lib/class-lesson-type";
 import { formatClassSubject, listKnownClassSubjects } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
 import {
@@ -89,6 +89,7 @@ type ClassDetail = Pick<
   | "teacher_id"
   | "room_id"
   | "lesson_type"
+  | "trial_format"
   | "class_track"
   | "is_active"
   | "location_id"
@@ -201,6 +202,7 @@ export default async function ClassDetailPage({
       teacher_id,
       room_id,
       lesson_type,
+      trial_format,
       class_track,
       is_active,
       location_id,
@@ -489,7 +491,11 @@ export default async function ClassDetailPage({
               {t("common.lessonType")}
             </dt>
             <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {formatLessonType(detail.lesson_type as LessonType | null, staff.preferred_language)}
+              {formatLessonTypeWithFormat(
+                detail.lesson_type as LessonType | null,
+                detail.trial_format,
+                staff.preferred_language,
+              )}
             </dd>
           </div>
           <div>

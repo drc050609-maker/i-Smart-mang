@@ -26,6 +26,7 @@ type ClassEmbed = {
   is_active: boolean;
   class_track: string | null;
   lesson_type: string | null;
+  trial_format: string | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
 };
@@ -249,6 +250,7 @@ export async function loadScheduleCalendarEvents(
         is_active,
         class_track,
         lesson_type,
+        trial_format,
         location_id,
         teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
         rooms ( room_number )
@@ -343,6 +345,7 @@ export async function loadScheduleCalendarEvents(
               is_active: classRow.is_active,
               class_track: classRow.class_track,
               lesson_type: classRow.lesson_type,
+              trial_format: classRow.trial_format,
               teachers: firstOrNull(classRow.teachers),
               rooms: firstOrNull(classRow.rooms),
             }

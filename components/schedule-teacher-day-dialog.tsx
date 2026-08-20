@@ -462,6 +462,7 @@ export function ScheduleTeacherDayDialog({
                                       </Link>
                                       <ScheduleTrialLabel
                                         lessonType={instance.lesson_type}
+                                        trialFormat={instance.trial_format}
                                       />
                                       <StudentNoteStar students={[student]} />
                                     </li>
