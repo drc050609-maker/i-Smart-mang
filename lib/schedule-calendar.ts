@@ -121,6 +121,21 @@ export function formatScheduleEventStudentLabel(
 }
 
 /**
+ * Group classes with more than 3 students show the class name first on the
+ * calendar; smaller groups keep student names as the title.
+ */
+export const LARGE_GROUP_STUDENT_THRESHOLD = 3;
+
+export function isLargeGroupClassDisplay(
+  lessonType: string | null | undefined,
+  studentCount: number,
+) {
+  return (
+    lessonType === "group" && studentCount > LARGE_GROUP_STUDENT_THRESHOLD
+  );
+}
+
+/**
  * Students to display for a schedule event.
  * Prefers slot-linked students; for group/unassigned slots, the class roster
  * from `student_ids` resolved against `studentsById`.

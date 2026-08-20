@@ -9,7 +9,8 @@ import { AddClassStudentsDialog } from "@/components/add-class-students-dialog";
 import { RemoveClassStudentButton } from "@/components/remove-class-student-button";
 import { ClassSessionActionButtons } from "@/components/class-session-action-buttons";
 import { DetailActiveToggle } from "@/components/detail-active-toggle";
-import { SameSubjectTeacherSelect } from "@/components/same-subject-teacher-select";
+import { AssignClassRoomDialog } from "@/components/assign-class-room-dialog";
+import { EditClassTeachersDialog, AssignedTeachersList } from "@/components/edit-class-teachers-dialog";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -29,9 +30,6 @@ import {
   sortClassSchedules,
 } from "@/lib/class-schedule";
 import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
-import {
-  classSubjectKey,
-} from "@/lib/class-list";
 import { formatClassSubject, listKnownClassSubjects } from "@/lib/class-subject";
 import { formatClassTrack, type ClassTrack } from "@/lib/class-track";
 import {
@@ -100,13 +98,6 @@ type ClassDetail = Pick<
   class_schedules: ClassScheduleEmbed | ClassScheduleEmbed[] | null;
 };
 
-type SiblingClassRow = {
-  id: number;
-  subject: string;
-  is_active: boolean;
-  teachers: TeacherEmbed | TeacherEmbed[] | null;
-};
-
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
   return Array.isArray(value) ? (value[0] ?? null) : value;
@@ -115,12 +106,6 @@ function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
 function listOrEmpty<T>(value: T | T[] | null | undefined): T[] {
   if (!value) return [];
   return Array.isArray(value) ? value : [value];
-}
-
-function formatTeacherName(teacher: TeacherEmbed | null) {
-  if (!teacher) return "—";
-  const last = teacher.last_name;
-  return last ? `${teacher.first_name} ${last}` : teacher.first_name;
 }
 
 function formatDob(dob: string | null, language: import("@/lib/language").AppLanguage) {
@@ -351,55 +336,6 @@ export default async function ClassDetailPage({
   const assignedTeachers = assignedTeacherIds
     .map((id) => teacherOptions.find((teacherOption) => teacherOption.id === id))
     .filter((item): item is TeacherOption => item != null);
-  const assignedTeacherNames =
-    assignedTeachers.length > 0
-      ? assignedTeachers.map((item) => formatTeacherName(item)).join(", ")
-      : teacher
-        ? formatTeacherName(teacher)
-        : t("common.noTeacherAssigned");
-
-  const subjectKey = classSubjectKey(detail.subject);
-  let sameSubjectClasses: {
-    id: number;
-    teacher: TeacherEmbed | null;
-  }[] = [];
-
-  if (detail.location_id != null) {
-    const { data: campusClasses } = await supabase
-      .from("classes")
-      .select(
-        `
-      id,
-      subject,
-      is_active,
-      teachers!classes_teacher_id_fkey ( first_name, last_name, is_active )
-    `,
-      )
-      .eq("location_id", detail.location_id)
-      .eq("is_active", true);
-
-    sameSubjectClasses = ((campusClasses as SiblingClassRow[] | null) ?? [])
-      .filter((row) => classSubjectKey(row.subject) === subjectKey)
-      .map((row) => {
-        const siblingTeacher = firstOrNull(row.teachers);
-        return {
-          id: row.id,
-          teacher:
-            siblingTeacher && siblingTeacher.is_active !== false
-              ? siblingTeacher
-              : null,
-        };
-      })
-      // Prefer classes that still have an active teacher when switching.
-      .filter((row) => row.teacher != null || row.id === classId);
-
-    if (!sameSubjectClasses.some((row) => row.id === classId)) {
-      sameSubjectClasses.push({
-        id: detail.id,
-        teacher,
-      });
-    }
-  }
 
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
   const subjectOptions = listKnownClassSubjects([
@@ -495,32 +431,41 @@ export default async function ClassDetailPage({
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t("common.teacher")}
+              {t("common.teachers")}
             </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {sameSubjectClasses.length > 1 ? (
-                <SameSubjectTeacherSelect
-                  currentClassId={classId}
-                  options={sameSubjectClasses}
-                  returnTo={returnTo}
-                />
-              ) : (
-                assignedTeacherNames
-              )}
+            <dd className="mt-1 space-y-2">
+              <AssignedTeachersList teachers={assignedTeachers} />
+              <EditClassTeachersDialog
+                classId={classId}
+                teachers={teacherOptions}
+                assignedTeachers={assignedTeachers}
+              />
             </dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
               {t("common.room")}
             </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {room?.room_number ?? t("common.notAvailable")}
+            <dd className="mt-1 space-y-2">
               {room ? (
-                <span className="text-gray-500 dark:text-gray-400">
-                  {" "}
-                  {t("common.capacity", { count: room.class_size })}
-                </span>
-              ) : null}
+                <p className="text-sm text-gray-900 dark:text-white">
+                  {t("common.room")} {room.room_number}
+                  <span className="text-gray-500 dark:text-gray-400">
+                    {" "}
+                    {t("common.capacity", { count: room.class_size })}
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {t("common.noRoomAssigned")}
+                </p>
+              )}
+              <AssignClassRoomDialog
+                classId={classId}
+                rooms={roomOptions}
+                roomId={detail.room_id}
+                hasRoom={room != null}
+              />
             </dd>
           </div>
           <div>

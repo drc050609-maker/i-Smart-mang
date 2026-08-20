@@ -21,7 +21,12 @@ import {
   type TeacherGroupPayRates,
   type TeacherPaycheckPeriodData,
 } from "@/lib/teacher-paycheck";
-import { formatClassSubject, listKnownClassSubjects } from "@/lib/class-subject";
+import {
+  formatClassSubject,
+  groupByClassSubject,
+  listKnownClassSubjects,
+} from "@/lib/class-subject";
+import { isCatalogTrialClass } from "@/lib/class-lesson-type";
 import { classHref } from "@/lib/return-to";
 import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 import { compareStudentNames, formatStudentName } from "@/lib/person-name";
@@ -46,6 +51,7 @@ type ClassEmbed = {
   subject: string;
   duration_minutes: number | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
+  lesson_type?: string | null;
 };
 
 type StudentEmbed = {
@@ -270,6 +276,7 @@ export default async function TutorDetailPage({
         id,
         subject,
         duration_minutes,
+        lesson_type,
         rooms ( room_number )
       `,
       )
@@ -286,6 +293,7 @@ export default async function TutorDetailPage({
         id,
         subject,
         duration_minutes,
+        lesson_type,
         rooms ( room_number )
       `,
       )
@@ -296,6 +304,32 @@ export default async function TutorDetailPage({
   }
 
   const classRows = (classes as ClassEmbed[] | null) ?? [];
+  const catalogClassRows = classRows.filter((row) => !isCatalogTrialClass(row));
+  const subjectGroups = groupByClassSubject(catalogClassRows).map((group) => {
+    const classIds = group.items.map((row) => row.id).sort((a, b) => a - b);
+    const rooms = [
+      ...new Set(
+        group.items
+          .map((row) => firstOrNull(row.rooms)?.room_number?.trim())
+          .filter((room): room is string => Boolean(room)),
+      ),
+    ];
+    const durations = [
+      ...new Set(
+        group.items
+          .map((row) => row.duration_minutes)
+          .filter((minutes): minutes is number => minutes != null && minutes > 0),
+      ),
+    ].sort((a, b) => a - b);
+
+    return {
+      subject: group.subject,
+      classIds,
+      representativeId: classIds[0]!,
+      rooms,
+      durations,
+    };
+  });
   const subjectByClassId = new Map(
     classRows.map((row) => [row.id, row.subject]),
   );
@@ -317,26 +351,38 @@ export default async function TutorDetailPage({
     enrollmentRows = (enrollments as EnrollmentRow[] | null) ?? [];
   }
 
-  const studentEnrollments = enrollmentRows
-    .map((enrollment) => {
-      const student = firstOrNull(enrollment.students);
-      const classId = enrollment["class id"];
-      if (!student || classId == null) return null;
-      return {
-        enrollmentId: enrollment.id,
-        gradeLevel: enrollment.grade_level,
-        isActive: enrollment.is_active !== false && student.is_active !== false,
-        subject: subjectByClassId.get(classId) ?? `Class ${classId}`,
-        student,
-      };
-    })
-    .filter((row): row is NonNullable<typeof row> => row !== null)
-    .sort((a, b) => {
+  const studentEnrollments = (() => {
+    const mapped = enrollmentRows
+      .map((enrollment) => {
+        const student = firstOrNull(enrollment.students);
+        const classId = enrollment["class id"];
+        if (!student || classId == null) return null;
+        return {
+          enrollmentId: enrollment.id,
+          gradeLevel: enrollment.grade_level,
+          isActive: enrollment.is_active !== false && student.is_active !== false,
+          subject: subjectByClassId.get(classId) ?? `Class ${classId}`,
+          student,
+        };
+      })
+      .filter((row): row is NonNullable<typeof row> => row !== null);
+
+    const uniqueByStudentSubject = new Map<string, (typeof mapped)[number]>();
+    for (const row of mapped) {
+      const key = `${row.student.id}|${row.subject.trim().toLowerCase()}`;
+      const existing = uniqueByStudentSubject.get(key);
+      if (!existing || (row.isActive && !existing.isActive)) {
+        uniqueByStudentSubject.set(key, row);
+      }
+    }
+
+    return [...uniqueByStudentSubject.values()].sort((a, b) => {
       if (a.isActive !== b.isActive) return a.isActive ? -1 : 1;
       const nameCmp = compareStudentNames(a.student, b.student);
       if (nameCmp !== 0) return nameCmp;
       return a.subject.localeCompare(b.subject);
     });
+  })();
   const subjectOptions = listKnownClassSubjects([
     ...listPriceSheetSubjects(),
     ...((campusClassSubjects as { subject: string }[] | null)?.map(
@@ -507,7 +553,7 @@ export default async function TutorDetailPage({
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
             {t("common.error.loadFailed", { entity: t("common.classes"), message: classesError.message })}
           </p>
-        ) : classRows.length === 0 ? (
+        ) : subjectGroups.length === 0 ? (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             {t("common.noClassesYet")}
           </p>
@@ -551,38 +597,48 @@ export default async function TutorDetailPage({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                    {classRows.map((classRow) => {
-                      const room = firstOrNull(classRow.rooms);
-
-                      return (
-                        <tr key={classRow.id}>
-                          <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
-                            <Link
-                              href={classHref(classRow.id, `/tutors/${teacherId}`)}
-                              className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-                            >
-                              {formatClassSubject(classRow.subject, staff.preferred_language)}
-                            </Link>
-                          </td>
-                          <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                            {room?.room_number ?? t("common.notAvailable")}
-                          </td>
-                          <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                            {formatDuration(classRow.duration_minutes, t)}
-                          </td>
-                          <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
-                            {classRow.id}
-                          </td>
-                          <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
-                            <UnassignTeacherClassButton
-                              teacherId={teacherId}
-                              classId={classRow.id}
-                              classSubject={classRow.subject}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    {subjectGroups.map((group) => (
+                      <tr key={group.subject}>
+                        <td className="py-4 pr-3 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0 dark:text-white">
+                          <Link
+                            href={classHref(
+                              group.representativeId,
+                              `/tutors/${teacherId}`,
+                            )}
+                            className="text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+                          >
+                            {formatClassSubject(
+                              group.subject,
+                              staff.preferred_language,
+                            )}
+                          </Link>
+                        </td>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {group.rooms.length > 0
+                            ? group.rooms.join(", ")
+                            : t("common.notAvailable")}
+                        </td>
+                        <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                          {group.durations.length > 0
+                            ? group.durations
+                                .map((minutes) => formatDuration(minutes, t))
+                                .join(", ")
+                            : t("common.notAvailable")}
+                        </td>
+                        <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
+                          {group.classIds.length === 1
+                            ? group.representativeId
+                            : t("common.notAvailable")}
+                        </td>
+                        <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
+                          <UnassignTeacherClassButton
+                            teacherId={teacherId}
+                            classIds={group.classIds}
+                            classSubject={group.subject}
+                          />
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

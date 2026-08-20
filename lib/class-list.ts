@@ -21,7 +21,10 @@ export type ClassSearchRow = {
   class_track: string | null;
   is_active: boolean;
   teacher: TeacherNameFields | null;
+  assignedTeachers: Array<TeacherNameFields & { id: number }>;
+  room_id: number | null;
   room_number: string | null;
+  room_class_size: number | null;
 };
 
 export function classSubjectKey(subject: string) {
@@ -79,8 +82,14 @@ export function groupClassesBySubject(
       if (classRow.duration_minutes != null && classRow.duration_minutes > 0) {
         durationSet.add(classRow.duration_minutes);
       }
-      if (classRow.teacher) {
-        teacherByKey.set(teacherIdentityKey(classRow.teacher), classRow.teacher);
+      const teachers =
+        classRow.assignedTeachers.length > 0
+          ? classRow.assignedTeachers
+          : classRow.teacher
+            ? [classRow.teacher]
+            : [];
+      for (const teacher of teachers) {
+        teacherByKey.set(teacherIdentityKey(teacher), teacher);
       }
     }
 
@@ -159,6 +168,7 @@ function classSearchText(classRow: ClassSearchRow, language: AppLanguage = "en")
   return [
     classSubjectSearchText(classRow.subject, language),
     classRow.teacher ? formatTeacherName(classRow.teacher) : "",
+    ...classRow.assignedTeachers.map((teacher) => formatTeacherName(teacher)),
     classRow.room_number ? `room ${classRow.room_number}` : "",
     formatLessonType(classRow.lesson_type as LessonType | null, language),
     formatClassTrack(classRow.class_track as ClassTrack | null, language),
