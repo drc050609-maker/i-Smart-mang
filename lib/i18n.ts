@@ -70,6 +70,7 @@ export type TranslationKey =
   | "common.actions"
   | "common.name"
   | "common.dateOfBirth"
+  | "common.birthday"
   | "common.id"
   | "common.email"
   | "common.phone"
@@ -232,6 +233,9 @@ export type TranslationKey =
   | "common.noLinkedClass"
   | "common.editGrade"
   | "common.editGradeLevel"
+  | "common.editCredits"
+  | "common.editClassCredits"
+  | "common.editClassCreditsHelp"
   | "common.gradeLevel"
   | "common.noGradeLevel"
   | "common.customGradeLevel"
@@ -535,6 +539,7 @@ export type TranslationKey =
   | "common.editClass"
   | "common.editTutor"
   | "common.editStudent"
+  | "common.editPageHelp"
   | "common.editAddress"
   | "common.addAddress"
   | "common.assignClasses"
@@ -911,7 +916,42 @@ export type TranslationKey =
   | "common.hideSubjectClasses"
   | "common.teacherCount"
   | "common.durationsAvailable"
-  | "common.selectTeacherForSubject";
+  | "common.selectTeacherForSubject"
+  | "trial.title"
+  | "trial.intro"
+  | "trial.childName"
+  | "trial.lastName"
+  | "trial.dob"
+  | "trial.gender"
+  | "trial.genderMale"
+  | "trial.genderFemale"
+  | "trial.parentName"
+  | "trial.phone"
+  | "trial.address"
+  | "trial.subject"
+  | "trial.haveStudied"
+  | "trial.haveStudiedPlaceholder"
+  | "trial.suitableTime"
+  | "trial.weekday"
+  | "trial.weekend"
+  | "trial.duration"
+  | "trial.durationUnit"
+  | "trial.fee"
+  | "trial.teacher"
+  | "trial.date"
+  | "trial.startTime"
+  | "trial.submit"
+  | "trial.booking"
+  | "trial.booked"
+  | "trial.bookedHelp"
+  | "trial.bookAnother"
+  | "trial.noTeachers"
+  | "trial.close"
+  | "trial.bookButton"
+  | "common.editPayment"
+  | "common.editPaymentHelp"
+  | "common.savePayment"
+  | "common.paidAt";
 
 const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
   en: {
@@ -983,6 +1023,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.actions": "Actions",
     "common.name": "Name",
     "common.dateOfBirth": "Date of birth",
+    "common.birthday": "Birthday",
     "common.id": "ID",
     "common.email": "Email",
     "common.phone": "Phone",
@@ -1080,6 +1121,45 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.amount": "Amount",
     "common.category": "Category",
     "common.plan": "Plan",
+    "trial.title": "【iSmartMusic·Trial class】",
+    "trial.intro":
+      "Please fill in the following information and send it to me, We will contact you:",
+    "trial.childName": "Name",
+    "trial.lastName": "Last name",
+    "trial.dob": "DOB",
+    "trial.gender": "Gender",
+    "trial.genderMale": "Male",
+    "trial.genderFemale": "Female",
+    "trial.parentName": "Parent’s Name",
+    "trial.phone": "Phone Number",
+    "trial.address": "Address",
+    "trial.subject": "Study Subjects",
+    "trial.haveStudied": "Have you Studied",
+    "trial.haveStudiedPlaceholder": "e.g. played piano for 2 years, first lesson",
+    "trial.suitableTime": "Suitable trial time",
+    "trial.weekday": "Weekday",
+    "trial.weekend": "Weekend",
+    "trial.duration": "Trial time",
+    "trial.durationUnit": "minutes",
+    "trial.fee": "Trial Fee",
+    "trial.teacher": "Teacher",
+    "trial.date": "Date",
+    "trial.startTime": "Start time",
+    "trial.submit": "Book trial class",
+    "trial.booking": "Booking…",
+    "trial.booked": "Trial class booked",
+    "trial.bookedHelp":
+      "Thank you. Front desk will call to confirm this trial lesson.",
+    "trial.bookAnother": "Book another trial class",
+    "trial.noTeachers":
+      "No teachers are available for trial classes right now. Please contact the school to schedule.",
+    "trial.close": "Close",
+    "trial.bookButton": "Book trial class",
+    "common.editPayment": "Edit payment",
+    "common.editPaymentHelp":
+      "Fix the student, class, amount, date, or notes if this payment was entered incorrectly.",
+    "common.savePayment": "Save payment",
+    "common.paidAt": "Paid at",
     "common.total": "Total",
     "common.remaining": "Remaining",
     "common.used": "Used",
@@ -1160,6 +1240,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noLinkedClass": "No linked class",
     "common.editGrade": "Edit grade",
     "common.editGradeLevel": "Edit grade level",
+    "common.editCredits": "Edit credits",
+    "common.editClassCredits": "Edit class credits",
+    "common.editClassCreditsHelp":
+      "Type the counts you want to keep. Remaining is stored as entered, not calculated from total minus used.",
     "common.gradeLevel": "Grade level",
     "common.noGradeLevel": "No grade",
     "common.customGradeLevel": "Custom grade",
@@ -1501,6 +1585,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editClass": "Edit class",
     "common.editTutor": "Edit teacher",
     "common.editStudent": "Edit student",
+    "common.editPageHelp":
+      "Change any field below, then save. Cancel discards unsaved changes.",
     "common.editAddress": "Edit address",
     "common.addAddress": "Add address",
     "common.assignClasses": "Assign classes",
@@ -1994,6 +2080,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.actions": "操作",
     "common.name": "姓名",
     "common.dateOfBirth": "出生日期",
+    "common.birthday": "生日",
     "common.id": "编号",
     "common.email": "邮箱",
     "common.phone": "电话",
@@ -2086,7 +2173,43 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.scheduleStudentOptional": "学生（可选）",
     "common.amount": "金额",
     "common.category": "类别",
-    "common.plan": "方案",
+    "common.plan": "课包",
+    "trial.title": "【云乐艺校·体验课】",
+    "trial.intro": "请填好下列资料发给我，前台老师会电话联系你：",
+    "trial.childName": "宝贝姓名",
+    "trial.lastName": "姓氏",
+    "trial.dob": "出生年月",
+    "trial.gender": "性别",
+    "trial.genderMale": "男",
+    "trial.genderFemale": "女",
+    "trial.parentName": "家长姓名",
+    "trial.phone": "联系电话",
+    "trial.address": "居住地址",
+    "trial.subject": "学习科目",
+    "trial.haveStudied": "是否学过",
+    "trial.haveStudiedPlaceholder": "例如：学过两年钢琴，或第一次上课",
+    "trial.suitableTime": "合适的试课时间",
+    "trial.weekday": "工作日",
+    "trial.weekend": "周末",
+    "trial.duration": "试课时长",
+    "trial.durationUnit": "分钟",
+    "trial.fee": "试课费用",
+    "trial.teacher": "老师",
+    "trial.date": "日期",
+    "trial.startTime": "开始时间",
+    "trial.submit": "预约体验课",
+    "trial.booking": "提交中…",
+    "trial.booked": "体验课已预约",
+    "trial.bookedHelp": "谢谢。前台老师会电话联系确认试课时间。",
+    "trial.bookAnother": "再预约一节体验课",
+    "trial.noTeachers": "目前没有可预约体验课的老师，请联系学校安排。",
+    "trial.close": "关闭",
+    "trial.bookButton": "预约体验课",
+    "common.editPayment": "编辑付款",
+    "common.editPaymentHelp":
+      "如果记错了，可修改学生、课程、金额、日期或备注。",
+    "common.savePayment": "保存付款",
+    "common.paidAt": "付款时间",
     "common.total": "总计",
     "common.remaining": "剩余",
     "common.used": "已用",
@@ -2167,6 +2290,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noLinkedClass": "无关联课程",
     "common.editGrade": "编辑级别",
     "common.editGradeLevel": "编辑年级/级别",
+    "common.editCredits": "编辑课时",
+    "common.editClassCredits": "编辑课时余额",
+    "common.editClassCreditsHelp":
+      "直接输入要保留的数量。剩余课时按输入值保存，不会根据总计减已用自动计算。",
     "common.gradeLevel": "级别",
     "common.noGradeLevel": "无级别",
     "common.customGradeLevel": "自定义级别",
@@ -2499,6 +2626,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.editClass": "编辑课程",
     "common.editTutor": "编辑老师",
     "common.editStudent": "编辑学生",
+    "common.editPageHelp": "直接修改下方任意信息后保存。取消则放弃未保存的更改。",
     "common.editAddress": "编辑地址",
     "common.addAddress": "添加地址",
     "common.assignClasses": "分配课程",
@@ -2660,7 +2788,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.purchaseDescription": "描述",
     "common.confirmPurchaseTitle": "确认购买",
     "common.confirmPaymentTitle": "确定吗？",
-    "common.paymentPlanHelp": "为此课程选择付款方案。",
+    "common.paymentPlanHelp": "为此课程选择课包。",
     "common.singleClassLabel": "单节课",
     "common.activeEnrolled": "活跃 · 已报名 {count} 人",
     "common.activeEnrolledSummary": "{active} 活跃 · {enrolled} 已报名",

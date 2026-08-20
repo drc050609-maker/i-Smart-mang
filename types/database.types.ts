@@ -1772,6 +1772,9 @@ export type Database = {
           location_id: number | null
           notes: string | null
           starting_class_credits: number
+          gender: string | null
+          parent_name: string | null
+          trial_time_preference: string | null
         }
         Insert: {
           dob?: string | null
@@ -1783,6 +1786,9 @@ export type Database = {
           location_id?: number | null
           notes?: string | null
           starting_class_credits?: number
+          gender?: string | null
+          parent_name?: string | null
+          trial_time_preference?: string | null
         }
         Update: {
           dob?: string | null
@@ -1794,6 +1800,9 @@ export type Database = {
           location_id?: number | null
           notes?: string | null
           starting_class_credits?: number
+          gender?: string | null
+          parent_name?: string | null
+          trial_time_preference?: string | null
         }
         Relationships: [
           {
@@ -2024,6 +2033,11 @@ export type Database = {
           p_schedule_start_time?: string
           p_subject?: string
           p_teacher_id?: number
+          p_gender?: string
+          p_parent_name?: string
+          p_address?: string
+          p_trial_time_preference?: string
+          p_duration_minutes?: number
         }
         Returns: {
           class_id: number

@@ -36,7 +36,13 @@ type TrialProps = {
   kind: "trial";
   studentId: number;
   name: string;
+  dob?: string | null;
 };
+
+function toDateInputValue(dob: string | null | undefined) {
+  if (!dob) return "";
+  return dob.slice(0, 10);
+}
 
 export function MakeOfficialStudentDialog(props: InquiryProps | TrialProps) {
   const { t } = useLanguage();
@@ -122,21 +128,25 @@ export function MakeOfficialStudentDialog(props: InquiryProps | TrialProps) {
                   <input type="hidden" name="studentId" value={props.studentId} />
                 )}
 
-                {props.kind === "inquiry" ? (
-                  <div>
-                    <label htmlFor={`official-dob-${props.leadId}`} className={labelClassName}>
-                      {t("common.dateOfBirth")}
-                    </label>
-                    <div className="mt-2">
-                      <input
-                        id={`official-dob-${props.leadId}`}
-                        name="dob"
-                        type="date"
-                        className={inputClassName}
-                      />
-                    </div>
+                <div>
+                  <label
+                    htmlFor={`official-dob-${props.kind === "inquiry" ? props.leadId : props.studentId}`}
+                    className={labelClassName}
+                  >
+                    {t("common.birthday")}
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      id={`official-dob-${props.kind === "inquiry" ? props.leadId : props.studentId}`}
+                      name="dob"
+                      type="date"
+                      defaultValue={
+                        props.kind === "trial" ? toDateInputValue(props.dob) : ""
+                      }
+                      className={inputClassName}
+                    />
                   </div>
-                ) : null}
+                </div>
 
                 <div>
                   <label

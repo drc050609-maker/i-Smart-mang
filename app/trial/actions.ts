@@ -94,9 +94,39 @@ export async function bookTrialClass(
   const scheduleStartTime = parseTime(formData.get("scheduleStartTime"));
   const parentPhone = parseOptionalText(formData.get("parentPhone"));
   const parentEmail = parseOptionalText(formData.get("parentEmail"));
+  const gender = parseOptionalText(formData.get("gender"));
+  const parentName = parseOptionalText(formData.get("parentName"));
+  const address = parseOptionalText(formData.get("address"));
+  const trialTimePreference = parseOptionalText(
+    formData.get("trialTimePreference"),
+  );
+  const durationRaw = formData.get("durationMinutes")?.toString().trim() ?? "";
+  const durationMinutes =
+    durationRaw === "" ? undefined : Number(durationRaw);
 
   if (!firstName) {
     return { error: "Student first name is required." };
+  }
+
+  if (gender && gender !== "male" && gender !== "female") {
+    return { error: "Select male or female." };
+  }
+
+  if (
+    trialTimePreference &&
+    trialTimePreference !== "weekday" &&
+    trialTimePreference !== "weekend"
+  ) {
+    return { error: "Select weekday or weekend." };
+  }
+
+  if (
+    durationMinutes !== undefined &&
+    (!Number.isInteger(durationMinutes) ||
+      durationMinutes < 15 ||
+      durationMinutes > 180)
+  ) {
+    return { error: "Duration must be between 15 and 180 minutes." };
   }
 
   if (subject === undefined) {
@@ -143,6 +173,11 @@ export async function bookTrialClass(
     p_schedule_start_time: scheduleStartTime,
     p_parent_phone: parentPhone ?? undefined,
     p_parent_email: parentEmail ?? undefined,
+    p_gender: gender ?? undefined,
+    p_parent_name: parentName ?? undefined,
+    p_address: address ?? undefined,
+    p_trial_time_preference: trialTimePreference ?? undefined,
+    p_duration_minutes: durationMinutes,
   });
 
   if (error) {

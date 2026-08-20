@@ -3,12 +3,14 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
+import { requireStaff } from "@/lib/auth";
 import { dollarsToCents } from "@/lib/money";
 import {
   parsePaymentPlan,
   sessionCountForPlan,
 } from "@/lib/payment-plan";
 import { parsePaymentStatus } from "@/lib/payment-status";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { buildTuitionPricing } from "@/lib/tuition";
 import { createClient } from "@/utils/supabase/server";
 
@@ -204,6 +206,163 @@ export async function updateClassPaymentStatus(
 
   revalidatePath("/payments");
   revalidatePath("/students", "layout");
+
+  return { success: true, paymentId };
+}
+
+export async function updateClassPayment(
+  _prevState: RecordPaymentState,
+  formData: FormData,
+): Promise<RecordPaymentState> {
+  await requireStaff();
+
+  const paymentId = Number(formData.get("paymentId"));
+  const studentId = Number(formData.get("studentId"));
+  const classId = Number(formData.get("classId"));
+  const plan = parsePaymentPlan(formData.get("paymentPlan"));
+  const notes = formData.get("notes")?.toString().trim() || null;
+  const paidAtRaw = formData.get("paidAt")?.toString().trim() ?? "";
+  const amountRaw = formData.get("amount")?.toString().trim() ?? "";
+  const amount = amountRaw === "" ? NaN : Number(amountRaw);
+
+  if (!Number.isInteger(paymentId) || paymentId <= 0) {
+    return { error: "Invalid payment." };
+  }
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Select a student." };
+  }
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Select a class." };
+  }
+  if (!plan) {
+    return { error: "Select a valid payment option." };
+  }
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { error: "Enter a valid amount." };
+  }
+
+  const paidAt = paidAtRaw ? new Date(paidAtRaw) : null;
+  if (!paidAt || Number.isNaN(paidAt.getTime())) {
+    return { error: "Enter a valid payment date." };
+  }
+
+  let supabase;
+  try {
+    supabase = createSupabaseServiceClient();
+  } catch {
+    return { error: "Could not save this payment. Try again." };
+  }
+
+  const { data: payment, error: paymentError } = await supabase
+    .from("class_payments")
+    .select(
+      "id, student_id, class_id, payment_plan, session_count, amount_cents, status, notes, paid_at",
+    )
+    .eq("id", paymentId)
+    .maybeSingle();
+
+  if (paymentError) {
+    return { error: paymentError.message };
+  }
+  if (!payment) {
+    return { error: "Payment not found." };
+  }
+
+  const [{ data: student, error: studentError }, { data: classRow, error: classError }] =
+    await Promise.all([
+      supabase
+        .from("students")
+        .select('id, "first name", "last name", is_active')
+        .eq("id", studentId)
+        .maybeSingle(),
+      supabase
+        .from("classes")
+        .select("id, subject, is_active")
+        .eq("id", classId)
+        .maybeSingle(),
+    ]);
+
+  if (studentError) return { error: studentError.message };
+  if (!student) return { error: "Student not found." };
+  if (classError) return { error: classError.message };
+  if (!classRow) return { error: "Class not found." };
+
+  const sessionCount = sessionCountForPlan(plan);
+  const amountCents = dollarsToCents(amount);
+  const studentOrClassChanged =
+    payment.student_id !== studentId || payment.class_id !== classId;
+  const sessionCountChanged = payment.session_count !== sessionCount;
+
+  if (
+    payment.status === "completed" &&
+    (studentOrClassChanged || sessionCountChanged)
+  ) {
+    const { error: deductError } = await supabase.rpc("deduct_class_credits", {
+      p_student_id: payment.student_id,
+      p_class_id: payment.class_id,
+      p_count: payment.session_count,
+    });
+    if (deductError) {
+      return {
+        error:
+          deductError.message ||
+          "Could not move class credits from the original student/class.",
+      };
+    }
+
+    const { error: addError } = await supabase.rpc("add_student_class_credits", {
+      p_student_id: studentId,
+      p_class_id: classId,
+      p_count: sessionCount,
+    });
+    if (addError) {
+      await supabase.rpc("add_student_class_credits", {
+        p_student_id: payment.student_id,
+        p_class_id: payment.class_id,
+        p_count: payment.session_count,
+      });
+      return { error: addError.message };
+    }
+  }
+
+  const studentName = [student["first name"], student["last name"]]
+    .filter(Boolean)
+    .join(" ");
+
+  const { error: updateError } = await supabase
+    .from("class_payments")
+    .update({
+      student_id: studentId,
+      class_id: classId,
+      payment_plan: plan,
+      session_count: sessionCount,
+      amount_cents: amountCents,
+      effective_amount_cents: amountCents,
+      notes,
+      paid_at: paidAt.toISOString(),
+    })
+    .eq("id", paymentId);
+
+  if (updateError) {
+    return { error: updateError.message };
+  }
+
+  await supabase
+    .from("statement_entries")
+    .update({
+      amount_cents: amountCents,
+      description: `Payment from ${studentName} for ${classRow.subject}`,
+      entry_date: paidAt.toISOString().slice(0, 10),
+    })
+    .eq("class_payment_id", paymentId)
+    .is("corrects_entry_id", null);
+
+  revalidatePath("/payments");
+  revalidatePath(`/students/${payment.student_id}`);
+  revalidatePath(`/students/${studentId}`);
+  revalidatePath(`/classes/${payment.class_id}`);
+  revalidatePath(`/classes/${classId}`);
+  revalidatePath("/statements");
 
   return { success: true, paymentId };
 }

@@ -2,6 +2,7 @@ import type { ClassScheduleFields } from "@/lib/class-schedule";
 
 export const SESSION_LOOKBACK_DAYS = 90;
 export const DEFAULT_STARTING_CLASS_CREDITS = 0;
+export const MAX_CLASS_CREDIT_VALUE = 9999;
 
 export function parseStartingClassCredits(value: FormDataEntryValue | null) {
   const raw = value?.toString().trim();
@@ -11,6 +12,21 @@ export function parseStartingClassCredits(value: FormDataEntryValue | null) {
 
   const count = Number(raw);
   if (!Number.isInteger(count) || count < 0 || count > 500) {
+    return null;
+  }
+
+  return count;
+}
+
+/** Non-negative integer for stored class-credit fields (total / remaining / used / absences). */
+export function parseClassCreditCount(value: FormDataEntryValue | null) {
+  const raw = value?.toString().trim();
+  if (!raw) {
+    return null;
+  }
+
+  const count = Number(raw);
+  if (!Number.isInteger(count) || count < 0 || count > MAX_CLASS_CREDIT_VALUE) {
     return null;
   }
 

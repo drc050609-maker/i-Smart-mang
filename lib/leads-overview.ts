@@ -24,6 +24,7 @@ export type LeadProspectRow = {
   classId: number | null;
   studentId: number | null;
   hasOfficialStudent: boolean;
+  dob: string | null;
 };
 
 export type LeadsOverviewCounts = {
@@ -59,6 +60,7 @@ type TrialEnrollmentRow = {
         is_active: boolean;
         experience: string | null;
         location_id: number | null;
+        dob: string | null;
       }
     | {
         id: number;
@@ -67,6 +69,7 @@ type TrialEnrollmentRow = {
         is_active: boolean;
         experience: string | null;
         location_id: number | null;
+        dob: string | null;
       }[]
     | null;
   classes:
@@ -115,6 +118,7 @@ function inquiryFromLead(lead: LeadRow): LeadProspectRow {
     classId: null,
     studentId: lead.student_id,
     hasOfficialStudent: Boolean(lead.student_id),
+    dob: null,
   };
 }
 
@@ -145,6 +149,7 @@ function trialFromEnrollment(row: TrialEnrollmentRow): LeadProspectRow | null {
     classId: classRow.id,
     studentId: student.id,
     hasOfficialStudent: false,
+    dob: student.dob,
   };
 }
 
@@ -208,6 +213,7 @@ export function filterProspectsByQuery(rows: LeadProspectRow[], query: string) {
       row.email ?? "",
       row.description ?? "",
       row.subject ?? "",
+      row.dob ?? "",
     ]
       .join(" ")
       .toLowerCase();
@@ -262,7 +268,8 @@ export async function loadLeadProspects(
                 "last name",
                 is_active,
                 experience,
-                location_id
+                location_id,
+                dob
               ),
               classes!inner (
                 id,

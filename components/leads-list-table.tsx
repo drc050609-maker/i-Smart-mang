@@ -11,11 +11,21 @@ import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { ListSearchInput } from "@/components/list-search-input";
 import { MakeOfficialStudentDialog } from "@/components/make-official-student-dialog";
 import { useLanguage } from "@/components/language-provider";
+import { appLanguageLocale } from "@/lib/language";
 import {
   filterProspectsByQuery,
   type LeadProspectRow,
 } from "@/lib/leads-overview";
 import { classHref } from "@/lib/return-to";
+
+function formatDob(dob: string | null, language: "en" | "zh", fallback: string) {
+  if (!dob) return fallback;
+  return new Date(`${dob}T00:00:00`).toLocaleDateString(appLanguageLocale(language), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 function TypeBadge({ kind }: { kind: LeadProspectRow["kind"] }) {
   const { t } = useLanguage();
@@ -75,6 +85,7 @@ function RowActions({ lead }: { lead: LeadProspectRow }) {
           kind="trial"
           studentId={lead.id}
           name={lead.name}
+          dob={lead.dob}
         />
         {lead.classId ? (
           <div>
@@ -111,7 +122,7 @@ function RowActions({ lead }: { lead: LeadProspectRow }) {
 }
 
 export function LeadsListTable({ leads }: { leads: LeadProspectRow[] }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<ActiveTab>("active");
 
@@ -179,6 +190,12 @@ export function LeadsListTable({ leads }: { leads: LeadProspectRow[] }) {
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                     >
+                      {t("common.birthday")}
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
+                    >
                       {t("leads.type")}
                     </th>
                     <th
@@ -232,6 +249,11 @@ export function LeadsListTable({ leads }: { leads: LeadProspectRow[] }) {
                             {lead.subject}
                           </div>
                         ) : null}
+                      </td>
+                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
+                        {lead.kind === "trial"
+                          ? formatDob(lead.dob, language, t("common.notAvailable"))
+                          : t("common.notAvailable")}
                       </td>
                       <td className="px-3 py-4 text-sm whitespace-nowrap">
                         <TypeBadge kind={lead.kind} />

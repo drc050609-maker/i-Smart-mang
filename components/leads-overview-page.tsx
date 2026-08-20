@@ -33,7 +33,8 @@ export async function LeadsOverviewPage({
   const activeCampus = await getActiveCampusLocation(staff);
   const locationId = await getActiveCampusLocationId(supabase, staff);
 
-  const [{ rows, error }, { data: teachers }] = await Promise.all([
+  const [{ rows, error }, { data: teachers }, { data: campusRow }] =
+    await Promise.all([
     loadLeadProspects(supabase, {
       campus: activeCampus,
       locationId,
@@ -46,6 +47,13 @@ export async function LeadsOverviewPage({
           .eq("location_id", locationId)
           .order("first_name")
       : Promise.resolve({ data: null }),
+    locationId
+      ? supabase
+          .from("locations")
+          .select("trial_price_cents")
+          .eq("id", locationId)
+          .maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const counts = countProspects(rows);
@@ -55,6 +63,7 @@ export async function LeadsOverviewPage({
     id: teacher.id,
     name: formatTeacherName(teacher),
   }));
+  const trialPricing = campusRow;
 
   const emptyMessage =
     view === "inquiries"
@@ -78,6 +87,11 @@ export async function LeadsOverviewPage({
           <TrialClassDialog
             subjects={[...TRIAL_CLASS_SUBJECTS]}
             teachers={trialTeachers}
+            trialPriceUsd={
+              trialPricing?.trial_price_cents
+                ? trialPricing.trial_price_cents / 100
+                : undefined
+            }
             triggerStyle="button"
           />
           <AddLeadDialog defaultLocation={activeCampus} />

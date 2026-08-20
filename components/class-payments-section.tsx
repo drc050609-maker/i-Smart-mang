@@ -18,6 +18,8 @@ import {
   correctClassPaymentAmount,
 } from "@/app/(dashboard)/finance-actions";
 import { EditAmountDialog } from "@/components/edit-amount-dialog";
+import { EditClassPaymentDialog } from "@/components/edit-class-payment-dialog";
+import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import {
   ClassCombobox,
   type ClassOption,
@@ -76,6 +78,8 @@ export type PaymentHistoryRow = {
   status: PaymentStatus;
   student: StudentOption;
   classSubject: string;
+  classId: number;
+  notes: string | null;
 };
 
 const inputClassName =
@@ -150,6 +154,8 @@ export function ClassPaymentsSection({
   const [selectedStudent, setSelectedStudent] = useState<StudentOption | null>(
     null,
   );
+  const [extraStudents, setExtraStudents] = useState<StudentOption[]>([]);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState<TeacherOption | null>(
     null,
   );
@@ -175,6 +181,17 @@ export function ClassPaymentsSection({
     }
     return sortTeachers([...byId.values()]);
   }, [classes]);
+
+  const studentOptions = useMemo(() => {
+    const byId = new Map<number, StudentOption>();
+    for (const row of students) {
+      byId.set(row.id, row);
+    }
+    for (const row of extraStudents) {
+      byId.set(row.id, row);
+    }
+    return [...byId.values()];
+  }, [extraStudents, students]);
 
   const classesForTeacher = useMemo(() => {
     if (!selectedTeacher) return [];
@@ -274,9 +291,18 @@ export function ClassPaymentsSection({
   }
 
   function closeRecordDialog() {
-    if (!pending) {
+    if (!pending && !quickAddOpen) {
       resetDialog();
     }
+  }
+
+  function handleStudentCreated(created: StudentOption) {
+    setExtraStudents((current) =>
+      current.some((item) => item.id === created.id)
+        ? current
+        : [...current, created],
+    );
+    setSelectedStudent(created);
   }
 
   function handleTeacherChange(teacher: TeacherOption | null) {
@@ -475,16 +501,19 @@ export function ClassPaymentsSection({
                         </div>
                       </td>
                       <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap sm:pr-0">
-                        {payment.status === "completed" ? (
-                          <PaymentStatusActions
+                        <div className="flex flex-col items-end gap-1">
+                          <EditClassPaymentDialog
                             payment={payment}
-                            students={students}
+                            students={studentOptions}
+                            classes={classes}
                           />
-                        ) : (
-                          <span className="text-gray-400 dark:text-gray-500">
-                            {t("common.notAvailable")}
-                          </span>
-                        )}
+                          {payment.status === "completed" ? (
+                            <PaymentStatusActions
+                              payment={payment}
+                              students={students}
+                            />
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -531,9 +560,15 @@ export function ClassPaymentsSection({
                       <div className="mt-2">
                         <StudentCombobox
                           id="payment-student"
-                          students={students}
+                          students={studentOptions}
                           selected={selectedStudent}
                           onChange={setSelectedStudent}
+                        />
+                      </div>
+                      <div className="mt-2">
+                        <QuickAddStudentDialog
+                          onCreated={handleStudentCreated}
+                          onOpenChange={setQuickAddOpen}
                         />
                       </div>
                     </div>

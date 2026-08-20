@@ -26,9 +26,19 @@ import {
   type ScheduleEventInstance,
   type ScheduleStudent,
 } from "@/lib/schedule-calendar";
+import { appLanguageLocale } from "@/lib/language";
 import { formatStudentName } from "@/lib/person-name";
 
 const initialDeleteState: ScheduleActionState = {};
+
+function formatDob(dob: string | null | undefined, language: "en" | "zh") {
+  if (!dob) return null;
+  return new Date(`${dob}T00:00:00`).toLocaleDateString(appLanguageLocale(language), {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
 
 export function ScheduleClassDetailDialog({
   instance,
@@ -179,6 +189,31 @@ export function ScheduleClassDetailDialog({
                   {studentSummary}
                 </dd>
               </div>
+
+              {isTrial ? (
+                <div className="sm:col-span-2">
+                  <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    {t("common.birthday")}
+                  </dt>
+                  <dd className="mt-1 text-sm text-gray-900 dark:text-white">
+                    {displayStudents.length === 0
+                      ? t("common.notAvailable")
+                      : displayStudents
+                          .map((student) => {
+                            const birthday = formatDob(student.dob, language);
+                            const name = formatStudentName(student);
+                            return birthday
+                              ? displayStudents.length > 1
+                                ? `${name}: ${birthday}`
+                                : birthday
+                              : displayStudents.length > 1
+                                ? `${name}: ${t("common.notAvailable")}`
+                                : t("common.notAvailable");
+                          })
+                          .join(" · ")}
+                  </dd>
+                </div>
+              ) : null}
             </dl>
 
             {displayStudents.length > 0 ? (
