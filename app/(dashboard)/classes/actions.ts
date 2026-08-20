@@ -561,6 +561,117 @@ export async function updateClass(
   return successState();
 }
 
+export async function updateClassRoom(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = Number(formData.get("classId"));
+  const roomId = parseOptionalId(formData.get("roomId"));
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+  if (roomId === undefined) {
+    return { error: "Invalid room." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { error } = await client.supabase
+    .from("classes")
+    .update({ room_id: roomId })
+    .eq("id", classId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateClass(classId);
+  return successState();
+}
+
+export async function updateClassTeachers(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const classId = Number(formData.get("classId"));
+  const teacherIds = parseTeacherIds(formData);
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+  if (teacherIds === undefined) {
+    return { error: "Invalid teacher." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: existingClass, error: existingError } = await client.supabase
+    .from("classes")
+    .select("location_id, teacher_id")
+    .eq("id", classId)
+    .maybeSingle();
+
+  if (existingError) {
+    return { error: existingError.message };
+  }
+  if (!existingClass) {
+    return { error: "Class not found." };
+  }
+  if (existingClass.location_id == null) {
+    return { error: "Class campus location could not be resolved." };
+  }
+
+  const teacherLocationError = await assertTeachersAtLocation(
+    client.supabase,
+    teacherIds,
+    existingClass.location_id,
+  );
+  if (teacherLocationError) {
+    return { error: teacherLocationError };
+  }
+
+  const previousTeacherId = existingClass.teacher_id;
+  const nextTeacherId = teacherIds[0] ?? null;
+
+  const { error: classError } = await client.supabase
+    .from("classes")
+    .update({ teacher_id: nextTeacherId })
+    .eq("id", classId);
+
+  if (classError) {
+    return { error: classError.message };
+  }
+
+  const syncError = await syncClassTeachers(
+    client.supabase,
+    classId,
+    teacherIds,
+  );
+  if (syncError) {
+    return { error: syncError };
+  }
+
+  revalidateClass(classId);
+  const teacherIdsToRevalidate = [
+    ...new Set(
+      [previousTeacherId, ...teacherIds].filter(
+        (id): id is number => typeof id === "number",
+      ),
+    ),
+  ];
+  for (const teacherId of teacherIdsToRevalidate) {
+    revalidatePath(`/tutors/${teacherId}`);
+  }
+  return successState();
+}
+
 function parseDayOfWeek(value: FormDataEntryValue | null) {
   if (value === null || value.toString().trim() === "") {
     return null;

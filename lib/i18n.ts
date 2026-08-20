@@ -184,6 +184,14 @@ export type TranslationKey =
   | "common.minutes"
   | "common.capacity"
   | "common.noTeacherAssigned"
+  | "common.addRoom"
+  | "common.changeRoom"
+  | "common.assignRoom"
+  | "common.noRoomAssigned"
+  | "common.editTeachers"
+  | "common.editTeachersHelp"
+  | "common.saveTeachers"
+  | "common.saveRoom"
   | "common.inSession"
   | "common.noStudentsEnrolled"
   | "common.trialLabel"
@@ -1100,6 +1108,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.minutes": "{count} min",
     "common.capacity": "(capacity {count})",
     "common.noTeacherAssigned": "No teacher assigned",
+    "common.addRoom": "Add room",
+    "common.changeRoom": "Change room",
+    "common.assignRoom": "Assign room",
+    "common.noRoomAssigned": "No room assigned",
+    "common.editTeachers": "Edit teachers",
+    "common.editTeachersHelp":
+      "Add or remove teachers for this class. Take out anyone who should not be listed here.",
+    "common.saveTeachers": "Save teachers",
+    "common.saveRoom": "Save room",
     "common.inSession": "In session",
     "common.noStudentsEnrolled": "No students enrolled",
     "common.trialLabel": "trial",
@@ -2098,6 +2115,15 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.minutes": "{count}分钟",
     "common.capacity": "（容量 {count}）",
     "common.noTeacherAssigned": "未分配老师",
+    "common.addRoom": "添加教室",
+    "common.changeRoom": "更改教室",
+    "common.assignRoom": "分配教室",
+    "common.noRoomAssigned": "未分配教室",
+    "common.editTeachers": "编辑老师",
+    "common.editTeachersHelp":
+      "为此课程添加或移除老师。把不应出现在这里的老师去掉。",
+    "common.saveTeachers": "保存老师",
+    "common.saveRoom": "保存教室",
     "common.inSession": "进行中",
     "common.noStudentsEnrolled": "暂无学生报名",
     "common.trialLabel": "试课",

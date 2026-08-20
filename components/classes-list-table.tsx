@@ -6,6 +6,11 @@ import { ChevronRightIcon } from "@heroicons/react/20/solid";
 
 import { ListSearchInput } from "@/components/list-search-input";
 import { ActiveStatusBadge } from "@/components/active-status-badge";
+import { AssignClassRoomDialog } from "@/components/assign-class-room-dialog";
+import {
+  EditClassTeachersDialog,
+} from "@/components/edit-class-teachers-dialog";
+import type { RoomOption, TeacherOption } from "@/components/add-class-dialog";
 import {
   countClassesByTrack,
   filterClassesByTrack,
@@ -98,12 +103,28 @@ function ClassTableRow({
   language,
   t,
   indented = false,
+  teachers,
+  rooms,
 }: {
   classRow: ClassSearchRow;
   language: AppLanguage;
   t: ReturnType<typeof useLanguage>["t"];
   indented?: boolean;
+  teachers: TeacherOption[];
+  rooms: RoomOption[];
 }) {
+  const assignedTeachers = classRow.assignedTeachers.map((teacher) => ({
+    id: teacher.id,
+    first_name: teacher.first_name,
+    last_name: teacher.last_name,
+  }));
+  const teacherLabel =
+    assignedTeachers.length > 0
+      ? assignedTeachers.map((teacher) => formatTeacherName(teacher)).join(", ")
+      : classRow.teacher
+        ? formatTeacherName(classRow.teacher)
+        : t("common.noTeacherAssigned");
+
   return (
     <tr>
       <td
@@ -124,13 +145,37 @@ function ClassTableRow({
       <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
         {formatLessonType(classRow.lesson_type as LessonType | null, language)}
       </td>
-      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-        {classRow.teacher
-          ? formatTeacherName(classRow.teacher)
-          : t("common.notAvailable")}
+      <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col items-start gap-1">
+          <span>{teacherLabel}</span>
+          <EditClassTeachersDialog
+            classId={classRow.id}
+            teachers={teachers}
+            assignedTeachers={assignedTeachers}
+            compact
+          />
+        </div>
       </td>
-      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-        {classRow.room_number ?? t("common.notAvailable")}
+      <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex flex-col items-start gap-1">
+          {classRow.room_number ? (
+            <span>
+              {t("common.room")} {classRow.room_number}
+              {classRow.room_class_size != null
+                ? ` ${t("common.capacity", { count: classRow.room_class_size })}`
+                : ""}
+            </span>
+          ) : (
+            <span>{t("common.noRoomAssigned")}</span>
+          )}
+          <AssignClassRoomDialog
+            classId={classRow.id}
+            rooms={rooms}
+            roomId={classRow.room_id}
+            hasRoom={classRow.room_id != null}
+            compact
+          />
+        </div>
       </td>
       <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
         {formatDuration(classRow.duration_minutes, t)}
@@ -189,7 +234,15 @@ function SubjectGroupSummary({
   );
 }
 
-export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
+export function ClassesListTable({
+  classes,
+  teachers,
+  rooms,
+}: {
+  classes: ClassSearchRow[];
+  teachers: TeacherOption[];
+  rooms: RoomOption[];
+}) {
   const { language, t } = useLanguage();
   const [query, setQuery] = useState("");
   const [trackTab, setTrackTab] = useState<ClassTrackTab>("all");
@@ -419,6 +472,8 @@ export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
                           classRow={group.classes[0]}
                           language={language}
                           t={t}
+                          teachers={teachers}
+                          rooms={rooms}
                         />
                       );
                     }
@@ -486,6 +541,8 @@ export function ClassesListTable({ classes }: { classes: ClassSearchRow[] }) {
                                 language={language}
                                 t={t}
                                 indented
+                                teachers={teachers}
+                                rooms={rooms}
                               />
                             ))
                           : null}

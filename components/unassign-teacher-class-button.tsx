@@ -9,11 +9,11 @@ import { unassignTeacherClass } from "@/app/(dashboard)/tutors/actions";
 
 export function UnassignTeacherClassButton({
   teacherId,
-  classId,
+  classIds,
   classSubject,
 }: {
   teacherId: number;
-  classId: number;
+  classIds: number[];
   classSubject: string;
 }) {
   const { language, t } = useLanguage();
@@ -32,14 +32,17 @@ export function UnassignTeacherClassButton({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="font-medium text-red-600 hover:text-red-500 dark:text-red-400 dark:hover:text-red-300"
+        disabled={classIds.length === 0}
+        className="font-medium text-red-600 hover:text-red-500 disabled:opacity-50 dark:text-red-400 dark:hover:text-red-300"
       >
         {t("common.remove")}
       </button>
 
       <form ref={formRef} action={formAction} className="hidden">
         <input type="hidden" name="teacherId" value={teacherId} />
-        <input type="hidden" name="classId" value={classId} />
+        {classIds.map((classId) => (
+          <input key={classId} type="hidden" name="classIds" value={classId} />
+        ))}
       </form>
 
       <ConfirmDialog

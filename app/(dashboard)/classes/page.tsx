@@ -8,6 +8,7 @@ import {
 import { ClassesListTable } from "@/components/classes-list-table";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
+import { isCatalogTrialClass } from "@/lib/class-lesson-type";
 import { listKnownClassSubjects } from "@/lib/class-subject";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
@@ -16,13 +17,25 @@ import { sortTeachers } from "@/lib/person-name";
 import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 
 type TeacherEmbed = {
+  id?: number;
   first_name: string;
   last_name: string | null;
   is_active?: boolean | null;
 };
 
 type RoomEmbed = {
+  id?: number;
   room_number: string;
+  class_size?: number;
+};
+
+type ClassTeacherLink = {
+  class_id: number;
+  teacher_id: number;
+  teachers:
+    | { id: number; first_name: string; last_name: string | null; is_active: boolean }
+    | { id: number; first_name: string; last_name: string | null; is_active: boolean }[]
+    | null;
 };
 
 type ClassScheduleEmbed = {
@@ -41,6 +54,8 @@ type ClassWithDetails = {
   lesson_type: string | null;
   class_track: string | null;
   is_active: boolean;
+  teacher_id: number | null;
+  room_id: number | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   rooms: RoomEmbed | RoomEmbed[] | null;
   class_schedules: ClassScheduleEmbed | ClassScheduleEmbed[] | null;
@@ -78,6 +93,7 @@ export default async function ClassesPage() {
     { data: classes, error },
     { data: teachers },
     { data: rooms },
+    { data: classTeacherLinks },
   ] = await Promise.all([
     supabase
       .from("classes")
@@ -89,8 +105,10 @@ export default async function ClassesPage() {
       lesson_type,
       class_track,
       is_active,
-      teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
-      rooms ( room_number ),
+      teacher_id,
+      room_id,
+      teachers!classes_teacher_id_fkey ( id, first_name, last_name, is_active ),
+      rooms ( id, room_number, class_size ),
       class_schedules (
         id,
         is_recurring,
@@ -114,20 +132,64 @@ export default async function ClassesPage() {
       .select("id, room_number, class_size")
       .eq("location_id", locationId)
       .order("room_number"),
+    supabase
+      .from("class_teachers")
+      .select(
+        `
+        class_id,
+        teacher_id,
+        teachers ( id, first_name, last_name, is_active ),
+        classes!inner ( location_id )
+      `,
+      )
+      .eq("classes.location_id", locationId),
   ]);
 
   const teacherOptions = sortTeachers((teachers as TeacherOption[] | null) ?? []);
   const roomOptions = (rooms as RoomOption[] | null) ?? [];
+  const teachersByClassId = new Map<number, TeacherOption[]>();
+  for (const link of (classTeacherLinks as ClassTeacherLink[] | null) ?? []) {
+    const linked = firstOrNull(link.teachers);
+    if (!linked || linked.is_active === false) continue;
+    const current = teachersByClassId.get(link.class_id) ?? [];
+    if (current.some((teacher) => teacher.id === linked.id)) continue;
+    teachersByClassId.set(link.class_id, [
+      ...current,
+      {
+        id: linked.id,
+        first_name: linked.first_name,
+        last_name: linked.last_name,
+      },
+    ]);
+  }
+
   const subjectOptions = listKnownClassSubjects([
     ...listPriceSheetSubjects(),
     ...((classes as ClassWithDetails[] | null)?.map((row) => row.subject) ?? []),
   ]);
   const classRows: ClassSearchRow[] =
-    (classes as ClassWithDetails[] | null)?.map((classRow) => {
+    (classes as ClassWithDetails[] | null)
+      ?.filter((classRow) => !isCatalogTrialClass(classRow))
+      .map((classRow) => {
       const teacherEmbed = firstOrNull(classRow.teachers);
       const teacher =
-        teacherEmbed && teacherEmbed.is_active !== false ? teacherEmbed : null;
+        teacherEmbed && teacherEmbed.is_active !== false && teacherEmbed.id != null
+          ? {
+              id: teacherEmbed.id,
+              first_name: teacherEmbed.first_name,
+              last_name: teacherEmbed.last_name,
+            }
+          : teacherEmbed && teacherEmbed.is_active !== false
+            ? teacherEmbed
+            : null;
       const room = firstOrNull(classRow.rooms);
+      const assignedFromJoin = teachersByClassId.get(classRow.id) ?? [];
+      const assignedTeachers =
+        assignedFromJoin.length > 0
+          ? assignedFromJoin
+          : teacher && "id" in teacher && teacher.id != null
+            ? [teacher]
+            : [];
 
       return {
         id: classRow.id,
@@ -143,8 +205,11 @@ export default async function ClassesPage() {
         lesson_type: classRow.lesson_type,
         class_track: classRow.class_track,
         is_active: classRow.is_active,
-        teacher,
+        teacher: assignedTeachers[0] ?? teacher,
+        assignedTeachers,
+        room_id: classRow.room_id,
         room_number: room?.room_number ?? null,
+        room_class_size: room?.class_size ?? null,
       };
     }) ?? [];
 
@@ -173,7 +238,13 @@ export default async function ClassesPage() {
         </p>
       ) : null}
 
-      {classRows.length > 0 ? <ClassesListTable classes={classRows} /> : null}
+      {classRows.length > 0 ? (
+        <ClassesListTable
+          classes={classRows}
+          teachers={teacherOptions}
+          rooms={roomOptions}
+        />
+      ) : null}
     </div>
   );
 }

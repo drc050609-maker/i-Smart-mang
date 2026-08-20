@@ -124,21 +124,34 @@ export function formatClassSubject(
   return translateClassSubjectToChinese(subject);
 }
 
+/** Group rows that share the same subject label (case-insensitive). */
+export function groupByClassSubject<T extends { subject: string }>(
+  rows: T[],
+): Array<{ subject: string; items: T[] }> {
+  const groups = new Map<string, { subject: string; items: T[] }>();
+
+  for (const row of rows) {
+    const trimmed = row.subject.trim();
+    if (!trimmed) continue;
+    const key = trimmed.toLowerCase();
+    const existing = groups.get(key);
+    if (existing) {
+      existing.items.push(row);
+    } else {
+      groups.set(key, { subject: trimmed, items: [row] });
+    }
+  }
+
+  return [...groups.values()].sort((a, b) =>
+    a.subject.localeCompare(b.subject, undefined, { sensitivity: "base" }),
+  );
+}
+
 /** Keep the first class for each subject (case-insensitive). */
 export function uniqueClassesBySubject<T extends { subject: string }>(
   classes: T[],
 ): T[] {
-  const seen = new Set<string>();
-  const result: T[] = [];
-
-  for (const row of classes) {
-    const key = row.subject.trim().toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    result.push(row);
-  }
-
-  return result;
+  return groupByClassSubject(classes).map((group) => group.items[0]!);
 }
 
 /** Display subject with optional enrollment grade, e.g. Piano (G5). */

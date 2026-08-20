@@ -50,3 +50,24 @@ export function parseLessonType(value: FormDataEntryValue | null) {
 
   return lessonType as LessonType;
 }
+
+/** Trial bookings stay on the schedule; they are hidden from the class catalog. */
+export function isCatalogTrialClass(row: {
+  lesson_type?: string | null;
+  subject?: string | null;
+}) {
+  if (row.lesson_type === "trial") {
+    return true;
+  }
+
+  const subject = row.subject?.trim().toLowerCase() ?? "";
+  if (!subject) {
+    return false;
+  }
+
+  return (
+    subject === "trial" ||
+    subject.includes("trial") ||
+    subject.includes("试课")
+  );
+}

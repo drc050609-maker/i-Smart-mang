@@ -55,6 +55,7 @@ import {
   formatEasternDateYMD,
   formatHourLabel,
   formatScheduleEventStudentLabel,
+  isLargeGroupClassDisplay,
   resolveScheduleEventStudents,
   scheduleEventUnassignedLabel,
   withTrialStudentLabel,
@@ -177,15 +178,27 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     instance.lesson_type,
     trialLabel,
   );
+  const largeGroup = isLargeGroupClassDisplay(
+    instance.lesson_type,
+    labeledStudents.length,
+  );
+  const titleLabel = largeGroup ? subjectLabel : studentLabel;
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
   const showSecondary = displayHeight >= 40;
   const showSubjectTertiary =
-    displayHeight >= (separated ? 72 : 58) && studentLabel !== subjectLabel;
+    !largeGroup &&
+    displayHeight >= (separated ? 72 : 58) &&
+    studentLabel !== subjectLabel;
+  const showStudentsFooter =
+    largeGroup && displayHeight >= (separated ? 56 : 48);
   const soleStudent =
-    separated && labeledStudents.length === 1 ? labeledStudents[0] : null;
-  const wrapNames = separated || labeledStudents.length > 1;
-  const tooltip =
-    displayStudentLabel === subjectLabel
+    !largeGroup && separated && labeledStudents.length === 1
+      ? labeledStudents[0]
+      : null;
+  const wrapNames = separated || labeledStudents.length > 1 || largeGroup;
+  const tooltip = largeGroup
+    ? `${subjectLabel} · ${displayStudentLabel} · ${timeLabel}`
+    : displayStudentLabel === subjectLabel
       ? `${subjectLabel} · ${timeLabel}`
       : `${displayStudentLabel} · ${timeLabel} · ${subjectLabel}`;
 
@@ -223,59 +236,68 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
       )}
       title={tooltip}
     >
-      <p
-        className={classNames(
-          "flex items-start gap-0.5 text-[11px] font-semibold leading-tight",
-          wrapNames ? "break-words" : "truncate",
-        )}
-      >
-        <span
-          className={
-            wrapNames ? "min-w-0 flex-1 break-words" : "min-w-0 truncate"
-          }
-        >
-          {soleStudent ? (
-            <>
-              <span className="block leading-tight">
-                {soleStudent["first name"]}
-              </span>
-              {soleStudent["last name"] ? (
-                <span className="block leading-tight">
-                  {soleStudent["last name"]}
-                </span>
-              ) : null}
-            </>
-          ) : (
-            studentLabel
-          )}
-        </span>
-        {labeledStudents.length > 0 ? (
-          <ScheduleTrialLabel
-            lessonType={instance.lesson_type}
-            className="shrink-0 font-medium opacity-80"
-          />
-        ) : null}
-        <StudentNoteStar
-          students={labeledStudents}
-          className="mt-px"
-          iconClassName="size-3"
-        />
-      </p>
-      {showSecondary ? (
-        <p className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
-          {timeLabel}
-        </p>
-      ) : null}
-      {showSubjectTertiary ? (
+      <div className="flex h-full min-h-0 flex-col">
         <p
           className={classNames(
-            "text-[10px] leading-tight opacity-70",
-            wrapNames ? "break-words" : "truncate",
+            "flex items-start gap-0.5 text-[11px] font-semibold leading-tight",
+            wrapNames && !largeGroup ? "break-words" : "truncate",
           )}
         >
-          {subjectLabel}
+          <span
+            className={
+              wrapNames && !largeGroup
+                ? "min-w-0 flex-1 break-words"
+                : "min-w-0 truncate"
+            }
+          >
+            {soleStudent ? (
+              <>
+                <span className="block leading-tight">
+                  {soleStudent["first name"]}
+                </span>
+                {soleStudent["last name"] ? (
+                  <span className="block leading-tight">
+                    {soleStudent["last name"]}
+                  </span>
+                ) : null}
+              </>
+            ) : (
+              titleLabel
+            )}
+          </span>
+          {labeledStudents.length > 0 && !largeGroup ? (
+            <ScheduleTrialLabel
+              lessonType={instance.lesson_type}
+              className="shrink-0 font-medium opacity-80"
+            />
+          ) : null}
+          <StudentNoteStar
+            students={labeledStudents}
+            className="mt-px"
+            iconClassName="size-3"
+          />
         </p>
-      ) : null}
+        {showSecondary ? (
+          <p className="text-[10px] leading-tight opacity-80 whitespace-nowrap">
+            {timeLabel}
+          </p>
+        ) : null}
+        {showSubjectTertiary ? (
+          <p
+            className={classNames(
+              "text-[10px] leading-tight opacity-70",
+              wrapNames ? "break-words" : "truncate",
+            )}
+          >
+            {subjectLabel}
+          </p>
+        ) : null}
+        {showStudentsFooter ? (
+          <p className="mt-auto min-h-0 overflow-hidden text-[10px] leading-tight opacity-80 break-words">
+            {studentLabel}
+          </p>
+        ) : null}
+      </div>
     </div>
   );
 });

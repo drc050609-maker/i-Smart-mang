@@ -15,7 +15,9 @@ function lessonTypeKey(value: string | null | undefined) {
 }
 
 /**
- * Find an existing class for the same teacher + instrument (and lesson type).
+ * Find an existing class for the same instrument (and lesson type).
+ * Callers must pass only classes owned by the target teacher
+ * (`classes.teacher_id`), not co-teacher links.
  * Prefers a matching duration when one exists; otherwise reuses any class for
  * that instrument so different-length slots do not require duplicate classes.
  */
