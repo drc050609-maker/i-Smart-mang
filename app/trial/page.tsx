@@ -1,31 +1,51 @@
 import { TrialClassForm } from "@/components/trial-class-form";
 import { BrandLogo } from "@/components/brand-logo";
+import { createTranslator } from "@/lib/i18n";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { formatTeacherName, sortTeachers } from "@/lib/person-name";
 import {
   formatTrialPrice,
-  TRIAL_CLASS_DURATION_MINUTES,
+  TRIAL_CLASS_PRICE_USD,
   TRIAL_CLASS_SUBJECTS,
   type TrialTeacherOption,
 } from "@/lib/trial-class";
 
 export default async function TrialPage() {
+  const t = createTranslator("en");
   let teachers: TrialTeacherOption[] = [];
+  let trialPriceUsd: number | undefined;
   let loadError: string | null = null;
 
   try {
     const supabase = createSupabaseServiceClient();
-    const { data, error } = await supabase
-      .from("teachers")
-      .select("id, first_name, last_name")
-      .eq("is_active", true)
-      .eq("position", "teacher")
-      .order("first_name");
+    const { data: campus, error: campusError } = await supabase
+      .from("locations")
+      .select("id, trial_price_cents")
+      .eq("slug", "brooklyn")
+      .maybeSingle();
 
-    if (error) {
-      loadError = error.message;
+    if (campusError) {
+      loadError = campusError.message;
     } else {
-      teachers = sortTeachers((data as TrialTeacherOption[] | null) ?? []);
+      trialPriceUsd = campus?.trial_price_cents
+        ? campus.trial_price_cents / 100
+        : undefined;
+      const query = supabase
+        .from("teachers")
+        .select("id, first_name, last_name")
+        .eq("is_active", true)
+        .eq("position", "teacher")
+        .order("first_name");
+
+      const { data, error } = campus?.id
+        ? await query.eq("location_id", campus.id)
+        : await query;
+
+      if (error) {
+        loadError = error.message;
+      } else {
+        teachers = sortTeachers((data as TrialTeacherOption[] | null) ?? []);
+      }
     }
   } catch {
     loadError =
@@ -46,11 +66,10 @@ export default async function TrialPage() {
         </div>
 
         <h1 className="mt-6 text-center text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-white">
-          Book a trial class
+          {t("trial.title")}
         </h1>
         <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-400">
-          {formatTrialPrice()} · {TRIAL_CLASS_DURATION_MINUTES} minutes ·
-          one-on-one with your teacher
+          {t("trial.fee")}: {formatTrialPrice(trialPriceUsd ?? TRIAL_CLASS_PRICE_USD)}
         </p>
       </div>
 
@@ -60,8 +79,7 @@ export default async function TrialPage() {
             <p className="text-sm text-red-600 dark:text-red-400">{loadError}</p>
           ) : teachers.length === 0 ? (
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              No teachers are available for trial classes right now. Please
-              contact the school to schedule.
+              {t("trial.noTeachers")}
             </p>
           ) : (
             <TrialClassForm
@@ -70,6 +88,8 @@ export default async function TrialPage() {
                 id: teacher.id,
                 name: formatTeacherName(teacher),
               }))}
+              language="en"
+              trialPriceUsd={trialPriceUsd ?? TRIAL_CLASS_PRICE_USD}
             />
           )}
         </div>

@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { formatSessionDate } from "@/lib/class-session-credits";
+import {
+  formatSessionDate,
+  parseClassCreditCount,
+} from "@/lib/class-session-credits";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionState = {
@@ -248,5 +251,60 @@ export async function transferStudentClassCredits(
   }
   revalidatePath("/payments");
 
+  return { success: true };
+}
+
+export async function updateStudentClassCredits(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const studentId = Number(formData.get("studentId"));
+  const classId = Number(formData.get("classId"));
+  const sessionsTotal = parseClassCreditCount(formData.get("sessionsTotal"));
+  const sessionsRemaining = parseClassCreditCount(
+    formData.get("sessionsRemaining"),
+  );
+  const sessionsUsed = parseClassCreditCount(formData.get("sessionsUsed"));
+  const absenceCount = parseClassCreditCount(formData.get("absenceCount"));
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  if (
+    sessionsTotal === null ||
+    sessionsRemaining === null ||
+    sessionsUsed === null ||
+    absenceCount === null
+  ) {
+    return { error: "Enter whole numbers from 0 to 9999." };
+  }
+
+  const auth = await getAuthClient();
+  if ("error" in auth) {
+    return { error: auth.error };
+  }
+
+  const { error } = await auth.supabase.from("student_class_balances").upsert(
+    {
+      student_id: studentId,
+      class_id: classId,
+      sessions_total: sessionsTotal,
+      sessions_remaining: sessionsRemaining,
+      sessions_used: sessionsUsed,
+      absence_count: absenceCount,
+    },
+    { onConflict: "student_id,class_id" },
+  );
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateCreditPaths(studentId, classId);
   return { success: true };
 }

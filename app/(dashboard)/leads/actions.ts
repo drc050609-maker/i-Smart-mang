@@ -705,6 +705,7 @@ export async function makeTrialStudentOfficial(
   formData: FormData,
 ): Promise<ConvertLeadChildState> {
   const studentId = Number(formData.get("studentId"));
+  const dob = parseOptionalText(formData.get("dob"));
   const startingClassCredits = parseStartingClassCredits(
     formData.get("startingClassCredits"),
   );
@@ -743,6 +744,7 @@ export async function makeTrialStudentOfficial(
     .update({
       starting_class_credits: startingClassCredits,
       is_active: true,
+      ...(dob ? { dob } : {}),
     })
     .eq("id", studentId);
 

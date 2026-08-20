@@ -55,12 +55,15 @@ type PaymentRow = {
     | null;
   classes:
     | {
+        id: number;
         subject: string;
       }
     | {
+        id: number;
         subject: string;
       }[]
     | null;
+  notes: string | null;
 };
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
@@ -129,7 +132,8 @@ export default async function PaymentsPage() {
         session_count,
         status,
         students!inner ( id, "first name", "last name", location_id ),
-        classes ( subject )
+        classes ( id, subject ),
+        notes
       `,
       )
       .eq("students.location_id", locationId)
@@ -185,6 +189,8 @@ export default async function PaymentsPage() {
           status: payment.status,
           student,
           classSubject: classRow.subject,
+          classId: classRow.id,
+          notes: payment.notes,
         };
       })
       .filter((row): row is PaymentHistoryRow => row !== null) ?? [];

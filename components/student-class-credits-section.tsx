@@ -8,7 +8,13 @@ import type { StudentOption } from "@/components/student-combobox";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
-import type { StudentClassCreditRow } from "@/lib/class-session-credits";
+import {
+  MAX_CLASS_CREDIT_VALUE,
+  type StudentClassCreditRow,
+} from "@/lib/class-session-credits";
+
+const creditInputClassName =
+  "w-20 rounded-md bg-white px-2 py-1 text-right text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:focus:outline-indigo-500";
 
 function BalanceCell({ value, highlight }: { value: number; highlight?: boolean }) {
   return (
@@ -24,14 +30,24 @@ function BalanceCell({ value, highlight }: { value: number; highlight?: boolean 
   );
 }
 
+export type CreditField =
+  | "sessions_total"
+  | "sessions_remaining"
+  | "sessions_used"
+  | "absence_count";
+
 export function StudentClassCreditsSection({
   rows,
   studentOptions,
   returnTo,
+  editing = false,
+  onCreditChange,
 }: {
   rows: StudentClassCreditRow[];
   studentOptions: StudentOption[];
   returnTo?: string | null;
+  editing?: boolean;
+  onCreditChange?: (classId: number, field: CreditField, value: number) => void;
 }) {
   const { language, t } = useLanguage();
 
@@ -80,12 +96,14 @@ export function StudentClassCreditsSection({
                 >
                   {t("common.absences")}
                 </th>
-                <th
-                  scope="col"
-                  className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-0 dark:text-white"
-                >
-                  {t("common.actions")}
-                </th>
+                {editing ? null : (
+                  <th
+                    scope="col"
+                    className="py-3.5 pr-4 pl-3 text-right text-sm font-semibold text-gray-900 sm:pr-0 dark:text-white"
+                  >
+                    {t("common.actions")}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-white/10">
@@ -99,42 +117,56 @@ export function StudentClassCreditsSection({
                       {formatClassSubject(row.subject, language)}
                     </Link>
                   </td>
-                  <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                    <BalanceCell value={row.balance.sessions_total} />
-                  </td>
-                  <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                    <BalanceCell
-                      value={row.balance.sessions_remaining}
-                      highlight={row.balance.sessions_remaining <= 2}
-                    />
-                  </td>
-                  <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                    <BalanceCell value={row.balance.sessions_used} />
-                  </td>
-                  <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                    <BalanceCell
-                      value={row.balance.absence_count}
-                      highlight={row.balance.absence_count > 0}
-                    />
-                  </td>
-                  <td className="py-4 pr-4 pl-3 text-right text-sm sm:pr-0">
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                      <StudentCreditActionsDialog
-                        studentId={row.balance.student_id}
-                        classId={row.classId}
-                        classSubject={row.subject}
-                        scheduleId={row.scheduleId}
-                        remainingCredits={row.balance.sessions_remaining}
-                        studentOptions={studentOptions}
-                      />
-                      <ClassSessionActionButtons
-                        studentId={row.balance.student_id}
-                        classId={row.classId}
-                        scheduleId={row.scheduleId}
-                        compact
-                      />
-                    </div>
-                  </td>
+                  <CreditValue
+                    editing={editing}
+                    value={row.balance.sessions_total}
+                    onChange={(value) =>
+                      onCreditChange?.(row.classId, "sessions_total", value)
+                    }
+                  />
+                  <CreditValue
+                    editing={editing}
+                    value={row.balance.sessions_remaining}
+                    highlight={!editing && row.balance.sessions_remaining <= 2}
+                    onChange={(value) =>
+                      onCreditChange?.(row.classId, "sessions_remaining", value)
+                    }
+                  />
+                  <CreditValue
+                    editing={editing}
+                    value={row.balance.sessions_used}
+                    onChange={(value) =>
+                      onCreditChange?.(row.classId, "sessions_used", value)
+                    }
+                  />
+                  <CreditValue
+                    editing={editing}
+                    value={row.balance.absence_count}
+                    highlight={!editing && row.balance.absence_count > 0}
+                    onChange={(value) =>
+                      onCreditChange?.(row.classId, "absence_count", value)
+                    }
+                  />
+                  {editing ? null : (
+                    <td className="py-4 pr-4 pl-3 text-right text-sm sm:pr-0">
+                      <div className="flex flex-wrap items-center justify-end gap-2">
+                        <StudentCreditActionsDialog
+                          studentId={row.balance.student_id}
+                          classId={row.classId}
+                          classSubject={row.subject}
+                          scheduleId={row.scheduleId}
+                          remainingCredits={row.balance.sessions_remaining}
+                          studentOptions={studentOptions}
+                        />
+                        <ClassSessionActionButtons
+                          studentId={row.balance.student_id}
+                          classId={row.classId}
+                          scheduleId={row.scheduleId}
+                          compact
+                        />
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -142,5 +174,39 @@ export function StudentClassCreditsSection({
         </div>
       </div>
     </div>
+  );
+}
+
+function CreditValue({
+  editing,
+  value,
+  highlight,
+  onChange,
+}: {
+  editing: boolean;
+  value: number;
+  highlight?: boolean;
+  onChange: (value: number) => void;
+}) {
+  return (
+    <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
+      {editing ? (
+        <input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={MAX_CLASS_CREDIT_VALUE}
+          step={1}
+          value={value}
+          onChange={(event) => {
+            const next = Number(event.target.value);
+            onChange(Number.isFinite(next) ? next : 0);
+          }}
+          className={creditInputClassName}
+        />
+      ) : (
+        <BalanceCell value={value} highlight={highlight} />
+      )}
+    </td>
   );
 }

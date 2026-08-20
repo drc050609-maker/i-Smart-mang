@@ -8,9 +8,10 @@ import { deactivateClassesWithNoActiveEnrollments } from "@/lib/class-active";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import {
   DEFAULT_STARTING_CLASS_CREDITS,
+  parseClassCreditCount,
   parseStartingClassCredits,
 } from "@/lib/class-session-credits";
-import { isPhoneOwnerRole } from "@/lib/phone-owner";
+import { isPhoneOwnerRole, type PhoneOwnerRole } from "@/lib/phone-owner";
 import {
   isStudentReceiptMimeType,
   MAX_STUDENT_RECEIPT_FILE_BYTES,
@@ -957,5 +958,608 @@ export async function deleteStudentReceipt(
   }
 
   revalidateStudent(studentId);
+  return { success: true };
+}
+
+export type SaveStudentDetailsState = ActionState;
+
+type SaveStudentDetailsPayload = {
+  firstName: string;
+  lastName: string | null;
+  dob: string | null;
+  isActive: boolean;
+  notes: string | null;
+  experience: string | null;
+  startingClassCredits: number;
+  gender: "male" | "female" | null;
+  parentName: string | null;
+  trialTimePreference: "weekday" | "weekend" | null;
+  phones: Array<{
+    id: number | null;
+    phoneNumber: string;
+    ownerRole: PhoneOwnerRole;
+    ownerName: string | null;
+    isPrimary: boolean;
+  }>;
+  deletedPhoneIds: number[];
+  addresses: Array<{
+    id: number | null;
+    street1: string;
+    street2: string | null;
+    city: string | null;
+    state: string | null;
+    zipCode: string | null;
+  }>;
+  deletedAddressIds: number[];
+  enrollments: Array<{
+    id: number;
+    gradeLevel: string | null;
+    isActive: boolean;
+  }>;
+  removedEnrollmentIds: number[];
+  newClassIds: number[];
+  credits: Array<{
+    classId: number;
+    sessionsTotal: number;
+    sessionsRemaining: number;
+    sessionsUsed: number;
+    absenceCount: number;
+  }>;
+  receiptNotes: Array<{
+    id: number;
+    note: string | null;
+  }>;
+};
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+}
+
+function asString(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+
+function asNullableString(value: unknown) {
+  const text = asString(value).trim();
+  return text ? text : null;
+}
+
+function asBoolean(value: unknown) {
+  return value === true;
+}
+
+function asIdArray(value: unknown) {
+  if (!Array.isArray(value)) return null;
+  const ids: number[] = [];
+  for (const item of value) {
+    const id = Number(item);
+    if (!Number.isInteger(id) || id <= 0) return null;
+    ids.push(id);
+  }
+  return ids;
+}
+
+function parseDobValue(value: unknown) {
+  const raw = asString(value).trim();
+  if (!raw) return { ok: true as const, value: null };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    return { ok: false as const, error: "Enter a valid date of birth." };
+  }
+  return { ok: true as const, value: raw };
+}
+
+function parseSaveStudentDetailsPayload(
+  raw: unknown,
+): { error: string } | { payload: SaveStudentDetailsPayload } {
+  const data = asRecord(raw);
+  if (!data) {
+    return { error: "Invalid student details." };
+  }
+
+  const firstName = asString(data.firstName).trim();
+  if (!firstName) {
+    return { error: "First name is required." };
+  }
+
+  const dob = parseDobValue(data.dob);
+  if (!dob.ok) {
+    return { error: dob.error };
+  }
+
+  const startingClassCredits = parseStartingClassCredits(
+    String(data.startingClassCredits ?? ""),
+  );
+  if (startingClassCredits === null) {
+    return {
+      error: "Starting class sessions must be a whole number from 0 to 500.",
+    };
+  }
+
+  const genderRaw = asString(data.gender).trim();
+  let gender: "male" | "female" | null = null;
+  if (genderRaw === "male" || genderRaw === "female") {
+    gender = genderRaw;
+  } else if (genderRaw) {
+    return { error: "Select male or female, or leave gender blank." };
+  }
+
+  const trialRaw = asString(data.trialTimePreference).trim();
+  let trialTimePreference: "weekday" | "weekend" | null = null;
+  if (trialRaw === "weekday" || trialRaw === "weekend") {
+    trialTimePreference = trialRaw;
+  } else if (trialRaw) {
+    return { error: "Select weekday or weekend, or leave trial time blank." };
+  }
+
+  if (!Array.isArray(data.phones)) {
+    return { error: "Invalid phone list." };
+  }
+
+  const phones: SaveStudentDetailsPayload["phones"] = [];
+  for (const item of data.phones) {
+    const phone = asRecord(item);
+    if (!phone) return { error: "Invalid phone contact." };
+    const phoneNumber = asString(phone.phoneNumber).trim();
+    const ownerRole = asString(phone.ownerRole).trim();
+    if (!phoneNumber) {
+      return { error: "Phone number is required." };
+    }
+    if (!isPhoneOwnerRole(ownerRole)) {
+      return { error: "Select whose phone this is." };
+    }
+    const id = phone.id == null ? null : Number(phone.id);
+    if (id !== null && (!Number.isInteger(id) || id <= 0)) {
+      return { error: "Invalid phone contact." };
+    }
+    phones.push({
+      id,
+      phoneNumber,
+      ownerRole,
+      ownerName: asNullableString(phone.ownerName),
+      isPrimary: asBoolean(phone.isPrimary),
+    });
+  }
+
+  if (!Array.isArray(data.addresses)) {
+    return { error: "Invalid address list." };
+  }
+
+  const addresses: SaveStudentDetailsPayload["addresses"] = [];
+  for (const item of data.addresses) {
+    const address = asRecord(item);
+    if (!address) return { error: "Invalid address." };
+    const street1 = asString(address.street1).trim();
+    if (!street1) {
+      return { error: "Street address is required." };
+    }
+    const zipCode = asNullableString(address.zipCode);
+    const zipError = validateZipCode(zipCode);
+    if (zipError) {
+      return { error: zipError };
+    }
+    const id = address.id == null ? null : Number(address.id);
+    if (id !== null && (!Number.isInteger(id) || id <= 0)) {
+      return { error: "Invalid address." };
+    }
+    addresses.push({
+      id,
+      street1,
+      street2: asNullableString(address.street2),
+      city: asNullableString(address.city),
+      state: asNullableString(address.state),
+      zipCode,
+    });
+  }
+
+  const deletedPhoneIds = asIdArray(data.deletedPhoneIds);
+  const deletedAddressIds = asIdArray(data.deletedAddressIds);
+  const removedEnrollmentIds = asIdArray(data.removedEnrollmentIds);
+  const newClassIds = asIdArray(data.newClassIds);
+  if (
+    !deletedPhoneIds ||
+    !deletedAddressIds ||
+    !removedEnrollmentIds ||
+    !newClassIds
+  ) {
+    return { error: "Invalid student details." };
+  }
+
+  if (!Array.isArray(data.enrollments)) {
+    return { error: "Invalid class list." };
+  }
+
+  const enrollments: SaveStudentDetailsPayload["enrollments"] = [];
+  for (const item of data.enrollments) {
+    const enrollment = asRecord(item);
+    if (!enrollment) return { error: "Invalid enrollment." };
+    const id = Number(enrollment.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return { error: "Invalid enrollment." };
+    }
+    enrollments.push({
+      id,
+      gradeLevel: asNullableString(enrollment.gradeLevel),
+      isActive: asBoolean(enrollment.isActive),
+    });
+  }
+
+  if (!Array.isArray(data.credits)) {
+    return { error: "Invalid class credits." };
+  }
+
+  const credits: SaveStudentDetailsPayload["credits"] = [];
+  for (const item of data.credits) {
+    const credit = asRecord(item);
+    if (!credit) return { error: "Invalid class credits." };
+    const classId = Number(credit.classId);
+    const sessionsTotal = parseClassCreditCount(
+      String(credit.sessionsTotal ?? ""),
+    );
+    const sessionsRemaining = parseClassCreditCount(
+      String(credit.sessionsRemaining ?? ""),
+    );
+    const sessionsUsed = parseClassCreditCount(
+      String(credit.sessionsUsed ?? ""),
+    );
+    const absenceCount = parseClassCreditCount(
+      String(credit.absenceCount ?? ""),
+    );
+    if (!Number.isInteger(classId) || classId <= 0) {
+      return { error: "Invalid class credits." };
+    }
+    if (
+      sessionsTotal === null ||
+      sessionsRemaining === null ||
+      sessionsUsed === null ||
+      absenceCount === null
+    ) {
+      return {
+        error: "Enter whole numbers from 0 to 9999 for every credit field.",
+      };
+    }
+    credits.push({
+      classId,
+      sessionsTotal,
+      sessionsRemaining,
+      sessionsUsed,
+      absenceCount,
+    });
+  }
+
+  if (!Array.isArray(data.receiptNotes)) {
+    return { error: "Invalid receipts." };
+  }
+
+  const receiptNotes: SaveStudentDetailsPayload["receiptNotes"] = [];
+  for (const item of data.receiptNotes) {
+    const receipt = asRecord(item);
+    if (!receipt) return { error: "Invalid receipts." };
+    const id = Number(receipt.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return { error: "Invalid receipts." };
+    }
+    receiptNotes.push({
+      id,
+      note: asNullableString(receipt.note),
+    });
+  }
+
+  return {
+    payload: {
+      firstName,
+      lastName: asNullableString(data.lastName),
+      dob: dob.value,
+      isActive: asBoolean(data.isActive),
+      notes: asNullableString(data.notes),
+      experience: asNullableString(data.experience),
+      startingClassCredits,
+      gender,
+      parentName: asNullableString(data.parentName),
+      trialTimePreference,
+      phones,
+      deletedPhoneIds,
+      addresses,
+      deletedAddressIds,
+      enrollments,
+      removedEnrollmentIds,
+      newClassIds,
+      credits,
+      receiptNotes,
+    },
+  };
+}
+
+export async function saveStudentDetails(
+  _prevState: SaveStudentDetailsState,
+  formData: FormData,
+): Promise<SaveStudentDetailsState> {
+  const studentId = Number(formData.get("studentId"));
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(formData.get("payload")?.toString() ?? "");
+  } catch {
+    return { error: "Invalid student details." };
+  }
+
+  const parsed = parseSaveStudentDetailsPayload(parsedJson);
+  if ("error" in parsed) {
+    return parsed;
+  }
+
+  const { payload } = parsed;
+  await requireStaff();
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const { data: existingStudent, error: existingError } = await client.supabase
+    .from("students")
+    .select("id, is_active")
+    .eq("id", studentId)
+    .maybeSingle();
+
+  if (existingError) {
+    return { error: existingError.message };
+  }
+  if (!existingStudent) {
+    return { error: "Student not found." };
+  }
+
+  const { error: studentError } = await client.supabase
+    .from("students")
+    .update({
+      "first name": payload.firstName,
+      "last name": payload.lastName,
+      dob: payload.dob,
+      is_active: payload.isActive,
+      notes: payload.notes,
+      experience: payload.experience,
+      starting_class_credits: payload.startingClassCredits,
+      gender: payload.gender,
+      parent_name: payload.parentName,
+      trial_time_preference: payload.trialTimePreference,
+    })
+    .eq("id", studentId);
+
+  if (studentError) {
+    return { error: studentError.message };
+  }
+
+  if (payload.deletedPhoneIds.length > 0) {
+    const { error } = await client.supabase
+      .from("student_phone_contacts")
+      .delete()
+      .eq("student_id", studentId)
+      .in("id", payload.deletedPhoneIds);
+    if (error) return { error: error.message };
+  }
+
+  const primaryPhone = payload.phones.find((phone) => phone.isPrimary) ?? null;
+  if (primaryPhone) {
+    const { error } = await client.supabase
+      .from("student_phone_contacts")
+      .update({ is_primary: false })
+      .eq("student_id", studentId)
+      .eq("is_primary", true);
+    if (error) return { error: error.message };
+  }
+
+  for (const phone of payload.phones) {
+    const fields = {
+      phone_number: phone.phoneNumber,
+      owner_role: phone.ownerRole,
+      owner_name: phone.ownerName,
+      is_primary: phone.isPrimary,
+    };
+    if (phone.id) {
+      const { error } = await client.supabase
+        .from("student_phone_contacts")
+        .update(fields)
+        .eq("id", phone.id)
+        .eq("student_id", studentId);
+      if (error) return { error: error.message };
+    } else {
+      const { error } = await client.supabase.from("student_phone_contacts").insert({
+        student_id: studentId,
+        ...fields,
+      });
+      if (error) return { error: error.message };
+    }
+  }
+
+  if (payload.deletedAddressIds.length > 0) {
+    const { error } = await client.supabase
+      .from("addresses")
+      .delete()
+      .eq("student", studentId)
+      .in("id", payload.deletedAddressIds);
+    if (error) return { error: error.message };
+  }
+
+  for (const address of payload.addresses) {
+    const fields = {
+      "street 1": address.street1,
+      "street 2": address.street2,
+      city: address.city,
+      state: address.state,
+      "zip code": address.zipCode,
+    };
+    if (address.id) {
+      const { error } = await client.supabase
+        .from("addresses")
+        .update(fields)
+        .eq("id", address.id)
+        .eq("student", studentId);
+      if (error) return { error: error.message };
+    } else {
+      const { error } = await client.supabase.from("addresses").insert({
+        student: studentId,
+        ...fields,
+      });
+      if (error) return { error: error.message };
+    }
+  }
+
+  const removedEnrollmentSet = new Set(payload.removedEnrollmentIds);
+  const classIdsToSync = new Set<number>();
+
+  if (payload.removedEnrollmentIds.length > 0) {
+    const { data: removedRows, error: removedLookupError } =
+      await client.supabase
+        .from("enrollments")
+        .select('id, "class id"')
+        .eq("student id", studentId)
+        .in("id", payload.removedEnrollmentIds);
+
+    if (removedLookupError) {
+      return { error: removedLookupError.message };
+    }
+
+    for (const row of removedRows ?? []) {
+      if (typeof row["class id"] === "number") {
+        classIdsToSync.add(row["class id"]);
+      }
+    }
+
+    const { error } = await client.supabase
+      .from("enrollments")
+      .delete()
+      .eq("student id", studentId)
+      .in("id", payload.removedEnrollmentIds);
+    if (error) return { error: error.message };
+  }
+
+  for (const enrollment of payload.enrollments) {
+    if (removedEnrollmentSet.has(enrollment.id)) continue;
+    const { error } = await client.supabase
+      .from("enrollments")
+      .update({
+        grade_level: enrollment.gradeLevel,
+        is_active: enrollment.isActive,
+      })
+      .eq("id", enrollment.id)
+      .eq("student id", studentId);
+    if (error) return { error: error.message };
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (payload.newClassIds.length > 0) {
+    const { data: existingEnrollments, error: existingEnrollError } =
+      await client.supabase
+        .from("enrollments")
+        .select('"class id"')
+        .eq("student id", studentId)
+        .in("class id", payload.newClassIds);
+
+    if (existingEnrollError) {
+      return { error: existingEnrollError.message };
+    }
+
+    const alreadyEnrolled = new Set(
+      (existingEnrollments ?? [])
+        .map((row) => row["class id"])
+        .filter((id): id is number => typeof id === "number"),
+    );
+    const classIdsToInsert = payload.newClassIds.filter(
+      (classId) => !alreadyEnrolled.has(classId),
+    );
+
+    if (classIdsToInsert.length > 0) {
+      const { error: insertError } = await client.supabase.from("enrollments").insert(
+        classIdsToInsert.map((classId) => ({
+          "class id": classId,
+          "student id": studentId,
+          created_date: today,
+          is_active: true,
+          updated_date: today,
+        })),
+      );
+      if (insertError) return { error: insertError.message };
+
+      for (const classId of classIdsToInsert) {
+        classIdsToSync.add(classId);
+        if (payload.startingClassCredits <= 0) continue;
+        const { error: creditsError } = await client.supabase.rpc(
+          "add_student_class_credits",
+          {
+            p_student_id: studentId,
+            p_class_id: classId,
+            p_count: payload.startingClassCredits,
+          },
+        );
+        if (creditsError) return { error: creditsError.message };
+      }
+    }
+  }
+
+  for (const credit of payload.credits) {
+    const { error } = await client.supabase.from("student_class_balances").upsert(
+      {
+        student_id: studentId,
+        class_id: credit.classId,
+        sessions_total: credit.sessionsTotal,
+        sessions_remaining: credit.sessionsRemaining,
+        sessions_used: credit.sessionsUsed,
+        absence_count: credit.absenceCount,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "student_id,class_id" },
+    );
+    if (error) return { error: error.message };
+    classIdsToSync.add(credit.classId);
+  }
+
+  for (const receipt of payload.receiptNotes) {
+    const { error } = await client.supabase
+      .from("student_receipts")
+      .update({ note: receipt.note })
+      .eq("id", receipt.id)
+      .eq("student_id", studentId);
+    if (error) return { error: error.message };
+  }
+
+  if (!payload.isActive || classIdsToSync.size > 0) {
+    const { data: remainingEnrollments, error: remainingError } =
+      await client.supabase
+        .from("enrollments")
+        .select('"class id"')
+        .eq("student id", studentId);
+
+    if (remainingError) {
+      return { error: remainingError.message };
+    }
+
+    for (const row of remainingEnrollments ?? []) {
+      if (typeof row["class id"] === "number") {
+        classIdsToSync.add(row["class id"]);
+      }
+    }
+
+    const syncError = await deactivateClassesWithNoActiveEnrollments(
+      client.supabase,
+      [...classIdsToSync],
+    );
+    if (syncError) {
+      return { error: syncError };
+    }
+  }
+
+  revalidateStudent(studentId);
+  revalidatePath("/classes", "layout");
+  revalidatePath("/tutors", "layout");
+  revalidatePath("/schedule");
+  revalidatePath("/payments");
+  revalidatePath("/attendance");
+  for (const classId of classIdsToSync) {
+    revalidatePath(`/classes/${classId}`);
+  }
+
   return { success: true };
 }

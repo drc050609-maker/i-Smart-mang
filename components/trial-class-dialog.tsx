@@ -10,9 +10,10 @@ import {
 import { XMarkIcon } from "@heroicons/react/24/outline";
 
 import { TrialClassForm } from "@/components/trial-class-form";
+import { useLanguage } from "@/components/language-provider";
 import {
   formatTrialPrice,
-  TRIAL_CLASS_DURATION_MINUTES,
+  TRIAL_CLASS_PRICE_USD,
 } from "@/lib/trial-class";
 
 type TeacherOption = {
@@ -23,12 +24,15 @@ type TeacherOption = {
 export function TrialClassDialog({
   subjects,
   teachers,
+  trialPriceUsd = TRIAL_CLASS_PRICE_USD,
   triggerStyle = "link",
 }: {
   subjects: string[];
   teachers: TeacherOption[];
+  trialPriceUsd?: number;
   triggerStyle?: "link" | "button";
 }) {
+  const { language, t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [formKey, setFormKey] = useState(0);
 
@@ -55,7 +59,7 @@ export function TrialClassDialog({
             : "text-sm font-medium text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
         }
       >
-        Book trial class
+        {t("trial.bookButton")}
       </button>
 
       <Dialog open={open} onClose={closeDialog} className="relative z-50">
@@ -76,7 +80,7 @@ export function TrialClassDialog({
                   onClick={closeDialog}
                   className="rounded-md text-gray-400 hover:text-gray-500 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-600 dark:hover:text-gray-300"
                 >
-                  <span className="sr-only">Close</span>
+                  <span className="sr-only">{t("trial.close")}</span>
                   <XMarkIcon aria-hidden="true" className="size-6" />
                 </button>
               </div>
@@ -87,25 +91,25 @@ export function TrialClassDialog({
                     as="h3"
                     className="text-lg font-semibold text-gray-900 dark:text-white"
                   >
-                    Book a trial class
+                    {t("trial.title")}
                   </DialogTitle>
                   <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
-                    {formatTrialPrice()} · {TRIAL_CLASS_DURATION_MINUTES}{" "}
-                    minutes · one-on-one with your teacher
+                    {t("trial.fee")}: {formatTrialPrice(trialPriceUsd)}
                   </p>
                 </div>
 
                 <div className="mt-6 min-h-0 overflow-y-auto sm:flex-1">
                   {teachers.length === 0 ? (
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      No teachers are available for trial classes right now.
-                      Please contact the school to schedule.
+                      {t("trial.noTeachers")}
                     </p>
                   ) : (
                     <TrialClassForm
                       key={formKey}
                       subjects={subjects}
                       teachers={teachers}
+                      language={language}
+                      trialPriceUsd={trialPriceUsd}
                       onBookAnother={handleBookAnother}
                     />
                   )}

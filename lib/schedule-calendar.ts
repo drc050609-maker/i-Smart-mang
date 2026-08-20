@@ -48,6 +48,7 @@ export type ScheduleStudent = {
   "first name": string;
   "last name": string | null;
   notes?: string | null;
+  dob?: string | null;
 };
 
 export type ScheduleEvent = {
@@ -149,8 +150,12 @@ export function resolveScheduleEventStudents(
 ): ScheduleStudent[] {
   function withCampusNotes(student: ScheduleStudent): ScheduleStudent {
     const campus = studentsById?.get(student.id);
-    if (!campus?.notes?.trim()) return student;
-    return { ...student, notes: campus.notes };
+    if (!campus) return student;
+    return {
+      ...student,
+      notes: campus.notes?.trim() ? campus.notes : student.notes,
+      dob: student.dob ?? campus.dob ?? null,
+    };
   }
 
   const slotStudents = sortStudents(event.students).map(withCampusNotes);
