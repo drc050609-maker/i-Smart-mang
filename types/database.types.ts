@@ -2111,7 +2111,7 @@ export type Database = {
         Args: {
           p_corrected_amount_cents: number
           p_field_name?: string
-          p_reason: string
+          p_reason?: string
           p_source_id: number
           p_source_kind: Database["public"]["Enums"]["financial_source_kind"]
         }

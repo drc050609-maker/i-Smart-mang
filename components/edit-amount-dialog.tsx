@@ -155,14 +155,15 @@ export function EditAmountDialog({
 
                 <div>
                   <label htmlFor="edit-reason" className={labelClassName}>
-                    {t("common.reason")}
+                    {t("common.reason")} {t("common.optional")}
                   </label>
                   <div className="mt-2">
                     <input
                       id="edit-reason"
                       name="reason"
                       type="text"
-                      required
+                      required={false}
+                      aria-required={false}
                       placeholder={t("common.correctionReasonPlaceholder")}
                       className={inputClassName}
                     />

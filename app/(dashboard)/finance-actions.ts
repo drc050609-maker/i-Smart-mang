@@ -54,9 +54,6 @@ async function correctSource(
   }
 
   const reason = reasonValue?.toString().trim() ?? "";
-  if (!reason) {
-    return { error: "Enter a reason for this correction." };
-  }
 
   const cookieStore = await cookies();
   const supabase = createClient(cookieStore);

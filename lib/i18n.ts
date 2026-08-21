@@ -1314,7 +1314,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.currentAmount": "Current amount",
     "common.newAmount": "New amount",
     "common.saveCorrection": "Save correction",
-    "common.correctionReasonPlaceholder": "Why are you changing this amount?",
+    "common.correctionReasonPlaceholder":
+      "Optional: why are you changing this amount?",
     "common.correctionKeepsHistory":
       "The original amount stays on record. This creates an adjustment on the statement.",
     "common.manualEntryCorrectionHelp":
@@ -2403,7 +2404,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.currentAmount": "当前金额",
     "common.newAmount": "新金额",
     "common.saveCorrection": "保存更正",
-    "common.correctionReasonPlaceholder": "为什么要更改此金额？",
+    "common.correctionReasonPlaceholder": "可选：为什么要更改此金额？",
     "common.correctionKeepsHistory":
       "原始金额会保留记录。此操作会在报表中创建调整项。",
     "common.manualEntryCorrectionHelp":
