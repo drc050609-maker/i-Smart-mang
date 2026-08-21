@@ -694,11 +694,17 @@ export async function addStudentToCalendar(
       return { error: "Instrument is required." };
     }
 
-    const existing = pickReusableClass(teacherClasses, {
-      subject,
-      lessonType,
-      durationMinutes,
-    });
+    // Group classes keep their own roster. Reusing an existing Jazz (or other
+    // subject) group would enroll the new students into that class and show
+    // every existing Jazz student on the new schedule slot.
+    const existing =
+      lessonType === "group"
+        ? undefined
+        : pickReusableClass(teacherClasses, {
+            subject,
+            lessonType,
+            durationMinutes,
+          });
 
     if (existing) {
       resolvedClassId = existing.id;

@@ -15,11 +15,16 @@ function lessonTypeKey(value: string | null | undefined) {
 }
 
 /**
- * Find an existing class for the same instrument (and lesson type).
+ * Find an existing private class for the same instrument (and lesson type).
  * Callers must pass only classes owned by the target teacher
  * (`classes.teacher_id`), not co-teacher links.
- * Prefers a matching duration when one exists; otherwise reuses any class for
- * that instrument so different-length slots do not require duplicate classes.
+ * Prefers a matching duration when one exists; otherwise reuses any private
+ * class for that instrument so different-length slots do not require duplicate
+ * classes.
+ *
+ * Never reuse group classes. Group calendar slots show the full class roster,
+ * so attaching a new Jazz group to an existing Jazz class would list every
+ * Jazz student on the new time.
  */
 export function pickReusableClass<T extends ReusableClassRow>(
   classes: T[],
@@ -29,21 +34,26 @@ export function pickReusableClass<T extends ReusableClassRow>(
     durationMinutes?: number | null;
   },
 ): T | undefined {
+  const requestedLessonType = options.lessonType
+    ? lessonTypeKey(options.lessonType)
+    : null;
+  if (requestedLessonType === "group") {
+    return undefined;
+  }
+
   const subjectKey = normalizeKey(options.subject);
   if (!subjectKey) {
     return undefined;
   }
 
   const sameSubject = classes.filter(
-    (row) => normalizeKey(row.subject) === subjectKey,
+    (row) =>
+      normalizeKey(row.subject) === subjectKey &&
+      lessonTypeKey(row.lesson_type) !== "group",
   );
   if (sameSubject.length === 0) {
     return undefined;
   }
-
-  const requestedLessonType = options.lessonType
-    ? lessonTypeKey(options.lessonType)
-    : null;
 
   let candidates: T[];
   if (requestedLessonType) {
