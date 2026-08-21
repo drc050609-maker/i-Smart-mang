@@ -7,6 +7,7 @@ import {
   bookTrialClass,
   type BookTrialClassState,
 } from "@/app/trial/actions";
+import { TimeSlotField } from "@/components/time-slot-field";
 import { translate } from "@/lib/i18n";
 import type { AppLanguage } from "@/lib/language";
 import {
@@ -401,21 +402,14 @@ export function TrialClassForm({
             />
           </div>
         </div>
-        <div>
-          <label htmlFor="scheduleStartTime" className={labelClassName}>
-            {t("trial.startTime")}
-          </label>
-          <div className="mt-2">
-            <input
-              id="scheduleStartTime"
-              name="scheduleStartTime"
-              type="time"
-              required
-              step={900}
-              className={inputClassName}
-            />
-          </div>
-        </div>
+        <TimeSlotField
+          id="scheduleStartTime"
+          name="scheduleStartTime"
+          required
+          defaultToNow
+          label={t("trial.startTime")}
+          language={language}
+        />
       </div>
 
       {state.error ? (

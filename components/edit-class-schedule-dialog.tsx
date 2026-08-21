@@ -18,8 +18,10 @@ import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
 import { useLanguage } from "@/components/language-provider";
 import type { StudentOption } from "@/components/student-combobox";
+import { TimeSlotField } from "@/components/time-slot-field";
 import {
   addMinutesToTimeInput,
+  currentLocalTimeInputValue,
   minutesBetweenScheduleTimes,
   type ClassScheduleFields,
   type ClassScheduleRow,
@@ -72,7 +74,9 @@ export function ClassScheduleDialog({
   const { t, language } = useLanguage();
   const isEdit = Boolean(schedule?.id) && !copy;
   const scheduleValues = schedule ?? emptySchedule;
-  const initialStartTime = toTimeInputValue(scheduleValues.schedule_start_time);
+  const initialStartTime = scheduleValues.schedule_start_time
+    ? toTimeInputValue(scheduleValues.schedule_start_time)
+    : currentLocalTimeInputValue();
   const slotDuration =
     minutesBetweenScheduleTimes(
       scheduleValues.schedule_start_time,
@@ -114,7 +118,11 @@ export function ClassScheduleDialog({
 
   function resetFormState() {
     setIsRecurring(scheduleValues.is_recurring);
-    setStartTime(initialStartTime);
+    setStartTime(
+      scheduleValues.schedule_start_time
+        ? toTimeInputValue(scheduleValues.schedule_start_time)
+        : currentLocalTimeInputValue(),
+    );
     setSelectedDuration(String(slotDuration));
     setStudentId(scheduleValues.student_id?.toString() ?? "");
   }
@@ -339,22 +347,15 @@ export function ClassScheduleDialog({
                   help={t("common.lessonLengthHelp")}
                 />
 
-                <div>
-                  <label htmlFor="scheduleStartTime" className={labelClassName}>
-                    {t("common.startTime")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="scheduleStartTime"
-                      name="scheduleStartTime"
-                      type="time"
-                      required
-                      value={startTime}
-                      onChange={(event) => setStartTime(event.target.value)}
-                      className={inputClassName}
-                    />
-                  </div>
-                </div>
+                <TimeSlotField
+                  id="scheduleStartTime"
+                  name="scheduleStartTime"
+                  required
+                  label={t("common.startTime")}
+                  language={language}
+                  value={startTime}
+                  onChange={setStartTime}
+                />
 
                 <div>
                   <span className={labelClassName}>{t("common.endTime")}</span>

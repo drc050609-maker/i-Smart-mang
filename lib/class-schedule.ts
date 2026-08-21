@@ -43,6 +43,76 @@ export function toTimeInputValue(time: string | null) {
   return time.slice(0, 5);
 }
 
+export type DayPeriod = "AM" | "PM";
+
+export type TimeSlotParts = {
+  hour12: number;
+  minute: number;
+  period: DayPeriod;
+};
+
+function pad2(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function hours24ToParts(hours24: number, minute: number): TimeSlotParts {
+  const period: DayPeriod = hours24 >= 12 ? "PM" : "AM";
+  const hour12 = hours24 % 12 || 12;
+  return { hour12, minute, period };
+}
+
+/** Split a 24-hour `HH:MM` / `HH:MM:SS` (or typed 12-hour) value into 12-hour parts. */
+export function timeInputToParts(
+  time: string | null | undefined,
+): TimeSlotParts | null {
+  const parsed = parseTypedTime(time);
+  if (!parsed) {
+    return null;
+  }
+
+  return hours24ToParts(Number(parsed.slice(0, 2)), Number(parsed.slice(3, 5)));
+}
+
+export function partsToTimeInputValue(parts: TimeSlotParts): string {
+  const hour24 =
+    parts.period === "AM"
+      ? parts.hour12 === 12
+        ? 0
+        : parts.hour12
+      : parts.hour12 === 12
+        ? 12
+        : parts.hour12 + 12;
+  return `${pad2(hour24)}:${pad2(parts.minute)}`;
+}
+
+/** Current local clock time as `HH:MM`, minutes rounded to `roundTo` (default 5). */
+export function currentLocalTimeInputValue(
+  now = new Date(),
+  roundTo = 5,
+): string {
+  let hours = now.getHours();
+  let minutes = now.getMinutes();
+
+  if (roundTo > 1) {
+    const rounded = Math.round(minutes / roundTo) * roundTo;
+    if (rounded === 60) {
+      minutes = 0;
+      hours = (hours + 1) % 24;
+    } else {
+      minutes = rounded;
+    }
+  }
+
+  return `${pad2(hours)}:${pad2(minutes)}`;
+}
+
+export function currentLocalTimeParts(
+  now = new Date(),
+  roundTo = 5,
+): TimeSlotParts {
+  return timeInputToParts(currentLocalTimeInputValue(now, roundTo))!;
+}
+
 function formatHms(hours: number, minutes: number, seconds: number) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
