@@ -12,13 +12,11 @@ import {
   type TimeSlotParts,
 } from "@/lib/class-schedule";
 
-const inputClassName =
-  "block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
-
 const labelClassName =
   "block text-sm/6 font-medium text-gray-900 dark:text-white";
 
-const clockInputClassName = `${inputClassName} text-center tabular-nums`;
+const clockInputClassName =
+  "h-9 w-11 shrink-0 rounded-md bg-white px-1.5 text-center text-sm tabular-nums text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-white dark:outline-white/10 dark:placeholder:text-gray-500 dark:focus:outline-indigo-500";
 
 function pad2(value: number) {
   return String(value).padStart(2, "0");
@@ -174,7 +172,7 @@ export function TimeSlotField({
         {name ? (
           <input type="hidden" name={name} value={submittedValue} />
         ) : null}
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-nowrap items-center gap-1.5 whitespace-nowrap">
           <input
             id={hourId}
             type="text"
@@ -189,9 +187,9 @@ export function TimeSlotField({
               emit(next, minuteText, period);
             }}
             onBlur={commitHour}
-            className={`${clockInputClassName} w-16`}
+            className={clockInputClassName}
           />
-          <span className="text-base font-medium text-gray-500 dark:text-gray-400">
+          <span className="text-sm font-medium text-gray-500 dark:text-gray-400">
             :
           </span>
           <input
@@ -208,10 +206,10 @@ export function TimeSlotField({
               emit(hourText, next, period);
             }}
             onBlur={commitMinute}
-            className={`${clockInputClassName} w-16`}
+            className={clockInputClassName}
           />
           <div
-            className="inline-flex rounded-md shadow-xs inset-ring inset-ring-gray-300 dark:inset-ring-white/10"
+            className="inline-flex h-9 shrink-0 rounded-md shadow-xs inset-ring inset-ring-gray-300 dark:inset-ring-white/10"
             role="group"
             aria-label={t("common.amPm")}
           >
@@ -229,7 +227,7 @@ export function TimeSlotField({
                       : "bg-white text-gray-700 hover:bg-gray-50 dark:bg-white/10 dark:text-gray-200 dark:hover:bg-white/20",
                     index === 0 && "rounded-l-md",
                     index === 1 && "rounded-r-md",
-                    "px-3 py-1.5 text-sm font-semibold",
+                    "px-2.5 text-sm font-semibold",
                   )}
                 >
                   {option === "AM" ? t("common.am") : t("common.pm")}
