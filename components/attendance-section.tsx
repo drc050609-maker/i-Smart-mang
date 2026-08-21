@@ -389,12 +389,12 @@ function TeacherAttendanceCard({
   ).length;
 
   return (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
+    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
       <div>
         <h2 className="text-base font-semibold text-gray-900 dark:text-white">
           {column.teacherName}
         </h2>
-        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
           {column.locationName ? `${column.locationName} · ` : null}
           {t("common.studentsMarked", {
             students: column.entries.length,
@@ -404,11 +404,11 @@ function TeacherAttendanceCard({
       </div>
 
       {column.entries.length === 0 ? (
-        <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
+        <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
           {t("common.noEnrolledStudents")}
         </p>
       ) : (
-        <ul className="mt-4 divide-y divide-gray-100 dark:divide-white/5">
+        <ul className="mt-3 divide-y divide-gray-100 dark:divide-white/5">
           {column.entries.map((entry) => {
             const studentName = formatStudentName({
               "first name": entry.student.firstName,
@@ -416,7 +416,7 @@ function TeacherAttendanceCard({
             });
 
             return (
-              <li key={entry.key} className="py-3 first:pt-0 last:pb-0">
+              <li key={entry.key} className="py-2 first:pt-0 last:pb-0">
                 <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
                   <div className="min-w-0">
                     <p className="inline-flex flex-wrap items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
@@ -638,7 +638,13 @@ export function AttendanceSection({
           {t("common.noClassesOnDate")}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div
+          className={
+            teacherColumns.length === 1
+              ? undefined
+              : "columns-1 gap-3 lg:columns-2"
+          }
+        >
           {teacherColumns.map((column) => (
             <div
               key={
@@ -646,7 +652,9 @@ export function AttendanceSection({
                   ? `teacher-${column.teacherId}`
                   : `teacher-${column.teacherName}`
               }
-              className={teacherColumns.length === 1 ? "lg:col-span-2" : undefined}
+              className={
+                teacherColumns.length === 1 ? undefined : "mb-3 break-inside-avoid"
+              }
             >
               <TeacherAttendanceCard
                 column={column}
