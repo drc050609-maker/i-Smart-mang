@@ -12,6 +12,7 @@ import { inferClassTrackFromSubject } from "@/lib/class-track";
 import { parseLessonType } from "@/lib/class-lesson-type";
 import { pickReusableClass } from "@/lib/find-reusable-class";
 import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
+import { deleteCalendarScheduleSlot } from "@/lib/schedule-delete";
 import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
@@ -376,8 +377,6 @@ export async function deleteFromCalendar(
   const classId = Number(formData.get("classId"));
   const scope = formData.get("scope")?.toString();
   const occurrenceDate = parseDate(formData.get("occurrenceDate"));
-  const startTime = parseScheduleTime(formData.get("startTime"));
-  const endTime = parseScheduleTime(formData.get("endTime"));
 
   if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
     return { error: "Invalid schedule." };
@@ -391,6 +390,8 @@ export async function deleteFromCalendar(
   if ("error" in client) {
     return { error: client.error };
   }
+
+  const locationId = await getActiveCampusLocationId(client.supabase, staff);
 
   const { data: classRow, error: classLookupError } = await client.supabase
     .from("classes")
@@ -425,63 +426,28 @@ export async function deleteFromCalendar(
     return { success: true };
   }
 
-  const { data: scheduleRow, error: scheduleError } = await client.supabase
-    .from("class_schedules")
-    .select("id, class_id, is_recurring")
-    .eq("id", scheduleId)
-    .eq("class_id", classId)
-    .maybeSingle();
-
-  if (scheduleError) {
-    return { error: scheduleError.message };
-  }
-
-  if (!scheduleRow) {
-    return { error: "Schedule not found." };
-  }
-
-  if (!scheduleRow.is_recurring || scope === "series") {
-    const { error: deleteError } = await client.supabase
-      .from("class_schedules")
-      .delete()
-      .eq("id", scheduleId)
-      .eq("class_id", classId);
-
-    if (deleteError) {
-      return { error: deleteError.message };
-    }
-
-    revalidateSchedule(classId);
-    return { success: true };
-  }
-
-  if (scope !== "occurrence") {
+  if (scope !== "occurrence" && scope !== "series") {
     return { error: "Select whether to delete this occurrence or all." };
   }
 
-  if (!occurrenceDate || !startTime || !endTime) {
-    return { error: "Missing occurrence details." };
-  }
+  const result = await deleteCalendarScheduleSlot(client.supabase, {
+    scheduleId,
+    classId,
+    scope,
+    occurrenceDate,
+    locationId,
+  });
 
-  const { error: upsertError } = await client.supabase
-    .from("class_schedule_exceptions")
-    .upsert(
-      {
-        schedule_id: scheduleId,
-        original_date: occurrenceDate,
-        override_date: occurrenceDate,
-        schedule_start_time: startTime,
-        schedule_end_time: endTime,
-        is_cancelled: true,
-      },
-      { onConflict: "schedule_id,original_date" },
-    );
-
-  if (upsertError) {
-    return { error: upsertError.message };
+  if (result.error) {
+    return { error: result.error };
   }
 
   revalidateSchedule(classId);
+  for (const id of result.classIds ?? []) {
+    if (id !== classId) {
+      revalidatePath(`/classes/${id}`);
+    }
+  }
   return { success: true };
 }
 
