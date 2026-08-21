@@ -21,9 +21,15 @@ import {
 } from "@/app/(dashboard)/tutors/front-desk-paycheck-actions";
 import { useLanguage } from "@/components/language-provider";
 import { DeleteFrontDeskHourButton } from "@/components/delete-front-desk-hour-button";
+import { TimeSlotField } from "@/components/time-slot-field";
 import { formatCentsAsCurrency } from "@/lib/money";
 import {
-  formatClockTime,
+  addMinutesToTimeInput,
+  currentLocalTimeInputValue,
+  formatTime12Hour,
+  toTimeInputValue,
+} from "@/lib/class-schedule";
+import {
   formatWorkedDuration,
   frontDeskDayPayCents,
   workedMinutesBetween,
@@ -113,6 +119,10 @@ function formatRecordedAt(iso: string, language: "en" | "zh") {
   });
 }
 
+function defaultClockOut(clockIn: string) {
+  return addMinutesToTimeInput(clockIn, 8 * 60) ?? "23:55";
+}
+
 function HoursFormFields({
   idPrefix,
   workDate,
@@ -124,7 +134,7 @@ function HoursFormFields({
   log?: FrontDeskHourLog;
   defaultRateCents: number | null;
 }) {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const rateDefault =
     log != null
       ? (log.rate_cents / 100).toFixed(log.rate_cents % 100 === 0 ? 0 : 2)
@@ -135,11 +145,11 @@ function HoursFormFields({
         : "";
 
   const clockInDefault = log?.clock_in
-    ? formatClockTime(log.clock_in)
-    : "09:00";
+    ? toTimeInputValue(log.clock_in)
+    : currentLocalTimeInputValue();
   const clockOutDefault = log?.clock_out
-    ? formatClockTime(log.clock_out)
-    : "17:00";
+    ? toTimeInputValue(log.clock_out)
+    : defaultClockOut(clockInDefault);
 
   return (
     <>
@@ -155,36 +165,22 @@ function HoursFormFields({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div>
-          <label htmlFor={`${idPrefix}-clockIn`} className={labelClassName}>
-            {t("common.clockIn")}
-          </label>
-          <div className="mt-2">
-            <input
-              id={`${idPrefix}-clockIn`}
-              name="clockIn"
-              type="time"
-              required
-              defaultValue={clockInDefault}
-              className={inputClassName}
-            />
-          </div>
-        </div>
-        <div>
-          <label htmlFor={`${idPrefix}-clockOut`} className={labelClassName}>
-            {t("common.clockOut")}
-          </label>
-          <div className="mt-2">
-            <input
-              id={`${idPrefix}-clockOut`}
-              name="clockOut"
-              type="time"
-              required
-              defaultValue={clockOutDefault}
-              className={inputClassName}
-            />
-          </div>
-        </div>
+        <TimeSlotField
+          id={`${idPrefix}-clockIn`}
+          name="clockIn"
+          required
+          label={t("common.clockIn")}
+          language={language}
+          defaultValue={clockInDefault}
+        />
+        <TimeSlotField
+          id={`${idPrefix}-clockOut`}
+          name="clockOut"
+          required
+          label={t("common.clockOut")}
+          language={language}
+          defaultValue={clockOutDefault}
+        />
       </div>
 
       <div>
@@ -370,8 +366,8 @@ export function FrontDeskHoursSection({
 
       return {
         date: formatLogDate(log.work_date, language),
-        clockIn: formatClockTime(log.clock_in),
-        clockOut: formatClockTime(log.clock_out),
+        clockIn: formatTime12Hour(log.clock_in),
+        clockOut: formatTime12Hour(log.clock_out),
         duration: t("common.durationHoursMinutes", {
           hours: duration.hours,
           minutes: duration.minutes,
@@ -670,8 +666,8 @@ export function FrontDeskHoursSection({
                 {log && duration ? (
                   <div className="mt-1 space-y-0.5 px-0.5">
                     <p className="text-[10px] leading-tight text-gray-600 dark:text-gray-300 sm:text-xs">
-                      {formatClockTime(log.clock_in)}–
-                      {formatClockTime(log.clock_out)}
+                      {formatTime12Hour(log.clock_in)}–
+                      {formatTime12Hour(log.clock_out)}
                     </p>
                     <p className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 sm:text-xs">
                       {t("common.durationHoursMinutes", {

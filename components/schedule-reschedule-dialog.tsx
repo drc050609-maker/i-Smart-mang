@@ -14,6 +14,7 @@ import {
   type ScheduleActionState,
 } from "@/app/(dashboard)/schedule/actions";
 import { DurationMinutesField } from "@/components/duration-minutes-field";
+import { TimeSlotField } from "@/components/time-slot-field";
 import { useLanguage } from "@/components/language-provider";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import {
@@ -253,21 +254,14 @@ export function ScheduleRescheduleDialog({
                   onChange={setEditDuration}
                   required
                 />
-                <div>
-                  <label htmlFor="scheduleEditStartTime" className={labelClassName}>
-                    {t("common.startTime")}
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      id="scheduleEditStartTime"
-                      type="time"
-                      required
-                      value={editStartTime}
-                      onChange={(event) => setEditStartTime(event.target.value)}
-                      className={inputClassName}
-                    />
-                  </div>
-                </div>
+                <TimeSlotField
+                  id="scheduleEditStartTime"
+                  required
+                  label={t("common.startTime")}
+                  language={language}
+                  value={editStartTime}
+                  onChange={setEditStartTime}
+                />
                 <div>
                   <span className={labelClassName}>{t("common.endTime")}</span>
                   <div className="mt-2">

@@ -674,6 +674,11 @@ export type TranslationKey =
   | "common.oneTime"
   | "common.startTime"
   | "common.endTime"
+  | "common.am"
+  | "common.pm"
+  | "common.hourInput"
+  | "common.minuteInput"
+  | "common.amPm"
   | "common.noLocation"
   | "common.location"
   | "common.noStaffAccounts"
@@ -1751,6 +1756,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.oneTime": "One-time",
     "common.startTime": "Start time",
     "common.endTime": "End time",
+    "common.am": "AM",
+    "common.pm": "PM",
+    "common.hourInput": "Hour",
+    "common.minuteInput": "Minute",
+    "common.amPm": "AM or PM",
     "common.noLocation": "No location",
     "common.location": "Location",
     "common.noStaffAccounts": "No staff accounts yet.",
@@ -2805,6 +2815,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.oneTime": "单次",
     "common.startTime": "开始时间",
     "common.endTime": "结束时间",
+    "common.am": "上午",
+    "common.pm": "下午",
+    "common.hourInput": "小时",
+    "common.minuteInput": "分钟",
+    "common.amPm": "上午或下午",
     "common.noLocation": "无地点",
     "common.location": "地点",
     "common.noStaffAccounts": "暂无员工账户。",
