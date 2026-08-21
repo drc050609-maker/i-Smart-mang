@@ -53,6 +53,10 @@ export type TranslationKey =
   | "common.notAvailable"
   | "common.active"
   | "common.inactive"
+  | "teacherStatus.active"
+  | "teacherStatus.onLeave"
+  | "teacherStatus.inactive"
+  | "common.changeTeacherStatus"
   | "common.save"
   | "common.saving"
   | "common.loading"
@@ -1026,6 +1030,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notAvailable": "—",
     "common.active": "Active",
     "common.inactive": "Inactive",
+    "teacherStatus.active": "Active",
+    "teacherStatus.onLeave": "On leave",
+    "teacherStatus.inactive": "Inactive",
+    "common.changeTeacherStatus": "Change status for {name}",
     "common.save": "Save",
     "common.saving": "Saving…",
     "common.loading": "Loading…",
@@ -1034,7 +1042,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirm": "Confirm",
     "common.deleting": "Deleting…",
     "common.signOut": "Sign out",
-    "common.status": "status",
+    "common.status": "Status",
     "common.edit": "Edit",
     "common.add": "Add",
     "common.remove": "Remove",
@@ -2104,6 +2112,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notAvailable": "—",
     "common.active": "活跃",
     "common.inactive": "非活跃",
+    "teacherStatus.active": "在职",
+    "teacherStatus.onLeave": "休假",
+    "teacherStatus.inactive": "离职",
+    "common.changeTeacherStatus": "更改 {name} 的状态",
     "common.save": "保存",
     "common.saving": "保存中…",
     "common.loading": "加载中…",

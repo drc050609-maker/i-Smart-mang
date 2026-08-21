@@ -8,7 +8,7 @@ import {
   ActiveInactiveTabs,
   type ActiveTab,
 } from "@/components/active-inactive-tabs";
-import { ActiveStatusBadge } from "@/components/active-status-badge";
+import { TeacherStatusBadge } from "@/components/teacher-status-badge";
 import { useLanguage } from "@/components/language-provider";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
@@ -19,10 +19,12 @@ import {
   formatTeacherName,
   sortTeachers,
 } from "@/lib/person-name";
+import { type StaffPosition } from "@/lib/staff-position";
 import {
-  staffPositionLabelKey,
-  type StaffPosition,
-} from "@/lib/staff-position";
+  isTeacherOnRoster,
+  teacherStatusFromRow,
+  type TeacherStatus,
+} from "@/lib/teacher-status";
 
 function classNames(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
@@ -39,6 +41,7 @@ type TutorRow = {
   last_name: string | null;
   dob: string | null;
   is_active: boolean;
+  status?: TeacherStatus | null;
   position: "teacher" | "front_desk";
   classes: ClassEmbed[];
 };
@@ -120,16 +123,20 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
   );
 
   const activeCount = useMemo(
-    () => positionTutors.filter((teacher) => teacher.is_active).length,
+    () =>
+      positionTutors.filter((teacher) =>
+        isTeacherOnRoster(teacherStatusFromRow(teacher)),
+      ).length,
     [positionTutors],
   );
   const inactiveCount = positionTutors.length - activeCount;
 
   const tabTutors = useMemo(
     () =>
-      positionTutors.filter((teacher) =>
-        activeTab === "active" ? teacher.is_active : !teacher.is_active,
-      ),
+      positionTutors.filter((teacher) => {
+        const onRoster = isTeacherOnRoster(teacherStatusFromRow(teacher));
+        return activeTab === "active" ? onRoster : !onRoster;
+      }),
     [positionTutors, activeTab],
   );
   const sortedTutors = useMemo(() => sortTeachers(tabTutors), [tabTutors]);
@@ -237,12 +244,6 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                       scope="col"
                       className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                     >
-                      {t("common.position")}
-                    </th>
-                    <th
-                      scope="col"
-                      className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
-                    >
                       {t("common.class")}
                     </th>
                     <th
@@ -255,7 +256,7 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                       scope="col"
                       className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-white"
                     >
-                      {t("common.active")}
+                      {t("common.status")}
                     </th>
                     <th
                       scope="col"
@@ -275,9 +276,6 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                         >
                           {formatTeacherName(teacher)}
                         </Link>
-                      </td>
-                      <td className="px-3 py-4 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                        {t(staffPositionLabelKey(teacher.position))}
                       </td>
                       <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">
                         {teacher.position === "front_desk" ? (
@@ -308,7 +306,9 @@ export function TutorsListTable({ tutors }: { tutors: TutorRow[] }) {
                         {formatDob(teacher.dob, language, t("common.notAvailable"))}
                       </td>
                       <td className="px-3 py-4 text-right text-sm whitespace-nowrap">
-                        <ActiveStatusBadge isActive={teacher.is_active} />
+                        <TeacherStatusBadge
+                          status={teacherStatusFromRow(teacher)}
+                        />
                       </td>
                       <td className="py-4 pr-4 pl-3 text-right text-sm whitespace-nowrap text-gray-500 sm:pr-0 dark:text-gray-400">
                         {teacher.id}
