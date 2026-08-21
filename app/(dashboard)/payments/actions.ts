@@ -11,7 +11,7 @@ import {
 } from "@/lib/payment-plan";
 import { parsePaymentStatus } from "@/lib/payment-status";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
-import { buildTuitionPricing } from "@/lib/tuition";
+import { resolveTuitionPricingForClass } from "@/lib/tuition-price-sheet";
 import { createClient } from "@/utils/supabase/server";
 
 export type ActionState = {
@@ -94,9 +94,12 @@ export async function recordClassPayment(
     return { error: "Cannot pay for an inactive class." };
   }
 
-  const pricing = buildTuitionPricing(
-    classRow.duration_minutes,
-    classRow.lesson_type,
+  const pricing = resolveTuitionPricingForClass(
+    {
+      subject: classRow.subject,
+      duration_minutes: classRow.duration_minutes,
+      lesson_type: classRow.lesson_type,
+    },
     {
       single_price_cents: classRow.single_price_cents,
       package_20_price_cents: classRow.package_20_price_cents,
