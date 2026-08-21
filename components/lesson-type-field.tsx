@@ -12,12 +12,18 @@ const labelClassName =
 export function LessonTypeField({
   idPrefix,
   defaultValue = "private",
+  exclude,
 }: {
   idPrefix: string;
   defaultValue?: LessonType | null;
+  exclude?: readonly LessonType[];
 }) {
   const { language, t } = useLanguage();
-  const options = getLessonTypeOptions(language);
+  const options = getLessonTypeOptions(language).filter(
+    (option) => !exclude?.includes(option.value),
+  );
+  const initial =
+    defaultValue && !exclude?.includes(defaultValue) ? defaultValue : "private";
 
   return (
     <fieldset>
@@ -34,7 +40,7 @@ export function LessonTypeField({
               name="lessonType"
               type="radio"
               value={option.value}
-              defaultChecked={(defaultValue ?? "private") === option.value}
+              defaultChecked={initial === option.value}
               required
               className="mt-0.5 size-4 border-gray-300 text-indigo-600 focus:ring-indigo-600 dark:border-white/20 dark:bg-white/5"
             />

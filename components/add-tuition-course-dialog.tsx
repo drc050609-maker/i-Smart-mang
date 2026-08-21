@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Dialog,
@@ -37,28 +37,18 @@ export function AddTuitionCourseDialog() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const formRef = useRef<HTMLFormElement>(null);
-  const [lessonType, setLessonType] = useState<"private" | "group" | "trial">(
-    "private",
-  );
   const [state, formAction, pending] = useActionState(
     async (prev: CreateClassState, formData: FormData) => {
       const result = await createClassWithPricing(prev, formData);
       if (result.success) {
         setOpen(false);
         formRef.current?.reset();
-        setLessonType("private");
         router.refresh();
       }
       return result;
     },
     initialState,
   );
-
-  useEffect(() => {
-    if (!open) {
-      setLessonType("private");
-    }
-  }, [open]);
 
   return (
     <>
@@ -133,18 +123,10 @@ export function AddTuitionCourseDialog() {
                   </div>
                 </div>
 
-                <div
-                  onChange={(event) => {
-                    const target = event.target as HTMLInputElement;
-                    if (target.name === "lessonType") {
-                      setLessonType(
-                        target.value as "private" | "group" | "trial",
-                      );
-                    }
-                  }}
-                >
-                  <LessonTypeField idPrefix="tuition-add-lesson" />
-                </div>
+                <LessonTypeField
+                  idPrefix="tuition-add-lesson"
+                  exclude={["trial"]}
+                />
 
                 <ClassTrackField idPrefix="tuition-add-track" />
 
@@ -168,46 +150,42 @@ export function AddTuitionCourseDialog() {
                   </div>
                 </div>
 
-                {lessonType !== "trial" ? (
-                  <>
-                    <div>
-                      <label
-                        htmlFor="tuition-pkg20-price"
-                        className={labelClassName}
-                      >
-                        {t("common.package20Price")}
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="tuition-pkg20-price"
-                          name="package20Price"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          className={inputClassName}
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label
-                        htmlFor="tuition-pkg50-price"
-                        className={labelClassName}
-                      >
-                        {t("common.package50Price")}
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          id="tuition-pkg50-price"
-                          name="package50Price"
-                          type="number"
-                          min="0.01"
-                          step="0.01"
-                          className={inputClassName}
-                        />
-                      </div>
-                    </div>
-                  </>
-                ) : null}
+                <div>
+                  <label
+                    htmlFor="tuition-pkg20-price"
+                    className={labelClassName}
+                  >
+                    {t("common.package20Price")}
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      id="tuition-pkg20-price"
+                      name="package20Price"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className={inputClassName}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label
+                    htmlFor="tuition-pkg50-price"
+                    className={labelClassName}
+                  >
+                    {t("common.package50Price")}
+                  </label>
+                  <div className="mt-2">
+                    <input
+                      id="tuition-pkg50-price"
+                      name="package50Price"
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      className={inputClassName}
+                    />
+                  </div>
+                </div>
 
                 {state.error ? (
                   <p className="text-sm text-red-600 dark:text-red-400">

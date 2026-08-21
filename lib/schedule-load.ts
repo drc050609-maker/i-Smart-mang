@@ -48,6 +48,7 @@ type ScheduleRow = {
   schedule_date: string | null;
   schedule_start_time: string;
   schedule_end_time: string;
+  is_makeup?: boolean | null;
   students: ScheduleStudentEmbed | ScheduleStudentEmbed[] | null;
   classes: ClassEmbed | ClassEmbed[] | null;
 };
@@ -242,6 +243,7 @@ export async function loadScheduleCalendarEvents(
       schedule_date,
       schedule_start_time,
       schedule_end_time,
+      is_makeup,
       students ( id, "first name", "last name", notes, dob ),
       classes!inner (
         id,
@@ -337,6 +339,7 @@ export async function loadScheduleCalendarEvents(
         schedule_date: scheduleRow.schedule_date,
         schedule_start_time: scheduleRow.schedule_start_time,
         schedule_end_time: scheduleRow.schedule_end_time,
+        is_makeup: Boolean(scheduleRow.is_makeup),
         classes: classRow
           ? {
               id: classRow.id,

@@ -323,6 +323,13 @@ export async function createClassWithPricing(
     return validationError;
   }
 
+  if (fields.lessonType === "trial") {
+    return {
+      error:
+        "Trial classes are not added on the price sheet. The trial fee is $25 (or the campus promo).",
+    };
+  }
+
   const single = parseDollarsToCents(formData.get("singlePrice"), {
     fieldLabel: "Single class price",
   });
@@ -330,39 +337,36 @@ export async function createClassWithPricing(
     return { error: single.error };
   }
 
-  const isTrial = fields.lessonType === "trial";
   let package20Cents: number | null = null;
   let package50Cents: number | null = null;
 
-  if (!isTrial) {
-    const package20Raw = formData.get("package20Price")?.toString().trim() ?? "";
-    const package50Raw = formData.get("package50Price")?.toString().trim() ?? "";
+  const package20Raw = formData.get("package20Price")?.toString().trim() ?? "";
+  const package50Raw = formData.get("package50Price")?.toString().trim() ?? "";
 
-    if (package20Raw) {
-      const package20 = parseDollarsToCents(package20Raw, {
-        fieldLabel: "20-class package price",
-      });
-      if (!package20.ok) {
-        return { error: package20.error };
-      }
-      package20Cents = package20.cents;
+  if (package20Raw) {
+    const package20 = parseDollarsToCents(package20Raw, {
+      fieldLabel: "20-class package price",
+    });
+    if (!package20.ok) {
+      return { error: package20.error };
     }
+    package20Cents = package20.cents;
+  }
 
-    if (package50Raw) {
-      const package50 = parseDollarsToCents(package50Raw, {
-        fieldLabel: "50-class package price",
-      });
-      if (!package50.ok) {
-        return { error: package50.error };
-      }
-      package50Cents = package50.cents;
+  if (package50Raw) {
+    const package50 = parseDollarsToCents(package50Raw, {
+      fieldLabel: "50-class package price",
+    });
+    if (!package50.ok) {
+      return { error: package50.error };
     }
+    package50Cents = package50.cents;
+  }
 
-    if ((package20Cents == null) !== (package50Cents == null)) {
-      return {
-        error: "Provide both package prices, or leave both empty.",
-      };
-    }
+  if ((package20Cents == null) !== (package50Cents == null)) {
+    return {
+      error: "Provide both package prices, or leave both empty.",
+    };
   }
 
   const staff = await requireStaff();
@@ -399,8 +403,8 @@ export async function createClassWithPricing(
       class_track: fields.classTrack as ClassTrack,
       location_id: locationId,
       single_price_cents: single.cents,
-      package_20_price_cents: isTrial ? null : package20Cents,
-      package_50_price_cents: isTrial ? null : package50Cents,
+      package_20_price_cents: package20Cents,
+      package_50_price_cents: package50Cents,
     })
     .select("id")
     .single();

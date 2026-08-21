@@ -21,6 +21,12 @@ import {
   type StaffPosition,
 } from "@/lib/staff-position";
 import { isFrontDeskStaffRole } from "@/lib/staff-role";
+import {
+  isTeacherAssignable,
+  isTeacherStatus,
+  teacherStatusFromRow,
+  type TeacherStatus,
+} from "@/lib/teacher-status";
 
 export type CreatedTeacher = {
   id: number;
@@ -90,6 +96,15 @@ function parseTeacherFields(formData: FormData) {
     hourlyRateCents = parsed.cents;
   }
 
+  const statusRaw = formData.get("status")?.toString().trim() ?? "";
+  let status: TeacherStatus | undefined;
+  if (statusRaw) {
+    if (!isTeacherStatus(statusRaw)) {
+      return { error: "Invalid status." } as const;
+    }
+    status = statusRaw;
+  }
+
   return {
     firstName: formData.get("firstName")?.toString().trim(),
     lastName: formData.get("lastName")?.toString().trim() || null,
@@ -97,7 +112,60 @@ function parseTeacherFields(formData: FormData) {
     phoneNumber: formData.get("phoneNumber")?.toString().trim() || null,
     position,
     hourlyRateCents: position === "front_desk" ? hourlyRateCents : null,
+    status,
   };
+}
+
+async function applyTeacherEmploymentStatus(
+  supabase: ReturnType<typeof createSupabaseServiceClient>,
+  teacherId: number,
+  nextStatus: TeacherStatus,
+): Promise<string | null> {
+  const { data: current, error: loadError } = await supabase
+    .from("teachers")
+    .select("status, is_active")
+    .eq("id", teacherId)
+    .maybeSingle();
+
+  if (loadError) {
+    return loadError.message;
+  }
+  if (!current) {
+    return "Tutor not found.";
+  }
+
+  const previous = teacherStatusFromRow(current);
+  if (previous === nextStatus) {
+    return null;
+  }
+
+  const { error: teacherError } = await supabase
+    .from("teachers")
+    .update({
+      status: nextStatus,
+      is_active: isTeacherAssignable(nextStatus),
+    })
+    .eq("id", teacherId);
+
+  if (teacherError) {
+    return teacherError.message;
+  }
+
+  const wasAvailable = isTeacherAssignable(previous);
+  const nowAvailable = isTeacherAssignable(nextStatus);
+
+  if (wasAvailable && !nowAvailable) {
+    return (
+      (await softReleaseTeacherClassAssignments(supabase, teacherId)) ?? null
+    );
+  }
+  if (!wasAvailable && nowAvailable) {
+    return (
+      (await restoreTeacherClassAssignments(supabase, teacherId)) ?? null
+    );
+  }
+
+  return null;
 }
 
 export async function createTeacher(
@@ -172,8 +240,15 @@ export async function updateTeacher(
   if ("error" in fields) {
     return { error: fields.error };
   }
-  const { firstName, lastName, dob, phoneNumber, position, hourlyRateCents } =
-    fields;
+  const {
+    firstName,
+    lastName,
+    dob,
+    phoneNumber,
+    position,
+    hourlyRateCents,
+    status,
+  } = fields;
 
   if (!Number.isInteger(teacherId) || teacherId <= 0) {
     return { error: "Invalid tutor." };
@@ -208,7 +283,55 @@ export async function updateTeacher(
     return { error: teacherError.message };
   }
 
+  if (status) {
+    const statusError = await applyTeacherEmploymentStatus(
+      client.supabase,
+      teacherId,
+      status,
+    );
+    if (statusError) {
+      return { error: statusError };
+    }
+  }
+
   revalidateTeacher(teacherId);
+  if (status) {
+    revalidatePath("/classes", "layout");
+    revalidatePath("/schedule");
+  }
+  return { success: true };
+}
+
+export async function updateTeacherStatus(
+  formData: FormData,
+): Promise<ActionState> {
+  const teacherId = Number(formData.get("teacherId"));
+  const statusRaw = formData.get("status")?.toString().trim() ?? "";
+
+  if (!Number.isInteger(teacherId) || teacherId <= 0) {
+    return { error: "Invalid tutor." };
+  }
+  if (!isTeacherStatus(statusRaw)) {
+    return { error: "Invalid status." };
+  }
+
+  const client = getServiceClient();
+  if ("error" in client) {
+    return { error: client.error };
+  }
+
+  const statusError = await applyTeacherEmploymentStatus(
+    client.supabase,
+    teacherId,
+    statusRaw,
+  );
+  if (statusError) {
+    return { error: statusError };
+  }
+
+  revalidateTeacher(teacherId);
+  revalidatePath("/classes", "layout");
+  revalidatePath("/schedule");
   return { success: true };
 }
 
@@ -312,51 +435,11 @@ export async function unassignTeacherClass(
 export async function updateTeacherActive(
   formData: FormData,
 ): Promise<ActionState> {
-  const teacherId = Number(formData.get("teacherId"));
-  const isActive = formData.get("isActive") === "true";
-
-  if (!Number.isInteger(teacherId) || teacherId <= 0) {
-    return { error: "Invalid tutor." };
-  }
-
-  const client = getServiceClient();
-  if ("error" in client) {
-    return { error: client.error };
-  }
-
-  const { error: teacherError } = await client.supabase
-    .from("teachers")
-    .update({ is_active: isActive })
-    .eq("id", teacherId);
-
-  if (teacherError) {
-    return { error: teacherError.message };
-  }
-
-  // Deactivate: free classes on the schedule (open/unassigned) but remember
-  // the links. Reactivate: reclaim only classes that still have no teacher.
-  if (isActive) {
-    const restoreError = await restoreTeacherClassAssignments(
-      client.supabase,
-      teacherId,
-    );
-    if (restoreError) {
-      return { error: restoreError };
-    }
-  } else {
-    const releaseError = await softReleaseTeacherClassAssignments(
-      client.supabase,
-      teacherId,
-    );
-    if (releaseError) {
-      return { error: releaseError };
-    }
-  }
-
-  revalidateTeacher(teacherId);
-  revalidatePath("/classes", "layout");
-  revalidatePath("/schedule");
-  return { success: true };
+  formData.set(
+    "status",
+    formData.get("isActive") === "true" ? "active" : "inactive",
+  );
+  return updateTeacherStatus(formData);
 }
 
 export async function deleteTeacher(

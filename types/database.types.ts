@@ -352,10 +352,17 @@ export type Database = {
           created_at: string
           created_by: string | null
           credit_cost: number
+          credits_applied: boolean
+          credits_applied_at: string | null
           id: number
+          makeup_schedule_id: number | null
           notes: string | null
+          original_schedule_id: number | null
+          original_session_date: string | null
           related_attendance_id: number | null
           session_date: string
+          session_end_time: string | null
+          session_start_time: string | null
           student_id: number
         }
         Insert: {
@@ -364,10 +371,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_cost: number
+          credits_applied?: boolean
+          credits_applied_at?: string | null
           id?: never
+          makeup_schedule_id?: number | null
           notes?: string | null
+          original_schedule_id?: number | null
+          original_session_date?: string | null
           related_attendance_id?: number | null
           session_date: string
+          session_end_time?: string | null
+          session_start_time?: string | null
           student_id: number
         }
         Update: {
@@ -376,10 +390,17 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           credit_cost?: number
+          credits_applied?: boolean
+          credits_applied_at?: string | null
           id?: never
+          makeup_schedule_id?: number | null
           notes?: string | null
+          original_schedule_id?: number | null
+          original_session_date?: string | null
           related_attendance_id?: number | null
           session_date?: string
+          session_end_time?: string | null
+          session_start_time?: string | null
           student_id?: number
         }
         Relationships: [
@@ -393,6 +414,20 @@ export type Database = {
           {
             foreignKeyName: "class_makeup_sessions_class_schedule_id_fkey"
             columns: ["class_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "class_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_makeup_sessions_makeup_schedule_id_fkey"
+            columns: ["makeup_schedule_id"]
+            isOneToOne: false
+            referencedRelation: "class_schedules"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "class_makeup_sessions_original_schedule_id_fkey"
+            columns: ["original_schedule_id"]
             isOneToOne: false
             referencedRelation: "class_schedules"
             referencedColumns: ["id"]
@@ -584,6 +619,7 @@ export type Database = {
         Row: {
           class_id: number
           id: number
+          is_makeup: boolean
           is_recurring: boolean
           schedule_date: string | null
           schedule_day_of_week: number | null
@@ -594,6 +630,7 @@ export type Database = {
         Insert: {
           class_id: number
           id?: number
+          is_makeup?: boolean
           is_recurring?: boolean
           schedule_date?: string | null
           schedule_day_of_week?: number | null
@@ -604,6 +641,7 @@ export type Database = {
         Update: {
           class_id?: number
           id?: number
+          is_makeup?: boolean
           is_recurring?: boolean
           schedule_date?: string | null
           schedule_day_of_week?: number | null
@@ -1972,6 +2010,7 @@ export type Database = {
           position: Database["public"]["Enums"]["staff_position"]
           resume_file_name: string | null
           resume_path: string | null
+          status: Database["public"]["Enums"]["teacher_status"]
         }
         Insert: {
           dob?: string | null
@@ -1986,6 +2025,7 @@ export type Database = {
           position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
+          status?: Database["public"]["Enums"]["teacher_status"]
         }
         Update: {
           dob?: string | null
@@ -2000,6 +2040,7 @@ export type Database = {
           position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
+          status?: Database["public"]["Enums"]["teacher_status"]
         }
         Relationships: [
           {
@@ -2019,6 +2060,14 @@ export type Database = {
       add_student_class_credits: {
         Args: { p_class_id: number; p_count: number; p_student_id: number }
         Returns: undefined
+      }
+      apply_due_makeup_credits: {
+        Args: { p_created_by?: string }
+        Returns: number
+      }
+      attendance_status_consumes_credit: {
+        Args: { p_status: Database["public"]["Enums"]["attendance_status"] }
+        Returns: boolean
       }
       apply_recurring_statement_entries: {
         Args: { p_created_by?: string; p_month: number; p_year: number }
@@ -2111,6 +2160,10 @@ export type Database = {
         Returns: number
       }
       is_active_staff: { Args: never; Returns: boolean }
+      restore_class_credits: {
+        Args: { p_class_id: number; p_count: number; p_student_id: number }
+        Returns: undefined
+      }
       record_class_attendance: {
         Args: {
           p_class_id: number
@@ -2163,6 +2216,19 @@ export type Database = {
           p_month: number
           p_teacher_id: number
           p_year: number
+        }
+        Returns: number
+      }
+      schedule_class_makeup: {
+        Args: {
+          p_class_id: number
+          p_created_by?: string
+          p_end_time: string
+          p_makeup_date: string
+          p_original_schedule_id: number
+          p_original_session_date: string
+          p_start_time: string
+          p_student_id: number
         }
         Returns: number
       }
@@ -2330,6 +2396,7 @@ export type Database = {
       staff_role: "admin" | "manager" | "teacher" | "front_desk"
       statement_entry_type: "income" | "expense"
       student_class_history_type: "regular" | "makeup"
+      teacher_status: "active" | "on_leave" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2493,6 +2560,7 @@ export const Constants = {
       staff_role: ["admin", "manager", "teacher", "front_desk"],
       statement_entry_type: ["income", "expense"],
       student_class_history_type: ["regular", "makeup"],
+      teacher_status: ["active", "on_leave", "inactive"],
     },
   },
 } as const

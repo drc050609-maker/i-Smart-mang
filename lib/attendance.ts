@@ -12,6 +12,13 @@ export const ATTENDANCE_STATUSES = [
   "excused",
 ] as const satisfies readonly AttendanceStatus[];
 
+/** Statuses staff mark on the attendance page. */
+export const ATTENDANCE_PAGE_STATUSES = [
+  "present",
+  "absent",
+  "excused",
+] as const satisfies readonly AttendanceStatus[];
+
 const ATTENDANCE_STATUS_LABEL_KEYS = {
   present: "enum.attendance.present",
   late: "enum.attendance.late",
@@ -28,6 +35,17 @@ const ATTENDANCE_STATUS_DESCRIPTION_KEYS = {
 
 export function getAttendanceStatusOptions(language: AppLanguage = "en") {
   return ATTENDANCE_STATUSES.map((value) => ({
+    value,
+    label: formatAttendanceStatus(value, language),
+    description: translate(
+      language,
+      ATTENDANCE_STATUS_DESCRIPTION_KEYS[value] as TranslationKey,
+    ),
+  }));
+}
+
+export function getAttendancePageStatusOptions(language: AppLanguage = "en") {
+  return ATTENDANCE_PAGE_STATUSES.map((value) => ({
     value,
     label: formatAttendanceStatus(value, language),
     description: translate(

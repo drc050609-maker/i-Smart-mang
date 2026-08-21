@@ -7,6 +7,7 @@ import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { uniqueClassesBySubject } from "@/lib/class-subject";
 import { createTranslator } from "@/lib/i18n";
 import { createClient } from "@/utils/supabase/server";
+import type { TeacherStatus } from "@/lib/teacher-status";
 
 type ClassEmbed = {
   id: number;
@@ -19,6 +20,7 @@ type TeacherWithClasses = {
   last_name: string | null;
   dob: string | null;
   is_active: boolean;
+  status: TeacherStatus;
   position: "teacher" | "front_desk";
   classes: ClassEmbed | ClassEmbed[] | null;
 };
@@ -62,6 +64,7 @@ export default async function TutorsPage() {
       last_name,
       dob,
       is_active,
+      status,
       position,
       classes!classes_teacher_id_fkey ( id, subject )
     `,
@@ -101,6 +104,7 @@ export default async function TutorsPage() {
         last_name: teacher.last_name,
         dob: teacher.dob,
         is_active: teacher.is_active,
+        status: teacher.status,
         position: teacher.position,
         classes: uniqueClassesBySubject([...mergedById.values()]).sort(
           (a, b) =>

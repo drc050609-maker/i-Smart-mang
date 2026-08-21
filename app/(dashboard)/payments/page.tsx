@@ -10,7 +10,7 @@ import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
 import type { PaymentClassSchedule } from "@/lib/payment-class-picker";
-import { buildTuitionPricing } from "@/lib/tuition";
+import { resolveTuitionPricingForClass } from "@/lib/tuition-price-sheet";
 import type { PaymentPlan } from "@/lib/payment-plan";
 import { createClient } from "@/utils/supabase/server";
 
@@ -195,9 +195,12 @@ export default async function PaymentsPage() {
         class_track: classRow.class_track,
         teacher,
         schedules: toPaymentSchedules(classRow.class_schedules),
-        pricing: buildTuitionPricing(
-          classRow.duration_minutes,
-          classRow.lesson_type,
+        pricing: resolveTuitionPricingForClass(
+          {
+            subject: classRow.subject,
+            duration_minutes: classRow.duration_minutes,
+            lesson_type: classRow.lesson_type,
+          },
           {
             single_price_cents: classRow.single_price_cents,
             package_20_price_cents: classRow.package_20_price_cents,

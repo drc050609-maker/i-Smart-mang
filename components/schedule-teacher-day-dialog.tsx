@@ -15,6 +15,7 @@ import { fetchScheduleCalendarEventsAction } from "@/app/(dashboard)/schedule/ac
 import { useLanguage } from "@/components/language-provider";
 import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
+import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
@@ -29,7 +30,7 @@ import {
   resolveScheduleEventStudents,
   startOfWeek,
   timeToMinutes,
-  withTrialStudentLabel,
+  withScheduleStudentLabel,
   type ScheduleEvent,
   type ScheduleEventInstance,
   type ScheduleException,
@@ -199,10 +200,12 @@ export function ScheduleTeacherDayDialog({
       for (const student of instanceStudents) {
         rows.push({
           time: timeLabel,
-          student: withTrialStudentLabel(
+          student: withScheduleStudentLabel(
             formatStudentName(student),
             instance.lesson_type,
+            instance.is_makeup,
             t("common.trialLabel"),
+            t("common.makeupLesson"),
           ),
           instrument,
         });
@@ -463,6 +466,9 @@ export function ScheduleTeacherDayDialog({
                                       <ScheduleTrialLabel
                                         lessonType={instance.lesson_type}
                                         trialFormat={instance.trial_format}
+                                      />
+                                      <ScheduleMakeupLabel
+                                        isMakeup={instance.is_makeup}
                                       />
                                       <StudentNoteStar students={[student]} />
                                     </li>

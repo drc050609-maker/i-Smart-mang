@@ -17,7 +17,11 @@ import {
   formatClassSubjectWithGrade,
   GRADE_LEVEL_OPTIONS,
 } from "@/lib/class-subject";
-import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
+import {
+  formatLessonType,
+  isCatalogTrialClass,
+  type LessonType,
+} from "@/lib/class-lesson-type";
 import type { AppLanguage } from "@/lib/language";
 import type { TranslationKey } from "@/lib/i18n";
 import { type TeacherNameFields } from "@/lib/person-name";
@@ -483,6 +487,8 @@ function DurationOptionBlock({
                 {(() => {
                   const editClass = primaryMatchedClass(matches, classesById);
                   const durationLabel = formatDuration(row.durationMinutes, t);
+                  const courseName =
+                    row.labelSubject ?? editClass?.subject ?? null;
                   const materialNote = row.pricing.materialFees
                     ? row.pricing.materialFees.labelKey === "sheet.danceBagAdd"
                       ? row.pricing.materialFees.pack50 > 0
@@ -495,13 +501,13 @@ function DurationOptionBlock({
                   return (
                     <CourseLabel
                       label={
-                        editClass
-                          ? formatClassSubject(editClass.subject, language)
+                        courseName
+                          ? formatClassSubject(courseName, language)
                           : durationLabel
                       }
                       editClass={editClass}
                       note={
-                        editClass
+                        courseName
                           ? [durationLabel, materialNote]
                               .filter(Boolean)
                               .join(" · ")
@@ -582,6 +588,8 @@ function FixedSectionBlock({
                         row.durationMinutes,
                         t,
                       );
+                      const courseName =
+                        row.labelSubject ?? editClass?.subject ?? null;
                       const monthlyNote = row.pricing.monthlyOnly
                         ? t("sheet.bandMonthlyNote")
                         : null;
@@ -594,15 +602,15 @@ function FixedSectionBlock({
                           : artMaterialFeeNote(t)
                         : null;
                       const noteParts = [
-                        editClass ? durationLabel : null,
+                        courseName ? durationLabel : null,
                         monthlyNote,
                         feeNote,
                       ].filter(Boolean);
                       return (
                         <CourseLabel
                           label={
-                            editClass
-                              ? formatClassSubject(editClass.subject, language)
+                            courseName
+                              ? formatClassSubject(courseName, language)
                               : durationLabel
                           }
                           editClass={editClass}
@@ -734,7 +742,7 @@ export function TuitionsTable({ classes }: { classes: TuitionClassRow[] }) {
   const otherClasses = useMemo(() => {
     const matchedIds = collectSheetMatchedClassIds(matchable);
     return classes
-      .filter((row) => !matchedIds.has(row.id))
+      .filter((row) => !matchedIds.has(row.id) && !isCatalogTrialClass(row))
       .sort((a, b) =>
         a.subject.localeCompare(b.subject, undefined, {
           sensitivity: "base",

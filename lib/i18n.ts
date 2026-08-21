@@ -53,6 +53,10 @@ export type TranslationKey =
   | "common.notAvailable"
   | "common.active"
   | "common.inactive"
+  | "teacherStatus.active"
+  | "teacherStatus.onLeave"
+  | "teacherStatus.inactive"
+  | "common.changeTeacherStatus"
   | "common.save"
   | "common.saving"
   | "common.loading"
@@ -876,6 +880,20 @@ export type TranslationKey =
   | "common.noClassesOnDate"
   | "common.viewStudentClassesOnly"
   | "common.classCountOnDate"
+  | "common.makeupLesson"
+  | "common.makeUpClass"
+  | "common.teachersToday"
+  | "common.allTeachersToday"
+  | "common.totalClass"
+  | "common.remainingClass"
+  | "common.makeupDate"
+  | "common.makeupTime"
+  | "common.saveMakeup"
+  | "common.makeupDialogHelp"
+  | "common.makeupScheduled"
+  | "common.rescheduleMakeup"
+  | "common.noTeachersToday"
+  | "common.notScheduled"
   | "common.paymentOptionUnavailable"
   | "common.noActiveClassesFor"
   | "common.recordPaymentDialogHelp"
@@ -1026,6 +1044,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notAvailable": "—",
     "common.active": "Active",
     "common.inactive": "Inactive",
+    "teacherStatus.active": "Active",
+    "teacherStatus.onLeave": "On leave",
+    "teacherStatus.inactive": "Inactive",
+    "common.changeTeacherStatus": "Change status for {name}",
     "common.save": "Save",
     "common.saving": "Saving…",
     "common.loading": "Loading…",
@@ -1034,7 +1056,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.confirm": "Confirm",
     "common.deleting": "Deleting…",
     "common.signOut": "Sign out",
-    "common.status": "status",
+    "common.status": "Status",
     "common.edit": "Edit",
     "common.add": "Add",
     "common.remove": "Remove",
@@ -1685,7 +1707,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Guzheng / Cello 1V1",
     "sheet.choirOrchestraTheory": "Choir / Orchestra / Music Theory — 60 min",
     "sheet.talentExam": "Talent Examination Preparation Class — 60 min",
-    "sheet.specialtyGroup": "Sing & Play / Model (group) — 60 min",
+    "sheet.specialtyGroup": "Sing & Play / Model / Catwalk (group) — 60 min",
     "sheet.art": "Art (group)",
     "sheet.dance": "Dance / Jazz / Chinese Dance / Hip Hop",
     "sheet.band": "Band group lessons — 60 min",
@@ -1705,11 +1727,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.paymentsSubtitle": "Record class payments. Completed payments appear in Statements automatically.",
     "common.purchasesSubtitle": "Books, materials, and other student purchases.",
     "common.statementsSubtitle": "Monthly income and expense summaries.",
-    "common.attendanceSubtitle": "Mark daily attendance for enrolled students.",
+    "common.attendanceSubtitle": "Mark daily attendance for enrolled students. Present and absent use 1 credit; excused does not.",
     "common.scheduleSubtitle":
       "Select a teacher, then click an empty time to add a student. Drag to change the time. Hold Option (Alt) and drag to copy.",
     "common.eventsSubtitle": "Share school news, photos, and video highlights.",
-    "common.attendanceFooter": "Use the student profile to grant make-up credits for excused absences.",
+    "common.attendanceFooter": "A scheduled makeup waits to use the credit until that makeup class has passed.",
     "common.rescheduleThisOccurrence": "This occurrence only",
     "common.rescheduleAllFuture": "All future occurrences",
     "common.deleteFromCalendar": "Delete from calendar",
@@ -1838,10 +1860,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendance.present": "Present",
     "enum.attendance.late": "Late",
     "enum.attendance.absent": "Absent",
-    "enum.attendance.excused": "Excused",
+    "enum.attendance.excused": "Excused absent",
     "enum.attendanceDescription.present": "Attended — 1 credit used",
     "enum.attendanceDescription.late": "Arrived late — 1 credit used",
-    "enum.attendanceDescription.absent": "Did not attend",
+    "enum.attendanceDescription.absent": "Did not attend — 1 credit used",
     "enum.attendanceDescription.excused": "Excused absence — no credit used",
     "enum.staffRole.admin": "Admin",
     "enum.staffRole.manager": "Manager",
@@ -1967,14 +1989,29 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "time.hoursAgo": "{count}h ago",
     "time.daysAgo": "{count}d ago",
     "common.attendancePickDateHelp":
-      "Pick a date to view classes, or optionally filter by student.",
+      "Pick a date, then choose all teachers with class today or one teacher.",
     "common.classesOnDate": "Classes on {date}",
     "common.attendanceAllClassesHelp":
-      "Only lessons scheduled for this date. Private lessons show the student for that time slot.",
+      "Students are grouped by teacher. Two teachers appear in each row.",
     "common.noClassesOnDate": "No classes scheduled for this date.",
     "common.viewStudentClassesOnly":
       "Select a student above to view their classes only.",
     "common.classCountOnDate": "{count} classes on {date}",
+    "common.makeupLesson": "makeup lesson",
+    "common.makeUpClass": "Make up class",
+    "common.teachersToday": "Teachers with class today",
+    "common.allTeachersToday": "All teachers with class today",
+    "common.totalClass": "Total class",
+    "common.remainingClass": "Remaining class",
+    "common.makeupDate": "Makeup date",
+    "common.makeupTime": "Makeup time",
+    "common.saveMakeup": "Save makeup",
+    "common.makeupDialogHelp":
+      "Reschedule this student with the same teacher. The class credit is used after the makeup time has passed.",
+    "common.makeupScheduled": "Makeup {date} · {time}",
+    "common.rescheduleMakeup": "Reschedule makeup",
+    "common.noTeachersToday": "No teachers have class on this date.",
+    "common.notScheduled": "Not scheduled",
     "common.paymentOptionUnavailable":
       "This payment option is not available for this class.",
     "common.noActiveClassesFor": "No active classes for {name}.",
@@ -2105,6 +2142,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.notAvailable": "—",
     "common.active": "活跃",
     "common.inactive": "非活跃",
+    "teacherStatus.active": "在职",
+    "teacherStatus.onLeave": "休假",
+    "teacherStatus.inactive": "离职",
+    "common.changeTeacherStatus": "更改 {name} 的状态",
     "common.save": "保存",
     "common.saving": "保存中…",
     "common.loading": "加载中…",
@@ -2766,11 +2807,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.paymentsSubtitle": "记录课程付款。已完成的付款会自动出现在财务报表中。",
     "common.purchasesSubtitle": "书籍、材料和其他学生购买。",
     "common.statementsSubtitle": "月度收支汇总。",
-    "common.attendanceSubtitle": "为报名学生标记每日考勤。",
+    "common.attendanceSubtitle": "为报名学生标记每日考勤。出席和缺席扣除1课时；请假不扣。",
     "common.scheduleSubtitle":
       "选择老师后，点击空白时间即可添加学生。拖动可改时间。按住 Option（Alt）再拖动可复制课表。",
     "common.eventsSubtitle": "分享学校新闻、照片和视频亮点。",
-    "common.attendanceFooter": "使用学生档案为请假缺勤授予补课课时。",
+    "common.attendanceFooter": "已安排的补课会等到补课时间过后再扣除课时。",
     "common.rescheduleThisOccurrence": "仅此次",
     "common.rescheduleAllFuture": "所有未来课程",
     "common.deleteFromCalendar": "从日历删除",
@@ -2897,10 +2938,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "enum.attendance.present": "出席",
     "enum.attendance.late": "迟到",
     "enum.attendance.absent": "缺席",
-    "enum.attendance.excused": "请假",
+    "enum.attendance.excused": "请假缺勤",
     "enum.attendanceDescription.present": "已出席 — 扣除1课时",
     "enum.attendanceDescription.late": "迟到 — 扣除1课时",
-    "enum.attendanceDescription.absent": "未出席",
+    "enum.attendanceDescription.absent": "未出席 — 扣除1课时",
     "enum.attendanceDescription.excused": "请假 — 不扣课时",
     "enum.staffRole.admin": "管理员",
     "enum.staffRole.manager": "经理",
@@ -3021,13 +3062,29 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "time.minutesAgo": "{count}分钟前",
     "time.hoursAgo": "{count}小时前",
     "time.daysAgo": "{count}天前",
-    "common.attendancePickDateHelp": "选择日期查看课程，也可按学生筛选。",
+    "common.attendancePickDateHelp":
+      "选择日期后，可查看今日有课的全部老师或其中一位老师。",
     "common.classesOnDate": "{date} 的课程",
     "common.attendanceAllClassesHelp":
-      "仅显示此日期已安排的课程。私教课只显示该时段对应的学生。",
+      "学生按老师分组，每行显示两位老师。",
     "common.noClassesOnDate": "此日期没有安排课程。",
     "common.viewStudentClassesOnly": "在上方选择学生以仅查看其课程。",
     "common.classCountOnDate": "{date} 共 {count} 节课",
+    "common.makeupLesson": "补课",
+    "common.makeUpClass": "安排补课",
+    "common.teachersToday": "今日有课老师",
+    "common.allTeachersToday": "今日有课的全部老师",
+    "common.totalClass": "总课时",
+    "common.remainingClass": "剩余课时",
+    "common.makeupDate": "补课日期",
+    "common.makeupTime": "补课时间",
+    "common.saveMakeup": "保存补课",
+    "common.makeupDialogHelp":
+      "为这名学生安排补课，默认仍是同一位老师。课时会在补课时间过后再扣除。",
+    "common.makeupScheduled": "补课 {date} · {time}",
+    "common.rescheduleMakeup": "改期补课",
+    "common.noTeachersToday": "此日期没有老师有课。",
+    "common.notScheduled": "未安排",
     "common.paymentOptionUnavailable": "此课程不支持该付款选项。",
     "common.noActiveClassesFor": "{name} 暂无活跃课程。",
     "common.recordPaymentDialogHelp":
