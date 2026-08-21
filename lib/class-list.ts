@@ -25,7 +25,6 @@ export type ClassSearchRow = {
   assignedTeachers: Array<TeacherNameFields & { id: number }>;
   room_id: number | null;
   room_number: string | null;
-  room_class_size: number | null;
 };
 
 export function classSubjectKey(subject: string) {

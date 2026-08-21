@@ -27,7 +27,6 @@ type TeacherEmbed = {
 type RoomEmbed = {
   id?: number;
   room_number: string;
-  class_size?: number;
 };
 
 type ClassTeacherLink = {
@@ -111,7 +110,7 @@ export default async function ClassesPage() {
       teacher_id,
       room_id,
       teachers!classes_teacher_id_fkey ( id, first_name, last_name, is_active ),
-      rooms ( id, room_number, class_size ),
+      rooms ( id, room_number ),
       class_schedules (
         id,
         is_recurring,
@@ -132,7 +131,7 @@ export default async function ClassesPage() {
       .order("first_name"),
     supabase
       .from("rooms")
-      .select("id, room_number, class_size")
+      .select("id, room_number")
       .eq("location_id", locationId)
       .order("room_number"),
     supabase
@@ -213,7 +212,6 @@ export default async function ClassesPage() {
         assignedTeachers,
         room_id: classRow.room_id,
         room_number: room?.room_number ?? null,
-        room_class_size: room?.class_size ?? null,
       };
     }) ?? [];
 

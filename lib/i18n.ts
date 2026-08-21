@@ -183,7 +183,6 @@ export type TranslationKey =
   | "common.hour"
   | "common.hours"
   | "common.minutes"
-  | "common.capacity"
   | "common.noTeacherAssigned"
   | "common.addRoom"
   | "common.changeRoom"
@@ -1206,7 +1205,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.hour": "1 hour",
     "common.hours": "{count} hours",
     "common.minutes": "{count} min",
-    "common.capacity": "(capacity {count})",
     "common.noTeacherAssigned": "No teacher assigned",
     "common.addRoom": "Add room",
     "common.changeRoom": "Change room",
@@ -2273,7 +2271,6 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.hour": "1小时",
     "common.hours": "{count}小时",
     "common.minutes": "{count}分钟",
-    "common.capacity": "（容量 {count}）",
     "common.noTeacherAssigned": "未分配老师",
     "common.addRoom": "添加教室",
     "common.changeRoom": "更改教室",

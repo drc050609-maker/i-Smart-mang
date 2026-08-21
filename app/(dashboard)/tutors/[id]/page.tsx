@@ -256,7 +256,7 @@ export default async function TutorDetailPage({
     locationId && !frontDesk
       ? supabase
           .from("rooms")
-          .select("id, room_number, class_size")
+          .select("id, room_number")
           .eq("location_id", locationId)
           .order("room_number")
       : Promise.resolve({ data: [] as RoomOption[] }),

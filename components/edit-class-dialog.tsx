@@ -259,8 +259,7 @@ export function EditClassDialog({
                       <option value="">{t("common.unassigned")}</option>
                       {rooms.map((room) => (
                         <option key={room.id} value={room.id}>
-                          {t("common.room")} {room.room_number}{" "}
-                          {t("common.capacity", { count: room.class_size })}
+                          {t("common.room")} {room.room_number}
                         </option>
                       ))}
                     </select>

@@ -27,7 +27,6 @@ export type { TeacherOption };
 export type RoomOption = {
   id: number;
   room_number: string;
-  class_size: number;
 };
 
 const inputClassName =
@@ -224,8 +223,7 @@ export function AddClassDialog({
                           <option value="">{t("common.unassigned")}</option>
                           {rooms.map((room) => (
                             <option key={room.id} value={room.id}>
-                              {t("common.room")} {room.room_number}{" "}
-                              {t("common.capacity", { count: room.class_size })}
+                              {t("common.room")} {room.room_number}
                             </option>
                           ))}
                         </select>

@@ -58,7 +58,6 @@ type TeacherEmbed = {
 
 type RoomEmbed = {
   room_number: string;
-  class_size: number;
 };
 
 type StudentEmbed = Pick<
@@ -208,7 +207,7 @@ export default async function ClassDetailPage({
       is_active,
       location_id,
       teachers!classes_teacher_id_fkey ( first_name, last_name, is_active ),
-      rooms ( room_number, class_size ),
+      rooms ( room_number ),
       class_schedules (
         id,
         is_recurring,
@@ -258,7 +257,7 @@ export default async function ClassDetailPage({
             .order("first_name"),
           supabase
             .from("rooms")
-            .select("id, room_number, class_size")
+            .select("id, room_number")
             .eq("location_id", locationId)
             .order("room_number"),
           supabase
@@ -455,10 +454,6 @@ export default async function ClassDetailPage({
               {room ? (
                 <p className="text-sm text-gray-900 dark:text-white">
                   {t("common.room")} {room.room_number}
-                  <span className="text-gray-500 dark:text-gray-400">
-                    {" "}
-                    {t("common.capacity", { count: room.class_size })}
-                  </span>
                 </p>
               ) : (
                 <p className="text-sm text-gray-500 dark:text-gray-400">
