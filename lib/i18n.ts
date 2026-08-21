@@ -1706,7 +1706,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "sheet.otherInstrument1v1": "Guitar / Drum / Vocal / Guzheng / Cello 1V1",
     "sheet.choirOrchestraTheory": "Choir / Orchestra / Music Theory — 60 min",
     "sheet.talentExam": "Talent Examination Preparation Class — 60 min",
-    "sheet.specialtyGroup": "Sing & Play / Model (group) — 60 min",
+    "sheet.specialtyGroup": "Sing & Play / Model / Catwalk (group) — 60 min",
     "sheet.art": "Art (group)",
     "sheet.dance": "Dance / Jazz / Chinese Dance / Hip Hop",
     "sheet.band": "Band group lessons — 60 min",

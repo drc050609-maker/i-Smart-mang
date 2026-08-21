@@ -1,9 +1,15 @@
 import {
+  DEFAULT_GRADE_LEVEL,
   gradeTierLabelKey,
   resolveGradeTier,
   type GradeLevelOption,
 } from "@/lib/class-subject";
-import type { TuitionPricing } from "@/lib/tuition";
+import {
+  buildTuitionPricing,
+  isTrialLesson,
+  type StoredClassPricing,
+  type TuitionPricing,
+} from "@/lib/tuition";
 
 export type { GradeLevelOption };
 export { gradeTierLabelKey, resolveGradeTier };
@@ -43,6 +49,9 @@ export const LEVEL_1V1_PRICE_MATRIX: Record<
 
 export const LEVEL_1V1_DURATIONS = [45, 60] as const;
 
+/** Canonical price-sheet name for Modeling 1, Modeling 2, Catwalk, etc. */
+export const MODEL_CATWALK_SUBJECT = "Model / Catwalk";
+
 export type ClassMatchHint = {
   subjects: string[];
   durationMinutes: number | null;
@@ -76,6 +85,8 @@ export type PriceSheetSection =
         durationMinutes: number;
         pricing: SheetPricing;
         match: ClassMatchHint;
+        /** Price-sheet display name when several scheduled classes share this rate. */
+        labelSubject?: string;
       }>;
     };
 
@@ -195,14 +206,26 @@ export const PRICE_SHEET_SECTIONS: PriceSheetSection[] = [
     titleKey: "sheet.specialtyGroup",
     rows: [
       {
-        id: "specialty_60",
+        id: "sing_play_60",
         durationMinutes: 60,
         pricing: { perClass: 45, package20: 900, package50: 2100 },
         match: {
-          subjects: ["Sing & Play", "Model / Catwalk"],
+          subjects: ["Sing & Play"],
           durationMinutes: 60,
           lessonType: "group",
         },
+        labelSubject: "Sing & Play",
+      },
+      {
+        id: "model_catwalk_60",
+        durationMinutes: 60,
+        pricing: { perClass: 45, package20: 900, package50: 2100 },
+        match: {
+          subjects: [MODEL_CATWALK_SUBJECT],
+          durationMinutes: 60,
+          lessonType: null,
+        },
+        labelSubject: MODEL_CATWALK_SUBJECT,
       },
     ],
   },
@@ -330,6 +353,35 @@ function subjectEquals(a: string, b: string) {
   return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
+function normalizeSubjectKey(subject: string) {
+  return subject
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/\s*\(\s*class\s*\d+\s*\)\s*$/i, "")
+    .trim();
+}
+
+/** Modeling 1/2, Catwalk, Cat walk, Model / Catwalk (Class 1), 模特走秀, … */
+export function isModelingCatwalkSubject(subject: string) {
+  const normalized = normalizeSubjectKey(subject);
+  if (!normalized) return false;
+  if (/模特|走秀/.test(subject)) return true;
+  if (/\bcat\s*-?\s*walks?\b/.test(normalized)) return true;
+  return /\bmodel(?:ing|s)?\b/.test(normalized);
+}
+
+function subjectsMatch(sheetSubject: string, classSubject: string) {
+  if (subjectEquals(sheetSubject, classSubject)) return true;
+  if (normalizeSubjectKey(sheetSubject) === normalizeSubjectKey(classSubject)) {
+    return true;
+  }
+  return (
+    isModelingCatwalkSubject(sheetSubject) &&
+    isModelingCatwalkSubject(classSubject)
+  );
+}
+
 function lessonTypeMatches(
   classLessonType: string | null,
   expected: ClassMatchHint["lessonType"],
@@ -345,7 +397,7 @@ export function findMatchingClasses(
 ) {
   return classes.filter((row) => {
     if (row.lesson_type === "trial") return false;
-    if (!match.subjects.some((s) => subjectEquals(s, row.subject))) {
+    if (!match.subjects.some((s) => subjectsMatch(s, row.subject))) {
       return false;
     }
     if (
@@ -413,4 +465,75 @@ export function listPriceSheetSubjects() {
   return [...subjects].sort((a, b) =>
     a.localeCompare(b, undefined, { sensitivity: "base" }),
   );
+}
+
+/** Official-sheet rate for a scheduled class, or null if it is off-sheet. */
+export function sheetPricingForClass(
+  classRow: Pick<MatchableClass, "subject" | "duration_minutes" | "lesson_type">,
+): SheetPricing | null {
+  if (isTrialLesson(classRow.lesson_type)) return null;
+
+  const asMatchable: MatchableClass = {
+    id: 0,
+    subject: classRow.subject,
+    duration_minutes: classRow.duration_minutes,
+    lesson_type: classRow.lesson_type,
+    is_active: true,
+  };
+
+  for (const section of PRICE_SHEET_SECTIONS) {
+    if (section.kind === "level_1v1") {
+      const duration =
+        classRow.duration_minutes === 45 || classRow.duration_minutes === 60
+          ? classRow.duration_minutes
+          : null;
+      if (duration == null) continue;
+      const matches = findMatchingClasses([asMatchable], {
+        subjects: [section.subject],
+        durationMinutes: duration,
+        lessonType: "private",
+      });
+      if (matches.length > 0) {
+        return level1v1Pricing(duration, DEFAULT_GRADE_LEVEL);
+      }
+      continue;
+    }
+
+    for (const sheetRow of section.rows) {
+      if (findMatchingClasses([asMatchable], sheetRow.match).length > 0) {
+        return sheetRow.pricing;
+      }
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Stored class prices win; otherwise use the official sheet (so Modeling 1 and
+ * Modeling 2 share one rate even when only one class has cents saved).
+ */
+export function resolveTuitionPricingForClass(
+  classRow: Pick<MatchableClass, "subject" | "duration_minutes" | "lesson_type">,
+  stored?: StoredClassPricing | null,
+): TuitionPricing {
+  const built = buildTuitionPricing(
+    classRow.duration_minutes,
+    classRow.lesson_type,
+    stored,
+  );
+
+  if (isTrialLesson(classRow.lesson_type)) return built;
+  if (stored?.single_price_cents != null && stored.single_price_cents > 0) {
+    return built;
+  }
+
+  const sheet = sheetPricingForClass(classRow);
+  if (!sheet) return built;
+
+  return {
+    perClass: sheet.perClass,
+    package20: sheet.package20,
+    package50: sheet.package50,
+  };
 }

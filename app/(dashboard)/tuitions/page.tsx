@@ -7,13 +7,14 @@ import {
 } from "@/components/tuitions-table";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
+import { isCatalogTrialClass } from "@/lib/class-lesson-type";
 import { createTranslator } from "@/lib/i18n";
 import {
   applyPromotionToPricing,
-  buildTuitionPricing,
   findActivePromotionForClass,
   type ClassPricePromotion,
 } from "@/lib/tuition";
+import { resolveTuitionPricingForClass } from "@/lib/tuition-price-sheet";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -93,11 +94,16 @@ export default async function TuitionsPage() {
   const today = todayIsoDate();
 
   const tuitionRows: TuitionClassRow[] =
-    (classes as ClassRow[] | null)?.map((classRow) => {
+    (classes as ClassRow[] | null)
+      ?.filter((classRow) => !isCatalogTrialClass(classRow))
+      .map((classRow) => {
       const teacher = firstOrNull(classRow.teachers);
-      const basePricing = buildTuitionPricing(
-        classRow.duration_minutes,
-        classRow.lesson_type,
+      const basePricing = resolveTuitionPricingForClass(
+        {
+          subject: classRow.subject,
+          duration_minutes: classRow.duration_minutes,
+          lesson_type: classRow.lesson_type,
+        },
         {
           single_price_cents: classRow.single_price_cents,
           package_20_price_cents: classRow.package_20_price_cents,
@@ -124,10 +130,12 @@ export default async function TuitionsPage() {
     }) ?? [];
 
   const classOptions =
-    (classes as ClassRow[] | null)?.map((classRow) => ({
-      id: classRow.id,
-      subject: classRow.subject,
-    })) ?? [];
+    (classes as ClassRow[] | null)
+      ?.filter((classRow) => !isCatalogTrialClass(classRow))
+      .map((classRow) => ({
+        id: classRow.id,
+        subject: classRow.subject,
+      })) ?? [];
 
   return (
     <div>
