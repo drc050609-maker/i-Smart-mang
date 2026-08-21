@@ -1,3 +1,4 @@
+import type { AttendanceStatus } from "@/lib/attendance";
 import type { ClassScheduleFields } from "@/lib/class-schedule";
 
 export const SESSION_LOOKBACK_DAYS = 90;
@@ -36,6 +37,57 @@ export function parseClassCreditCount(value: FormDataEntryValue | null) {
 export type SessionRecordStatus = "used" | "absent";
 export type SessionRecordSource = "automatic" | "manual";
 
+/** Present, late, and absent use 1 class credit. Excused does not. */
+export function attendanceStatusConsumesCredit(
+  status: AttendanceStatus | null | undefined,
+) {
+  return status === "present" || status === "late" || status === "absent";
+}
+
+export type ScheduledMakeupCredit = {
+  studentId: number;
+  classId: number;
+  creditsApplied: boolean;
+  makeupScheduleId?: number | null;
+  originalScheduleId?: number | null;
+  originalSessionDate?: string | null;
+};
+
+/**
+ * Original session credit is deferred whenever a makeup exists for that
+ * occurrence (until the makeup later consumes the credit).
+ */
+export function originalSessionDefersCredit(
+  makeup: ScheduledMakeupCredit | null | undefined,
+) {
+  return makeup != null;
+}
+
+/** Makeup slots should not be auto-processed as regular due sessions. */
+export function shouldSkipDueSessionForMakeup(options: {
+  isMakeupSchedule: boolean;
+  studentId: number;
+  classId: number;
+  scheduleId: number;
+  sessionDate: string;
+  pendingMakeups: ScheduledMakeupCredit[];
+}) {
+  if (options.isMakeupSchedule) {
+    return true;
+  }
+
+  return options.pendingMakeups.some((makeup) => {
+    if (makeup.creditsApplied) return false;
+    if (makeup.studentId !== options.studentId) return false;
+    if (makeup.classId !== options.classId) return false;
+    if (makeup.makeupScheduleId === options.scheduleId) return true;
+    return (
+      makeup.originalScheduleId === options.scheduleId &&
+      makeup.originalSessionDate === options.sessionDate
+    );
+  });
+}
+
 export type StudentClassBalance = {
   student_id: number;
   class_id: number;
@@ -55,6 +107,7 @@ export type SessionOccurrence = {
 export type ScheduleForOccurrences = ClassScheduleFields & {
   id: number;
   class_id: number;
+  is_makeup?: boolean | null;
 };
 
 function padDatePart(value: number) {

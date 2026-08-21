@@ -1,65 +1,142 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
   markAllAttendancePresent,
   markAttendance,
-  markStudentAllPresent,
   type ActionState,
   type MarkAllPresentState,
 } from "@/app/(dashboard)/attendance/actions";
 import {
-  StudentCombobox,
-  type StudentOption,
-} from "@/components/student-combobox";
+  ScheduleMakeupDialog,
+  type MakeupDialogTarget,
+} from "@/components/schedule-makeup-dialog";
+import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import { useLanguage } from "@/components/language-provider";
-import { formatClassSubject } from "@/lib/class-subject";
+import { minutesBetweenScheduleTimes } from "@/lib/class-schedule";
+import { formatSessionDate } from "@/lib/class-session-credits";
 import {
   attendanceStatusBadgeClass,
   formatAttendanceStatus,
-  getAttendanceStatusOptions,
+  getAttendancePageStatusOptions,
   type AttendanceStatus,
 } from "@/lib/attendance";
 import { appLanguageLocale } from "@/lib/language";
-import { formatStudentName } from "@/lib/person-name";
+import { compareStudentNames, formatStudentName } from "@/lib/person-name";
+
+export type AttendanceMakeupInfo = {
+  id: number;
+  makeupDate: string;
+  startTime: string;
+  endTime: string;
+  creditsApplied: boolean;
+  originalScheduleId: number | null;
+  originalSessionDate: string | null;
+  makeupScheduleId: number | null;
+};
 
 export type AttendanceStudentRow = {
   studentId: number;
   firstName: string;
   lastName: string | null;
   status: AttendanceStatus | null;
+  sessionsTotal: number;
+  sessionsRemaining: number;
+  makeup: AttendanceMakeupInfo | null;
+  isMakeupSlot: boolean;
 };
 
 export type AttendanceClassGroup = {
   scheduleId: number;
   classId: number;
   classSubject: string;
+  teacherId: number | null;
   teacherName: string | null;
   locationName: string | null;
   startTime: string;
   endTime: string;
+  isMakeup: boolean;
   students: AttendanceStudentRow[];
 };
 
-export type AttendanceClassSession = {
+export type AttendanceTeacherOption = {
+  id: number;
+  name: string;
+};
+
+type TeacherStudentEntry = {
+  key: string;
+  student: AttendanceStudentRow;
   scheduleId: number;
   classId: number;
   classSubject: string;
-  teacherName: string | null;
-  locationName: string | null;
   startTime: string;
   endTime: string;
-  status: AttendanceStatus | null;
+  teacherName: string | null;
 };
 
-export type AttendanceStudentDay = {
-  studentId: number;
-  firstName: string;
-  lastName: string | null;
-  sessions: AttendanceClassSession[];
+type TeacherColumn = {
+  teacherId: number | null;
+  teacherName: string;
+  locationName: string | null;
+  entries: TeacherStudentEntry[];
 };
+
+function groupClassGroupsByTeacher(
+  classGroups: AttendanceClassGroup[],
+  unassignedLabel: string,
+): TeacherColumn[] {
+  const columns = new Map<string, TeacherColumn>();
+
+  for (const group of classGroups) {
+    const mapKey =
+      group.teacherId != null
+        ? `id:${group.teacherId}`
+        : `name:${group.teacherName ?? "unassigned"}`;
+    let column = columns.get(mapKey);
+    if (!column) {
+      column = {
+        teacherId: group.teacherId,
+        teacherName: group.teacherName?.trim() || unassignedLabel,
+        locationName: group.locationName,
+        entries: [],
+      };
+      columns.set(mapKey, column);
+    }
+
+    for (const student of group.students) {
+      column.entries.push({
+        key: `${group.scheduleId}:${student.studentId}`,
+        student,
+        scheduleId: group.scheduleId,
+        classId: group.classId,
+        classSubject: group.classSubject,
+        startTime: group.startTime,
+        endTime: group.endTime,
+        teacherName: group.teacherName,
+      });
+    }
+  }
+
+  for (const column of columns.values()) {
+    column.entries.sort((a, b) => {
+      const time = a.startTime.localeCompare(b.startTime);
+      if (time !== 0) return time;
+      return compareStudentNames(
+        { "first name": a.student.firstName, "last name": a.student.lastName },
+        { "first name": b.student.firstName, "last name": b.student.lastName },
+      );
+    });
+  }
+
+  return [...columns.values()].sort((a, b) =>
+    a.teacherName.localeCompare(b.teacherName, undefined, {
+      sensitivity: "base",
+    }),
+  );
+}
 
 const initialState: ActionState = {};
 const initialMarkAllState: MarkAllPresentState = {};
@@ -85,11 +162,49 @@ function formatAttendanceDate(sessionDate: string, language: "en" | "zh") {
   );
 }
 
-function toStudentOption(row: AttendanceStudentDay): StudentOption {
+function addDaysYmd(ymd: string, days: number) {
+  const date = new Date(`${ymd}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return formatSessionDate(date);
+}
+
+function makeupTargetForSession(options: {
+  studentId: number;
+  studentName: string;
+  classId: number;
+  classSubject: string;
+  teacherName: string | null;
+  scheduleId: number;
+  sessionDate: string;
+  startTime: string;
+  endTime: string;
+  isMakeupSlot: boolean;
+  makeup: AttendanceMakeupInfo | null;
+}): MakeupDialogTarget | null {
+  const originalScheduleId = options.isMakeupSlot
+    ? options.makeup?.originalScheduleId
+    : options.scheduleId;
+  const originalSessionDate = options.isMakeupSlot
+    ? options.makeup?.originalSessionDate
+    : options.sessionDate;
+  if (!originalScheduleId || !originalSessionDate) {
+    return null;
+  }
+
+  const durationMinutes =
+    minutesBetweenScheduleTimes(options.startTime, options.endTime) ?? 45;
+
   return {
-    id: row.studentId,
-    "first name": row.firstName,
-    "last name": row.lastName,
+    studentId: options.studentId,
+    studentName: options.studentName,
+    classId: options.classId,
+    classSubject: options.classSubject,
+    teacherName: options.teacherName,
+    originalScheduleId,
+    originalSessionDate,
+    defaultDate: options.makeup?.makeupDate ?? addDaysYmd(originalSessionDate, 7),
+    defaultStartTime: options.makeup?.startTime ?? options.startTime,
+    durationMinutes,
   };
 }
 
@@ -99,6 +214,7 @@ function AttendanceMarkButton({
   scheduleId,
   sessionDate,
   status,
+  currentStatus,
   label,
 }: {
   studentId: number;
@@ -106,10 +222,14 @@ function AttendanceMarkButton({
   scheduleId: number;
   sessionDate: string;
   status: AttendanceStatus;
+  currentStatus: AttendanceStatus | null;
   label: string;
 }) {
-  const { t } = useLanguage();
-  const [state, formAction, pending] = useActionState(markAttendance, initialState);
+  const [state, formAction, pending] = useActionState(
+    markAttendance,
+    initialState,
+  );
+  const selected = currentStatus === status;
 
   return (
     <form action={formAction} className="inline">
@@ -121,7 +241,11 @@ function AttendanceMarkButton({
       <button
         type="submit"
         disabled={pending}
-        className="rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+        className={
+          selected
+            ? "rounded-md bg-indigo-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+            : "rounded-md bg-white px-2.5 py-1.5 text-xs font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 disabled:opacity-60 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+        }
       >
         {pending ? "…" : label}
       </button>
@@ -136,18 +260,18 @@ function AttendanceMarkButton({
 
 function MarkAllPresentButton({
   sessionDate,
-  studentId,
   unmarkedCount,
   label,
 }: {
   sessionDate: string;
-  studentId?: number;
   unmarkedCount: number;
   label: string;
 }) {
   const { t } = useLanguage();
-  const action = studentId ? markStudentAllPresent : markAllAttendancePresent;
-  const [state, formAction, pending] = useActionState(action, initialMarkAllState);
+  const [state, formAction, pending] = useActionState(
+    markAllAttendancePresent,
+    initialMarkAllState,
+  );
 
   if (unmarkedCount === 0) {
     return null;
@@ -156,9 +280,6 @@ function MarkAllPresentButton({
   return (
     <form action={formAction} className="inline">
       <input type="hidden" name="sessionDate" value={sessionDate} />
-      {studentId ? (
-        <input type="hidden" name="studentId" value={studentId} />
-      ) : null}
       <button
         type="submit"
         disabled={pending}
@@ -181,141 +302,197 @@ function MarkAllPresentButton({
   );
 }
 
-function ClassGroupCard({
-  group,
+function AttendanceActionButtons({
+  studentId,
+  classId,
+  scheduleId,
   sessionDate,
+  status,
+  studentName,
+  classSubject,
+  teacherName,
+  startTime,
+  endTime,
+  isMakeupSlot,
+  makeup,
+  onMakeup,
 }: {
-  group: AttendanceClassGroup;
+  studentId: number;
+  classId: number;
+  scheduleId: number;
   sessionDate: string;
+  status: AttendanceStatus | null;
+  studentName: string;
+  classSubject: string;
+  teacherName: string | null;
+  startTime: string;
+  endTime: string;
+  isMakeupSlot: boolean;
+  makeup: AttendanceMakeupInfo | null;
+  onMakeup: (target: MakeupDialogTarget) => void;
 }) {
   const { language, t } = useLanguage();
-  const attendanceOptions = getAttendanceStatusOptions(language);
-  const markedCount = group.students.filter((s) => s.status !== null).length;
-  const singleStudent =
-    group.students.length === 1 ? group.students[0] : null;
+  const attendanceOptions = getAttendancePageStatusOptions(language);
+  const makeupTarget = makeupTargetForSession({
+    studentId,
+    studentName,
+    classId,
+    classSubject,
+    teacherName,
+    scheduleId,
+    sessionDate,
+    startTime,
+    endTime,
+    isMakeupSlot,
+    makeup,
+  });
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {attendanceOptions.map((option) => (
+        <AttendanceMarkButton
+          key={option.value}
+          studentId={studentId}
+          classId={classId}
+          scheduleId={scheduleId}
+          sessionDate={sessionDate}
+          status={option.value}
+          currentStatus={status}
+          label={option.label}
+        />
+      ))}
+      {makeupTarget ? (
+        <button
+          type="button"
+          onClick={() => onMakeup(makeupTarget)}
+          className="rounded-md bg-sky-50 px-2.5 py-1.5 text-xs font-semibold text-sky-800 shadow-xs inset-ring inset-ring-sky-200 hover:bg-sky-100 dark:bg-sky-500/10 dark:text-sky-200 dark:inset-ring-sky-500/30 dark:hover:bg-sky-500/20"
+        >
+          {makeup ? t("common.rescheduleMakeup") : t("common.makeUpClass")}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
+function TeacherAttendanceCard({
+  column,
+  sessionDate,
+  onMakeup,
+}: {
+  column: TeacherColumn;
+  sessionDate: string;
+  onMakeup: (target: MakeupDialogTarget) => void;
+}) {
+  const { language, t } = useLanguage();
+  const markedCount = column.entries.filter(
+    (entry) => entry.student.status !== null,
+  ).length;
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {singleStudent
-              ? formatStudentName({
-                  "first name": singleStudent.firstName,
-                  "last name": singleStudent.lastName,
-                })
-              : formatClassSubject(group.classSubject, language)}
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {singleStudent
-              ? formatClassSubject(group.classSubject, language)
-              : null}
-            {singleStudent ? " · " : null}
-            {formatTime(group.startTime, language)} –{" "}
-            {formatTime(group.endTime, language)}
-            {group.teacherName ? ` · ${group.teacherName}` : ""}
-            {group.locationName ? ` · ${group.locationName}` : ""}
-          </p>
-          {!singleStudent ? (
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {t("common.studentsMarked", {
-                students: group.students.length,
-                marked: markedCount,
-              })}
-            </p>
-          ) : singleStudent.status ? (
-            <p className="mt-1">
-              <span
-                className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(singleStudent.status)}`}
-              >
-                {formatAttendanceStatus(singleStudent.status, language)}
-              </span>
-            </p>
-          ) : (
-            <p className="mt-1 text-xs text-gray-400 dark:text-gray-500">
-              {t("common.notMarked")}
-            </p>
-          )}
-        </div>
-        {singleStudent ? (
-          <div className="flex flex-wrap justify-end gap-1.5">
-            {attendanceOptions.map((option) => (
-              <AttendanceMarkButton
-                key={option.value}
-                studentId={singleStudent.studentId}
-                classId={group.classId}
-                scheduleId={group.scheduleId}
-                sessionDate={sessionDate}
-                status={option.value}
-                label={option.label}
-              />
-            ))}
-          </div>
-        ) : null}
+      <div>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+          {column.teacherName}
+        </h2>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {column.locationName ? `${column.locationName} · ` : null}
+          {t("common.studentsMarked", {
+            students: column.entries.length,
+            marked: markedCount,
+          })}
+        </p>
       </div>
 
-      {group.students.length === 0 ? (
+      {column.entries.length === 0 ? (
         <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
           {t("common.noEnrolledStudents")}
         </p>
-      ) : singleStudent ? null : (
-        <div className="mt-4 flow-root">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
-            <thead>
-              <tr>
-                <th className="py-2 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                  {t("common.student")}
-                </th>
-                <th className="px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                  {t("common.status")}
-                </th>
-                <th className="py-2 pl-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                  {t("common.mark")}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-              {group.students.map((student) => (
-                <tr key={student.studentId}>
-                  <td className="py-3 pr-3 text-sm font-medium text-gray-900 dark:text-white">
-                    {formatStudentName({
-                      "first name": student.firstName,
-                      "last name": student.lastName,
-                    })}
-                  </td>
-                  <td className="px-3 py-3 text-sm">
-                    {student.status ? (
-                      <span
-                        className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(student.status)}`}
-                      >
-                        {formatAttendanceStatus(student.status, language)}
-                      </span>
-                    ) : (
-                      <span className="text-gray-400 dark:text-gray-500">
-                        {t("common.notMarked")}
-                      </span>
-                    )}
-                  </td>
-                  <td className="py-3 pl-3 text-right">
-                    <div className="flex flex-wrap justify-end gap-1.5">
-                      {attendanceOptions.map((option) => (
-                        <AttendanceMarkButton
-                          key={option.value}
-                          studentId={student.studentId}
-                          classId={group.classId}
-                          scheduleId={group.scheduleId}
-                          sessionDate={sessionDate}
-                          status={option.value}
-                          label={option.label}
-                        />
-                      ))}
+      ) : (
+        <ul className="mt-4 divide-y divide-gray-100 dark:divide-white/5">
+          {column.entries.map((entry) => {
+            const studentName = formatStudentName({
+              "first name": entry.student.firstName,
+              "last name": entry.student.lastName,
+            });
+
+            return (
+              <li key={entry.key} className="py-3 first:pt-0 last:pb-0">
+                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+                  <div className="min-w-0">
+                    <p className="inline-flex flex-wrap items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
+                      {studentName}
+                      <ScheduleMakeupLabel isMakeup={entry.student.isMakeupSlot} />
+                    </p>
+                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                      {formatTime(entry.startTime, language)} –{" "}
+                      {formatTime(entry.endTime, language)}
+                    </p>
+                  </div>
+                  <dl className="flex flex-wrap gap-x-4 text-xs text-gray-500 dark:text-gray-400">
+                    <div>
+                      <dt className="inline">{t("common.totalClass")} </dt>
+                      <dd className="inline font-medium text-gray-900 dark:text-white">
+                        {entry.student.sessionsTotal}
+                      </dd>
                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <div>
+                      <dt className="inline">{t("common.remainingClass")} </dt>
+                      <dd className="inline font-medium text-gray-900 dark:text-white">
+                        {entry.student.sessionsRemaining}
+                      </dd>
+                    </div>
+                  </dl>
+                </div>
+
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  {entry.student.status ? (
+                    <span
+                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(entry.student.status)}`}
+                    >
+                      {formatAttendanceStatus(entry.student.status, language)}
+                    </span>
+                  ) : (
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
+                      {t("common.notMarked")}
+                    </span>
+                  )}
+                  {entry.student.makeup ? (
+                    <span className="text-xs text-sky-700 dark:text-sky-300">
+                      {t("common.makeupScheduled", {
+                        date: formatAttendanceDate(
+                          entry.student.makeup.makeupDate,
+                          language,
+                        ),
+                        time: formatTime(
+                          entry.student.makeup.startTime,
+                          language,
+                        ),
+                      })}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div className="mt-2">
+                  <AttendanceActionButtons
+                    studentId={entry.student.studentId}
+                    classId={entry.classId}
+                    scheduleId={entry.scheduleId}
+                    sessionDate={sessionDate}
+                    status={entry.student.status}
+                    studentName={studentName}
+                    classSubject={entry.classSubject}
+                    teacherName={entry.teacherName}
+                    startTime={entry.startTime}
+                    endTime={entry.endTime}
+                    isMakeupSlot={entry.student.isMakeupSlot}
+                    makeup={entry.student.makeup}
+                    onMakeup={onMakeup}
+                  />
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       )}
     </section>
   );
@@ -324,197 +501,81 @@ function ClassGroupCard({
 export function AttendanceSection({
   sessionDate,
   classGroups,
-  studentDays,
-  initialStudentId,
+  teachers,
+  selectedTeacherId,
 }: {
   sessionDate: string;
   classGroups: AttendanceClassGroup[];
-  studentDays: AttendanceStudentDay[];
-  initialStudentId?: number;
+  teachers: AttendanceTeacherOption[];
+  selectedTeacherId?: number;
 }) {
   const { language, t } = useLanguage();
   const router = useRouter();
-  const studentOptions = useMemo(
-    () => studentDays.map(toStudentOption),
-    [studentDays],
+  const [makeupTarget, setMakeupTarget] = useState<MakeupDialogTarget | null>(
+    null,
   );
-  const [selectedStudent, setSelectedStudent] = useState<StudentOption | null>(
-    () =>
-      initialStudentId
-        ? (studentOptions.find((s) => s.id === initialStudentId) ?? null)
-        : null,
+  const teacherColumns = useMemo(
+    () => groupClassGroupsByTeacher(classGroups, t("common.unassigned")),
+    [classGroups, t],
   );
 
-  useEffect(() => {
-    if (initialStudentId) {
-      setSelectedStudent(
-        studentOptions.find((s) => s.id === initialStudentId) ?? null,
-      );
+  function attendanceParams(overrides?: { date?: string; teacher?: string }) {
+    const params = new URLSearchParams({
+      date: overrides?.date ?? sessionDate,
+    });
+    const teacherValue =
+      overrides?.teacher ??
+      (selectedTeacherId ? String(selectedTeacherId) : "all");
+    if (teacherValue && teacherValue !== "all") {
+      params.set("teacher", teacherValue);
     }
-  }, [initialStudentId, studentOptions]);
-
-  const selectedDay = selectedStudent
-    ? studentDays.find((day) => day.studentId === selectedStudent.id)
-    : null;
-
-  function updateStudentSearchParam(student: StudentOption | null) {
-    const params = new URLSearchParams({ date: sessionDate });
-    if (student) {
-      params.set("student", String(student.id));
-    }
-    window.history.replaceState(null, "", `/attendance?${params.toString()}`);
+    return params;
   }
 
-  function handleStudentChange(student: StudentOption | null) {
-    const match = student
-      ? (studentOptions.find((s) => s.id === student.id) ?? student)
-      : null;
-    setSelectedStudent(match);
-    updateStudentSearchParam(match);
-  }
-
-  const totalUnmarked = studentDays.reduce(
-    (count, day) =>
-      count + day.sessions.filter((session) => session.status === null).length,
+  const totalUnmarked = classGroups.reduce(
+    (count, group) =>
+      count + group.students.filter((student) => student.status === null).length,
     0,
   );
-
-  const studentUnmarked =
-    selectedDay?.sessions.filter((session) => session.status === null).length ??
-    0;
 
   function handleDateSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const date = formData.get("date")?.toString() ?? sessionDate;
-    const params = new URLSearchParams({ date });
-    if (selectedStudent) {
-      params.set("student", String(selectedStudent.id));
-    }
-    router.push(`/attendance?${params.toString()}`);
+    router.push(`/attendance?${attendanceParams({ date }).toString()}`);
   }
 
-  const attendanceOptions = getAttendanceStatusOptions(language);
-
-  const studentDetailSection = !selectedStudent ? null : !selectedDay ||
-    selectedDay.sessions.length === 0 ? (
-    <p className="text-sm text-gray-500 dark:text-gray-400">
-      {t("common.noClassesScheduled", {
-        name: formatStudentName(selectedStudent),
-      })}
-    </p>
-  ) : (
-    <section className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900 dark:text-white">
-            {formatStudentName(selectedStudent)}
-          </h2>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            {t("common.classCountOnDate", {
-              count: selectedDay.sessions.length,
-              date: formatAttendanceDate(sessionDate, language),
-            })}
-          </p>
-        </div>
-        <MarkAllPresentButton
-          sessionDate={sessionDate}
-          studentId={selectedStudent.id}
-          unmarkedCount={studentUnmarked}
-          label={t("common.markAllPresent", { count: studentUnmarked })}
-        />
-      </div>
-
-      <div className="mt-4 flow-root">
-        <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
-          <thead>
-            <tr>
-              <th className="py-2 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                {t("common.class")}
-              </th>
-              <th className="px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                {t("common.time")}
-              </th>
-              <th className="px-3 py-2 text-left text-sm font-semibold text-gray-900 dark:text-white">
-                {t("common.status")}
-              </th>
-              <th className="py-2 pl-3 text-right text-sm font-semibold text-gray-900 dark:text-white">
-                {t("common.mark")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 dark:divide-white/5">
-            {selectedDay.sessions.map((session) => (
-              <tr key={session.scheduleId}>
-                <td className="py-3 pr-3 text-sm font-medium text-gray-900 dark:text-white">
-                  <div>{formatClassSubject(session.classSubject, language)}</div>
-                  {(session.teacherName || session.locationName) && (
-                    <div className="mt-0.5 text-xs font-normal text-gray-500 dark:text-gray-400">
-                      {[session.teacherName, session.locationName]
-                        .filter(Boolean)
-                        .join(" · ")}
-                    </div>
-                  )}
-                </td>
-                <td className="px-3 py-3 text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
-                  {formatTime(session.startTime, language)} – {formatTime(session.endTime, language)}
-                </td>
-                <td className="px-3 py-3 text-sm">
-                  {session.status ? (
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(session.status)}`}
-                    >
-                      {formatAttendanceStatus(session.status, language)}
-                    </span>
-                  ) : (
-                    <span className="text-gray-400 dark:text-gray-500">
-                      {t("common.notMarked")}
-                    </span>
-                  )}
-                </td>
-                <td className="py-3 pl-3 text-right">
-                  <div className="flex flex-wrap justify-end gap-1.5">
-                    {attendanceOptions.map((option) => (
-                      <AttendanceMarkButton
-                        key={option.value}
-                        studentId={selectedStudent.id}
-                        classId={session.classId}
-                        scheduleId={session.scheduleId}
-                        sessionDate={sessionDate}
-                        status={option.value}
-                        label={option.label}
-                      />
-                    ))}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </section>
-  );
+  function handleTeacherChange(event: React.ChangeEvent<HTMLSelectElement>) {
+    router.push(
+      `/attendance?${attendanceParams({ teacher: event.target.value }).toString()}`,
+    );
+  }
 
   return (
     <div className="mt-6 space-y-6">
       <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="flex flex-wrap items-end gap-4">
-            <div className="min-w-[12rem] flex-1 max-w-md">
+            <div>
               <label
-                htmlFor="attendance-student"
+                htmlFor="attendance-teacher"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t("common.student")}
+                {t("common.teachersToday")}
               </label>
-              <div className="mt-1">
-                <StudentCombobox
-                  id="attendance-student"
-                  students={studentOptions}
-                  selected={selectedStudent}
-                  onChange={handleStudentChange}
-                />
-              </div>
+              <select
+                id="attendance-teacher"
+                value={selectedTeacherId ? String(selectedTeacherId) : "all"}
+                onChange={handleTeacherChange}
+                className="mt-1 block rounded-md bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-white dark:outline-white/10"
+              >
+                <option value="all">{t("common.allTeachersToday")}</option>
+                {teachers.map((teacher) => (
+                  <option key={teacher.id} value={teacher.id}>
+                    {teacher.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <form
@@ -557,42 +618,55 @@ export function AttendanceSection({
         </p>
       </div>
 
-      {selectedStudent ? (
-        studentDetailSection
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+          {t("common.classesOnDate", {
+            date: formatAttendanceDate(sessionDate, language),
+          })}
+        </h2>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          {t("common.attendanceAllClassesHelp")}
+        </p>
+      </div>
+
+      {teachers.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("common.noTeachersToday")}
+        </p>
+      ) : teacherColumns.length === 0 ? (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {t("common.noClassesOnDate")}
+        </p>
       ) : (
-        <>
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {t("common.classesOnDate", {
-                date: formatAttendanceDate(sessionDate, language),
-              })}
-            </h2>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {t("common.attendanceAllClassesHelp")}
-            </p>
-          </div>
-
-          {classGroups.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              {t("common.noClassesOnDate")}
-            </p>
-          ) : (
-            <div className="space-y-6">
-              {classGroups.map((group) => (
-                <ClassGroupCard
-                  key={group.scheduleId}
-                  group={group}
-                  sessionDate={sessionDate}
-                />
-              ))}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {teacherColumns.map((column) => (
+            <div
+              key={
+                column.teacherId != null
+                  ? `teacher-${column.teacherId}`
+                  : `teacher-${column.teacherName}`
+              }
+              className={teacherColumns.length === 1 ? "lg:col-span-2" : undefined}
+            >
+              <TeacherAttendanceCard
+                column={column}
+                sessionDate={sessionDate}
+                onMakeup={setMakeupTarget}
+              />
             </div>
-          )}
-
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {t("common.viewStudentClassesOnly")}
-          </p>
-        </>
+          ))}
+        </div>
       )}
+
+      <ScheduleMakeupDialog
+        key={
+          makeupTarget
+            ? `${makeupTarget.studentId}-${makeupTarget.originalScheduleId}`
+            : "idle"
+        }
+        target={makeupTarget}
+        onClose={() => setMakeupTarget(null)}
+      />
     </div>
   );
 }

@@ -67,6 +67,8 @@ export type ScheduleEvent = {
   class_track: ClassTrack | string | null;
   lesson_type: string | null;
   trial_format: string | null;
+  /** One-off makeup occurrence for a student. */
+  is_makeup: boolean;
   /** Student linked to this schedule slot (private lessons). Null for group/shared. */
   schedule_student_id: number | null;
   /**
@@ -199,6 +201,32 @@ export function withTrialStudentLabel(
   if (!isTrialLessonType(lessonType)) return name;
   if (!name || name === trialLabel) return trialLabel;
   return `${name} ${trialLabel}`;
+}
+
+/** Append "makeup lesson" next to a student name for text-only surfaces. */
+export function withMakeupStudentLabel(
+  name: string,
+  isMakeup: boolean | null | undefined,
+  makeupLabel: string,
+) {
+  if (!isMakeup) return name;
+  if (!name) return makeupLabel;
+  if (name.includes(makeupLabel)) return name;
+  return `${name} ${makeupLabel}`;
+}
+
+export function withScheduleStudentLabel(
+  name: string,
+  lessonType: string | null | undefined,
+  isMakeup: boolean | null | undefined,
+  trialLabel: string,
+  makeupLabel: string,
+) {
+  return withMakeupStudentLabel(
+    withTrialStudentLabel(name, lessonType, trialLabel),
+    isMakeup,
+    makeupLabel,
+  );
 }
 
 export function timeToMinutes(time: string) {
@@ -741,6 +769,7 @@ export function buildScheduleEvents(
         teachers: { first_name: string; last_name: string | null; is_active?: boolean | null } | null;
         rooms: { room_number: string } | null;
       } | null;
+      is_makeup?: boolean | null;
     }
   >,
   enrollmentsByClass: Map<number, ScheduleStudent[]>,
@@ -755,9 +784,22 @@ export function buildScheduleEvents(
       const classRow = scheduleRow.classes!;
       const enrolled = sortStudents(enrollmentsByClass.get(classRow.id) ?? []);
       const scheduleStudentId = scheduleRow.student_id ?? null;
+      const isMakeup = Boolean(scheduleRow.is_makeup);
 
       let students: ScheduleStudent[] = [];
-      if (classRow.lesson_type === "group" && enrolled.length > 0) {
+      if (isMakeup && scheduleStudentId != null) {
+        const fromEmbed = scheduleRow.schedule_student;
+        if (fromEmbed && fromEmbed.id === scheduleStudentId) {
+          students = [fromEmbed];
+        } else {
+          const fromRoster = enrolled.find(
+            (student) => student.id === scheduleStudentId,
+          );
+          if (fromRoster) {
+            students = [fromRoster];
+          }
+        }
+      } else if (classRow.lesson_type === "group" && enrolled.length > 0) {
         students = enrolled;
       } else if (scheduleStudentId != null) {
         const fromEmbed = scheduleRow.schedule_student;
@@ -798,12 +840,15 @@ export function buildScheduleEvents(
         class_track: classRow.class_track,
         lesson_type: classRow.lesson_type ?? null,
         trial_format: classRow.trial_format ?? null,
+        is_makeup: isMakeup,
         schedule_student_id: scheduleStudentId,
         student_ids:
-          (classRow.lesson_type === "group" && enrolled.length > 0) ||
-          scheduleStudentId == null
-            ? enrolled.map((student) => student.id)
-            : [scheduleStudentId],
+          isMakeup && scheduleStudentId != null
+            ? [scheduleStudentId]
+            : (classRow.lesson_type === "group" && enrolled.length > 0) ||
+                scheduleStudentId == null
+              ? enrolled.map((student) => student.id)
+              : [scheduleStudentId],
         students,
       };
     });

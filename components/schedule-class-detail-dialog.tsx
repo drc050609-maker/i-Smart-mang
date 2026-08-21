@@ -17,6 +17,7 @@ import { ActiveStatusBadge } from "@/components/active-status-badge";
 import { useLanguage } from "@/components/language-provider";
 import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
+import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
@@ -243,6 +244,7 @@ export function ScheduleClassDetailDialog({
                       lessonType={instance.lesson_type}
                       trialFormat={instance.trial_format}
                     />
+                    <ScheduleMakeupLabel isMakeup={instance.is_makeup} />
                     <StudentNoteStar students={[student]} />
                   </li>
                 ))}
