@@ -168,9 +168,6 @@ function ClassTableRow({
           {classRow.room_number ? (
             <span>
               {t("common.room")} {classRow.room_number}
-              {classRow.room_class_size != null
-                ? ` ${t("common.capacity", { count: classRow.room_class_size })}`
-                : ""}
             </span>
           ) : (
             <span>{t("common.noRoomAssigned")}</span>
