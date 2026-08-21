@@ -20,6 +20,12 @@ import {
   staffPositionLabelKey,
   type StaffPosition,
 } from "@/lib/staff-position";
+import {
+  TEACHER_STATUSES,
+  teacherStatusFromRow,
+  teacherStatusLabelKey,
+  type TeacherStatus,
+} from "@/lib/teacher-status";
 
 import type { Database } from "@/types/database.types";
 
@@ -52,12 +58,17 @@ export function EditTeacherDialog({
     | "phone_number"
     | "position"
     | "hourly_rate_cents"
+    | "is_active"
+    | "status"
   >;
 }) {
   const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<StaffPosition>(teacher.position);
+  const [status, setStatus] = useState<TeacherStatus>(
+    teacherStatusFromRow(teacher),
+  );
   const formRef = useRef<HTMLFormElement>(null);
   const [state, formAction, pending] = useActionState(
     updateTeacher,
@@ -67,6 +78,7 @@ export function EditTeacherDialog({
   function openDialog() {
     setError(null);
     setPosition(teacher.position);
+    setStatus(teacherStatusFromRow(teacher));
     setOpen(true);
   }
 
@@ -128,7 +140,7 @@ export function EditTeacherDialog({
               </DialogTitle>
 
               <form
-                key={`${teacher.id}-${teacher.first_name}-${teacher.last_name}-${teacher.dob}-${teacher.phone_number}-${teacher.position}-${teacher.hourly_rate_cents}`}
+                key={`${teacher.id}-${teacher.first_name}-${teacher.last_name}-${teacher.dob}-${teacher.phone_number}-${teacher.position}-${teacher.hourly_rate_cents}-${teacher.status}-${teacher.is_active}`}
                 ref={formRef}
                 action={formAction}
                 className="mt-6 space-y-5"
@@ -187,6 +199,33 @@ export function EditTeacherDialog({
                       {STAFF_POSITIONS.map((value) => (
                         <option key={value} value={value}>
                           {t(staffPositionLabelKey(value))}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="editTeacherStatus" className={labelClassName}>
+                    {t("common.status")}
+                  </label>
+                  <div className="relative mt-2">
+                    <select
+                      id="editTeacherStatus"
+                      name="status"
+                      value={status}
+                      onChange={(e) =>
+                        setStatus(e.target.value as TeacherStatus)
+                      }
+                      className={selectClassName}
+                    >
+                      {TEACHER_STATUSES.map((value) => (
+                        <option key={value} value={value}>
+                          {t(teacherStatusLabelKey(value))}
                         </option>
                       ))}
                     </select>

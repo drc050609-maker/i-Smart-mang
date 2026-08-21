@@ -17,6 +17,7 @@ import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { TimeSlotField } from "@/components/time-slot-field";
 import { useLanguage } from "@/components/language-provider";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
+import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import {
   addMinutesToTimeInput,
   formatTime12Hour,
@@ -202,10 +203,13 @@ export function ScheduleRescheduleDialog({
             <p className="mt-2 flex flex-wrap items-start gap-1 text-sm font-medium text-gray-900 dark:text-white">
               {studentLabel}
               {labeledStudents.length > 0 ? (
-                <ScheduleTrialLabel
-                  lessonType={instance.lesson_type}
-                  trialFormat={instance.trial_format}
-                />
+                <>
+                  <ScheduleTrialLabel
+                    lessonType={instance.lesson_type}
+                    trialFormat={instance.trial_format}
+                  />
+                  <ScheduleMakeupLabel isMakeup={instance.is_makeup} />
+                </>
               ) : null}
             </p>
             {labeledStudents.length > 0 ||

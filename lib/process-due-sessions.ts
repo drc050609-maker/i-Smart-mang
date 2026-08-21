@@ -2,7 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import {
   getPastScheduleOccurrences,
+  shouldSkipDueSessionForMakeup,
   type ScheduleForOccurrences,
+  type ScheduledMakeupCredit,
 } from "@/lib/class-session-credits";
 import type { Database } from "@/types/database.types";
 
@@ -125,6 +127,16 @@ export async function processDueClassSessions(
   lookbackDate.setDate(lookbackDate.getDate() - lookbackDays);
   const lookbackIso = lookbackDate.toISOString().slice(0, 10);
 
+  const { error: dueMakeupError } = await supabase.rpc(
+    "apply_due_makeup_credits",
+    {
+      p_created_by: userId ?? undefined,
+    },
+  );
+  if (dueMakeupError) {
+    throw new Error(dueMakeupError.message);
+  }
+
   let campusClassIds: number[] | null = null;
   if (locationId != null) {
     const { data: campusClasses, error: campusClassesError } = await supabase
@@ -151,7 +163,7 @@ export async function processDueClassSessions(
         supabase
           .from("class_schedules")
           .select(
-            "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time",
+            "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time, is_makeup",
           )
           .not("schedule_start_time", "is", null)
           .not("schedule_end_time", "is", null)
@@ -184,7 +196,7 @@ export async function processDueClassSessions(
       supabase
         .from("class_schedules")
         .select(
-          "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time",
+          "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time, is_makeup",
         )
         .not("schedule_start_time", "is", null)
         .not("schedule_end_time", "is", null),
@@ -214,6 +226,44 @@ export async function processDueClassSessions(
   if (recordsError) {
     throw new Error(recordsError.message);
   }
+
+  const { data: makeupRows, error: makeupError } = await supabase
+    .from("class_makeup_sessions")
+    .select(
+      "student_id, class_id, makeup_schedule_id, original_schedule_id, original_session_date, credits_applied",
+    )
+    .eq("credits_applied", false);
+
+  if (makeupError) {
+    throw new Error(makeupError.message);
+  }
+
+  const campusClassIdSet =
+    campusClassIds == null ? null : new Set(campusClassIds);
+
+  const pendingMakeups: ScheduledMakeupCredit[] = (
+    makeupRows as
+      | Array<{
+          student_id: number;
+          class_id: number;
+          makeup_schedule_id: number | null;
+          original_schedule_id: number | null;
+          original_session_date: string | null;
+          credits_applied: boolean;
+        }>
+      | null
+  )
+    ?.filter(
+      (row) => campusClassIdSet == null || campusClassIdSet.has(row.class_id),
+    )
+    .map((row) => ({
+      studentId: row.student_id,
+      classId: row.class_id,
+      creditsApplied: row.credits_applied,
+      makeupScheduleId: row.makeup_schedule_id,
+      originalScheduleId: row.original_schedule_id,
+      originalSessionDate: row.original_session_date,
+    })) ?? [];
 
   const studentsByClass = new Map<number, number[]>();
 
@@ -247,6 +297,10 @@ export async function processDueClassSessions(
       break;
     }
 
+    if (schedule.is_makeup) {
+      continue;
+    }
+
     const studentIds = studentsByClass.get(schedule.class_id) ?? [];
     if (studentIds.length === 0) continue;
 
@@ -274,6 +328,19 @@ export async function processDueClassSessions(
         );
 
         if (existingKeys.has(key)) {
+          continue;
+        }
+
+        if (
+          shouldSkipDueSessionForMakeup({
+            isMakeupSchedule: Boolean(schedule.is_makeup),
+            studentId,
+            classId: occurrence.classId,
+            scheduleId: occurrence.scheduleId,
+            sessionDate: occurrence.sessionDate,
+            pendingMakeups,
+          })
+        ) {
           continue;
         }
 

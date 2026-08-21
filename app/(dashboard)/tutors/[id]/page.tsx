@@ -12,7 +12,7 @@ import { TeacherResumeSection } from "@/components/teacher-resume-section";
 import { FrontDeskHoursSection } from "@/components/front-desk-hours-section";
 import { LinkFrontDeskAccountSection } from "@/components/link-front-desk-account-section";
 import { UnassignTeacherClassButton } from "@/components/unassign-teacher-class-button";
-import { DetailActiveToggle } from "@/components/detail-active-toggle";
+import { TeacherStatusSelect } from "@/components/teacher-status-select";
 import {
   classPayRatesToGroupRates,
   listTeacherPaycheckPeriodOptions,
@@ -33,7 +33,8 @@ import { compareStudentNames, formatStudentName } from "@/lib/person-name";
 import { requireStaff } from "@/lib/auth";
 import { createTranslator } from "@/lib/i18n";
 import { formatCentsAsCurrency } from "@/lib/money";
-import { isFrontDesk, staffPositionLabelKey } from "@/lib/staff-position";
+import { isFrontDesk } from "@/lib/staff-position";
+import { teacherStatusFromRow } from "@/lib/teacher-status";
 import { TEACHER_RESUME_BUCKET } from "@/lib/teacher-resume";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
@@ -121,7 +122,7 @@ export default async function TutorDetailPage({
   const { data: teacher, error: teacherError } = await supabase
     .from("teachers")
     .select(
-      "id, first_name, last_name, dob, phone_number, is_active, location_id, resume_path, resume_file_name, position, hourly_rate_cents",
+      "id, first_name, last_name, dob, phone_number, is_active, status, location_id, resume_path, resume_file_name, position, hourly_rate_cents",
     )
     .eq("id", teacherId)
     .maybeSingle();
@@ -436,14 +437,6 @@ export default async function TutorDetailPage({
           </div>
         </div>
         <dl className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <div>
-            <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
-              {t("common.position")}
-            </dt>
-            <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-              {t(staffPositionLabelKey(teacher.position))}
-            </dd>
-          </div>
           {frontDesk ? (
             <div>
               <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -480,11 +473,12 @@ export default async function TutorDetailPage({
               {t("common.status")}
             </dt>
             <dd className="mt-1">
-              <DetailActiveToggle
-                entityType="teacher"
-                entityId={teacherId}
-                isActive={teacher.is_active}
-                label={t("common.toggleActiveStatus", { name: formatTeacherName(teacher) })}
+              <TeacherStatusSelect
+                teacherId={teacherId}
+                status={teacherStatusFromRow(teacher)}
+                label={t("common.changeTeacherStatus", {
+                  name: formatTeacherName(teacher),
+                })}
               />
             </dd>
           </div>
