@@ -125,7 +125,7 @@ export function formatScheduleEventStudentLabel(
 }
 
 /**
- * Group classes with more than 3 students show the class name first on the
+ * Group classes with 3 or more students show the class name first on the
  * calendar; smaller groups keep student names as the title.
  */
 export const LARGE_GROUP_STUDENT_THRESHOLD = 3;
@@ -135,7 +135,8 @@ export function isLargeGroupClassDisplay(
   studentCount: number,
 ) {
   return (
-    lessonType === "group" && studentCount > LARGE_GROUP_STUDENT_THRESHOLD
+    lessonType?.trim().toLowerCase() === "group" &&
+    studentCount >= LARGE_GROUP_STUDENT_THRESHOLD
   );
 }
 

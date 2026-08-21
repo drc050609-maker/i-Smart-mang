@@ -184,7 +184,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   );
   const largeGroup = isLargeGroupClassDisplay(
     instance.lesson_type,
-    labeledStudents.length,
+    Math.max(labeledStudents.length, instance.student_ids.length),
   );
   const titleLabel = largeGroup ? subjectLabel : studentLabel;
   const timeLabel = `${formatTime12Hour(instance.display_start_time)} – ${formatTime12Hour(instance.display_end_time)}`;
