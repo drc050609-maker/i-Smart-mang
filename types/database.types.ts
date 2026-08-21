@@ -2010,6 +2010,7 @@ export type Database = {
           position: Database["public"]["Enums"]["staff_position"]
           resume_file_name: string | null
           resume_path: string | null
+          status: Database["public"]["Enums"]["teacher_status"]
         }
         Insert: {
           dob?: string | null
@@ -2024,6 +2025,7 @@ export type Database = {
           position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
+          status?: Database["public"]["Enums"]["teacher_status"]
         }
         Update: {
           dob?: string | null
@@ -2038,6 +2040,7 @@ export type Database = {
           position?: Database["public"]["Enums"]["staff_position"]
           resume_file_name?: string | null
           resume_path?: string | null
+          status?: Database["public"]["Enums"]["teacher_status"]
         }
         Relationships: [
           {
@@ -2393,6 +2396,7 @@ export type Database = {
       staff_role: "admin" | "manager" | "teacher" | "front_desk"
       statement_entry_type: "income" | "expense"
       student_class_history_type: "regular" | "makeup"
+      teacher_status: "active" | "on_leave" | "inactive"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2556,6 +2560,7 @@ export const Constants = {
       staff_role: ["admin", "manager", "teacher", "front_desk"],
       statement_entry_type: ["income", "expense"],
       student_class_history_type: ["regular", "makeup"],
+      teacher_status: ["active", "on_leave", "inactive"],
     },
   },
 } as const
