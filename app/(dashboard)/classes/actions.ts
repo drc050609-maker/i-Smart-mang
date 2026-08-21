@@ -13,6 +13,7 @@ import { addMinutesToScheduleTime, parseTypedTime } from "@/lib/class-schedule";
 import { parseLessonType, type LessonType } from "@/lib/class-lesson-type";
 import { parseClassTrack, type ClassTrack } from "@/lib/class-track";
 import { parseDollarsToCents } from "@/lib/money";
+import { deleteCalendarScheduleSlot } from "@/lib/schedule-delete";
 export type ActionState = {
   error?: string;
   success?: boolean;
@@ -937,17 +938,22 @@ export async function deleteClassSchedule(
     return { error: client.error };
   }
 
-  const { error: deleteError } = await client.supabase
-    .from("class_schedules")
-    .delete()
-    .eq("id", scheduleId)
-    .eq("class_id", classId);
+  const result = await deleteCalendarScheduleSlot(client.supabase, {
+    scheduleId,
+    classId,
+    scope: "series",
+  });
 
-  if (deleteError) {
-    return { error: deleteError.message };
+  if (result.error) {
+    return { error: result.error };
   }
 
   revalidateClass(classId);
+  for (const id of result.classIds ?? []) {
+    if (id !== classId) {
+      revalidatePath(`/classes/${id}`);
+    }
+  }
   return { success: true };
 }
 
