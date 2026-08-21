@@ -39,6 +39,7 @@ import { ScheduleClassDetailDialog } from "@/components/schedule-class-detail-di
 import { ScheduleTeacherDayDialog } from "@/components/schedule-teacher-day-dialog";
 import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
+import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import { useLanguage } from "@/components/language-provider";
 import { formatTime12Hour } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
@@ -58,7 +59,7 @@ import {
   isLargeGroupClassDisplay,
   resolveScheduleEventStudents,
   scheduleEventUnassignedLabel,
-  withTrialStudentLabel,
+  withScheduleStudentLabel,
   formatWeekRange,
   formatDayTitle,
   getEventColumnStyle,
@@ -160,6 +161,7 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
   const columnStyle = getEventColumnStyle(layout, { separated });
   const subjectLabel = formatClassSubject(instance.subject, language);
   const trialLabel = t("common.trialLabel");
+  const makeupLabel = t("common.makeupLesson");
   const unassignedLabel = scheduleEventUnassignedLabel(
     instance.lesson_type,
     subjectLabel,
@@ -173,10 +175,12 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
     labeledStudents,
     unassignedLabel,
   );
-  const displayStudentLabel = withTrialStudentLabel(
+  const displayStudentLabel = withScheduleStudentLabel(
     studentLabel,
     instance.lesson_type,
+    instance.is_makeup,
     trialLabel,
+    makeupLabel,
   );
   const largeGroup = isLargeGroupClassDisplay(
     instance.lesson_type,
@@ -266,11 +270,17 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
             )}
           </span>
           {labeledStudents.length > 0 && !largeGroup ? (
-            <ScheduleTrialLabel
-              lessonType={instance.lesson_type}
-              trialFormat={instance.trial_format}
-              className="shrink-0 font-medium opacity-80"
-            />
+            <>
+              <ScheduleTrialLabel
+                lessonType={instance.lesson_type}
+                trialFormat={instance.trial_format}
+                className="shrink-0 font-medium opacity-80"
+              />
+              <ScheduleMakeupLabel
+                isMakeup={instance.is_makeup}
+                className="shrink-0 font-medium opacity-80"
+              />
+            </>
           ) : null}
           <StudentNoteStar
             students={labeledStudents}
