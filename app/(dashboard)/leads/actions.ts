@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
-import { LEAD_STATUSES, type LeadStatus } from "@/lib/lead";
+import { type LeadStatus } from "@/lib/lead";
 import {
   getCampusLocationId,
 } from "@/lib/campus-location";
@@ -115,14 +115,6 @@ async function copyLeadAddressToStudent(
 function parseOptionalText(value: FormDataEntryValue | null) {
   const text = value?.toString().trim();
   return text ? text : null;
-}
-
-function parseLeadStatus(value: FormDataEntryValue | null): LeadStatus | null {
-  const status = value?.toString().trim();
-  if (!status || !LEAD_STATUSES.includes(status as LeadStatus)) {
-    return null;
-  }
-  return status as LeadStatus;
 }
 
 function parseLocation(value: FormDataEntryValue | null): StaffLocation | null {

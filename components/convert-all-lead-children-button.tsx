@@ -42,15 +42,6 @@ export function ConvertAllLeadChildrenButton({
     initialState,
   );
 
-  if (pendingCount === 0) {
-    return null;
-  }
-
-  function closeDialog() {
-    setError(null);
-    setOpen(false);
-  }
-
   useEffect(() => {
     if (state.error) {
       setError(state.error);
@@ -64,6 +55,15 @@ export function ConvertAllLeadChildrenButton({
       }
     }
   }, [router, state.error, state.studentId, state.success]);
+
+  if (pendingCount === 0) {
+    return null;
+  }
+
+  function closeDialog() {
+    setError(null);
+    setOpen(false);
+  }
 
   return (
     <>

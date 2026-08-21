@@ -51,7 +51,9 @@ export function ScheduleMakeupDialog({
     initialState,
   );
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     if (state.success) {

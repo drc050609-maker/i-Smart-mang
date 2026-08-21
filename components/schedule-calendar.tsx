@@ -103,7 +103,7 @@ function classNames(...classes: (string | false | undefined)[]) {
 }
 
 /** Empty selection means "all teachers". */
-function initialSelectedTeacherIds(_events: ScheduleEvent[]) {
+function initialSelectedTeacherIds() {
   return [] as number[];
 }
 
@@ -362,7 +362,7 @@ export function ScheduleCalendar({
   const [internalSelectedTeacherIds, setInternalSelectedTeacherIds] = useState<
     number[]
   >(() =>
-    selectedTeacherIdsProp ?? initialSelectedTeacherIds(events),
+    selectedTeacherIdsProp ?? initialSelectedTeacherIds(),
   );
   const selectedTeacherIds =
     selectedTeacherIdsProp ?? internalSelectedTeacherIds;

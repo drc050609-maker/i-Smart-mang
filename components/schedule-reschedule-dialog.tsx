@@ -104,8 +104,10 @@ export function ScheduleRescheduleDialog({
   const onCloseRef = useRef(onClose);
   const onSuccessRef = useRef(onSuccess);
 
-  onCloseRef.current = onClose;
-  onSuccessRef.current = onSuccess;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onSuccessRef.current = onSuccess;
+  });
 
   useEffect(() => {
     if (state.success) {

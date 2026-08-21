@@ -62,7 +62,9 @@ export function QuickAddTeacherDialog({
   }
 
   const onCreatedRef = useRef(onCreated);
-  onCreatedRef.current = onCreated;
+  useEffect(() => {
+    onCreatedRef.current = onCreated;
+  });
 
   useEffect(() => {
     if (state.error) {

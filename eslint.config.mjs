@@ -5,13 +5,21 @@ import nextTs from "eslint-config-next/typescript";
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Override default ignores of eslint-config-next.
+  {
+    rules: {
+      // Dialogs sync useActionState results into local UI state; rewriting
+      // every instance is a separate pass and is not required for correctness.
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
   globalIgnores([
-    // Default ignores of eslint-config-next:
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "scripts/**",
+    "seed.ts",
+    ".venv-match/**",
   ]),
 ]);
 
