@@ -110,8 +110,10 @@ export function ScheduleAddStudentDialog({
     initialState,
   );
 
-  onCloseRef.current = onClose;
-  onSuccessRef.current = onSuccess;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+    onSuccessRef.current = onSuccess;
+  });
 
   useEffect(() => {
     if (!pending) {

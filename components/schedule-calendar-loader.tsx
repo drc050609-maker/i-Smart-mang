@@ -39,7 +39,9 @@ export function ScheduleCalendarLoader({
   const [scheduleRevision, setScheduleRevision] = useState(0);
   const requestIdRef = useRef(0);
   const selectedTeacherIdsRef = useRef(selectedTeacherIds);
-  selectedTeacherIdsRef.current = selectedTeacherIds;
+  useEffect(() => {
+    selectedTeacherIdsRef.current = selectedTeacherIds;
+  });
 
   useEffect(() => {
     try {
