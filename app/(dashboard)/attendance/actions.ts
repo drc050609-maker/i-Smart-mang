@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 import { parseAttendanceStatus, type AttendanceStatus } from "@/lib/attendance";
+import {
+  addMinutesToScheduleTime,
+  toTimeInputValue,
+} from "@/lib/class-schedule";
 import { formatSessionDate } from "@/lib/class-session-credits";
 import { createClient } from "@/utils/supabase/server";
 
@@ -355,4 +359,77 @@ export async function markStudentAllPresent(
       error: error instanceof Error ? error.message : "Could not mark attendance.",
     };
   }
+}
+
+export async function scheduleMakeupClass(
+  _prevState: ActionState,
+  formData: FormData,
+): Promise<ActionState> {
+  const studentId = Number(formData.get("studentId"));
+  const classId = Number(formData.get("classId"));
+  const originalScheduleId = Number(formData.get("originalScheduleId"));
+  const originalSessionDate = parseSessionDate(
+    formData.get("originalSessionDate"),
+  );
+  const makeupDate = parseSessionDate(formData.get("makeupDate"));
+  const startTimeRaw = toTimeInputValue(
+    formData.get("startTime")?.toString() ?? "",
+  );
+  const durationMinutes = Number(formData.get("durationMinutes"));
+
+  if (!Number.isInteger(studentId) || studentId <= 0) {
+    return { error: "Invalid student." };
+  }
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+  if (!Number.isInteger(originalScheduleId) || originalScheduleId <= 0) {
+    return { error: "Invalid class schedule." };
+  }
+  if (!originalSessionDate) {
+    return { error: "Invalid original class date." };
+  }
+  if (!makeupDate) {
+    return { error: "Pick a makeup date." };
+  }
+  if (!startTimeRaw) {
+    return { error: "Pick a makeup time." };
+  }
+
+  const duration =
+    Number.isInteger(durationMinutes) && durationMinutes > 0
+      ? durationMinutes
+      : 45;
+  const endTime = addMinutesToScheduleTime(`${startTimeRaw}:00`, duration);
+  if (!endTime) {
+    return { error: "Makeup time is too late in the day." };
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  const { error } = await supabase.rpc("schedule_class_makeup", {
+    p_student_id: studentId,
+    p_class_id: classId,
+    p_original_schedule_id: originalScheduleId,
+    p_original_session_date: originalSessionDate,
+    p_makeup_date: makeupDate,
+    p_start_time: `${startTimeRaw}:00`,
+    p_end_time: endTime,
+    p_created_by: user.id,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  revalidateAttendancePaths(studentId, classId);
+  return { success: true };
 }
