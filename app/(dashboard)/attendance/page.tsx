@@ -119,6 +119,7 @@ export default async function AttendancePage({
     { data: enrollments, error: enrollmentsError },
     { data: students, error: studentsError },
     { data: attendance, error: attendanceError },
+    { data: campusTeachers, error: teachersError },
   ] = await Promise.all([
     supabase
       .from("class_schedules")
@@ -165,6 +166,13 @@ export default async function AttendancePage({
       )
       .eq("session_date", sessionDate)
       .eq("classes.location_id", locationId),
+    supabase
+      .from("teachers")
+      .select("id, first_name, last_name")
+      .eq("is_active", true)
+      .eq("position", "teacher")
+      .eq("location_id", locationId)
+      .order("first_name"),
   ]);
 
   const error =
@@ -172,6 +180,7 @@ export default async function AttendancePage({
     enrollmentsError?.message ??
     studentsError?.message ??
     attendanceError?.message ??
+    teachersError?.message ??
     null;
 
   const studentById = new Map(
@@ -383,6 +392,12 @@ export default async function AttendancePage({
   }
 
   const teachersMap = new Map<number, AttendanceTeacherOption>();
+  for (const teacher of campusTeachers ?? []) {
+    teachersMap.set(teacher.id, {
+      id: teacher.id,
+      name: formatTeacherName(teacher),
+    });
+  }
   for (const session of sessionsForDate) {
     if (session.teacherId == null || !session.teacherName) continue;
     if (!teachersMap.has(session.teacherId)) {

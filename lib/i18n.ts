@@ -1996,7 +1996,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "time.hoursAgo": "{count}h ago",
     "time.daysAgo": "{count}d ago",
     "common.attendancePickDateHelp":
-      "Pick a date, then choose all teachers with class today or one teacher.",
+      "Pick a date, then choose all teachers or one teacher.",
     "common.classesOnDate": "Classes on {date}",
     "common.attendanceAllClassesHelp":
       "Students are grouped by teacher. Group classes such as Art and Dance appear as one row. Open a group to mark each student.",
@@ -3075,7 +3075,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "time.hoursAgo": "{count}小时前",
     "time.daysAgo": "{count}天前",
     "common.attendancePickDateHelp":
-      "选择日期后，可查看今日有课的全部老师或其中一位老师。",
+      "选择日期后，可查看全部老师或其中一位老师。",
     "common.classesOnDate": "{date} 的课程",
     "common.attendanceAllClassesHelp":
       "学生按老师分组。美术、舞蹈等小组课显示为一行。点击小组课可标记每位学生。",

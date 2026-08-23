@@ -147,8 +147,18 @@ function clusterEntriesForTeacher(
 function groupClassGroupsByTeacher(
   classGroups: AttendanceClassGroup[],
   unassignedLabel: string,
+  allTeachers: AttendanceTeacherOption[] = [],
 ): TeacherColumn[] {
   const columns = new Map<string, TeacherColumn>();
+
+  for (const teacher of allTeachers) {
+    columns.set(`id:${teacher.id}`, {
+      teacherId: teacher.id,
+      teacherName: teacher.name,
+      locationName: null,
+      entries: [],
+    });
+  }
 
   for (const group of classGroups) {
     const mapKey =
@@ -164,6 +174,8 @@ function groupClassGroupsByTeacher(
         entries: [],
       };
       columns.set(mapKey, column);
+    } else if (!column.locationName && group.locationName) {
+      column.locationName = group.locationName;
     }
 
     for (const student of group.students) {
@@ -746,7 +758,7 @@ function TeacherAttendanceCard({
 
       {column.entries.length === 0 ? (
         <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
-          {t("common.noEnrolledStudents")}
+          {t("common.noClassesScheduled", { name: column.teacherName })}
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 dark:divide-white/5">
@@ -795,8 +807,15 @@ export function AttendanceSection({
     null,
   );
   const teacherColumns = useMemo(
-    () => groupClassGroupsByTeacher(classGroups, t("common.unassigned")),
-    [classGroups, t],
+    () =>
+      groupClassGroupsByTeacher(
+        classGroups,
+        t("common.unassigned"),
+        selectedTeacherId
+          ? teachers.filter((teacher) => teacher.id === selectedTeacherId)
+          : teachers,
+      ),
+    [classGroups, selectedTeacherId, t, teachers],
   );
 
   function attendanceParams(overrides?: { date?: string; teacher?: string }) {
@@ -841,7 +860,7 @@ export function AttendanceSection({
                 htmlFor="attendance-teacher"
                 className="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                {t("common.teachersToday")}
+                {t("common.teachers")}
               </label>
               <select
                 id="attendance-teacher"
@@ -849,7 +868,7 @@ export function AttendanceSection({
                 onChange={handleTeacherChange}
                 className="mt-1 block rounded-md bg-white px-3 py-1.5 text-sm text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 dark:bg-white/5 dark:text-white dark:outline-white/10"
               >
-                <option value="all">{t("common.allTeachersToday")}</option>
+                <option value="all">{t("common.allTeachers")}</option>
                 {teachers.map((teacher) => (
                   <option key={teacher.id} value={teacher.id}>
                     {teacher.name}
