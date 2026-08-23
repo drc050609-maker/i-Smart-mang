@@ -880,6 +880,8 @@ export type TranslationKey =
   | "common.classesOnDate"
   | "common.attendanceAllClassesHelp"
   | "common.groupClassAtTime"
+  | "common.markGroupPresent"
+  | "common.groupClassOpenHelp"
   | "common.noClassesOnDate"
   | "common.viewStudentClassesOnly"
   | "common.classCountOnDate"
@@ -1997,8 +1999,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Pick a date, then choose all teachers with class today or one teacher.",
     "common.classesOnDate": "Classes on {date}",
     "common.attendanceAllClassesHelp":
-      "Students are grouped by teacher. Group classes such as Art and Dance show the class time and student count.",
+      "Students are grouped by teacher. Group classes such as Art and Dance appear as one row. Open a group to mark each student.",
     "common.groupClassAtTime": "{subject} at {time}",
+    "common.markGroupPresent": "Mark present",
+    "common.groupClassOpenHelp": "Open to mark each student",
     "common.noClassesOnDate": "No classes scheduled for this date.",
     "common.viewStudentClassesOnly":
       "Select a student above to view their classes only.",
@@ -3074,8 +3078,10 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "选择日期后，可查看今日有课的全部老师或其中一位老师。",
     "common.classesOnDate": "{date} 的课程",
     "common.attendanceAllClassesHelp":
-      "学生按老师分组。美术、舞蹈等小组课会显示上课时间和人数。",
+      "学生按老师分组。美术、舞蹈等小组课显示为一行。点击小组课可标记每位学生。",
     "common.groupClassAtTime": "{time} 的 {subject}",
+    "common.markGroupPresent": "标记出席",
+    "common.groupClassOpenHelp": "点击查看并标记每位学生",
     "common.noClassesOnDate": "此日期没有安排课程。",
     "common.viewStudentClassesOnly": "在上方选择学生以仅查看其课程。",
     "common.classCountOnDate": "{date} 共 {count} 节课",
