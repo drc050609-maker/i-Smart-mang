@@ -694,6 +694,8 @@ export type TranslationKey =
   | "common.grantAction"
   | "common.makeUpAction"
   | "common.searchClassesFull"
+  | "common.searchPayments"
+  | "common.search"
   | "common.searchAndSelectClasses"
   | "common.searchAndSelectStudents"
   | "common.searchAndSelectTeachers"
@@ -877,6 +879,7 @@ export type TranslationKey =
   | "common.attendancePickDateHelp"
   | "common.classesOnDate"
   | "common.attendanceAllClassesHelp"
+  | "common.groupClassAtTime"
   | "common.noClassesOnDate"
   | "common.viewStudentClassesOnly"
   | "common.classCountOnDate"
@@ -1795,6 +1798,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.grantAction": "Grant",
     "common.makeUpAction": "Make-up",
     "common.searchClassesFull": "Search classes by subject, track, teacher, room, or type",
+    "common.searchPayments": "Search by student, class, plan, or status…",
+    "common.search": "Search",
     "common.searchAndSelectClasses": "Search and select classes",
     "common.searchAndSelectStudents": "Search and select students",
     "common.searchAndSelectTeachers": "Search and select teachers",
@@ -1992,7 +1997,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "Pick a date, then choose all teachers with class today or one teacher.",
     "common.classesOnDate": "Classes on {date}",
     "common.attendanceAllClassesHelp":
-      "Students are grouped by teacher. Two teachers appear in each row.",
+      "Students are grouped by teacher. Group classes such as Art and Dance show the class time and student count.",
+    "common.groupClassAtTime": "{subject} at {time}",
     "common.noClassesOnDate": "No classes scheduled for this date.",
     "common.viewStudentClassesOnly":
       "Select a student above to view their classes only.",
@@ -2873,6 +2879,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.grantAction": "授予",
     "common.makeUpAction": "补课",
     "common.searchClassesFull": "按科目、类别、老师、教室或类型搜索课程",
+    "common.searchPayments": "按学生、课程、方案或状态搜索…",
+    "common.search": "搜索",
     "common.searchAndSelectClasses": "搜索并选择课程",
     "common.searchAndSelectStudents": "搜索并选择学生",
     "common.searchAndSelectTeachers": "搜索并选择老师",
@@ -3066,7 +3074,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
       "选择日期后，可查看今日有课的全部老师或其中一位老师。",
     "common.classesOnDate": "{date} 的课程",
     "common.attendanceAllClassesHelp":
-      "学生按老师分组，每行显示两位老师。",
+      "学生按老师分组。美术、舞蹈等小组课会显示上课时间和人数。",
+    "common.groupClassAtTime": "{time} 的 {subject}",
     "common.noClassesOnDate": "此日期没有安排课程。",
     "common.viewStudentClassesOnly": "在上方选择学生以仅查看其课程。",
     "common.classCountOnDate": "{date} 共 {count} 节课",

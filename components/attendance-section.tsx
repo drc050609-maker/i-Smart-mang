@@ -16,6 +16,7 @@ import {
 import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
 import { useLanguage } from "@/components/language-provider";
 import { minutesBetweenScheduleTimes } from "@/lib/class-schedule";
+import { formatClassSubject } from "@/lib/class-subject";
 import { formatSessionDate } from "@/lib/class-session-credits";
 import {
   attendanceStatusBadgeClass,
@@ -52,6 +53,7 @@ export type AttendanceClassGroup = {
   scheduleId: number;
   classId: number;
   classSubject: string;
+  lessonType: string | null;
   teacherId: number | null;
   teacherName: string | null;
   locationName: string | null;
@@ -72,6 +74,7 @@ type TeacherStudentEntry = {
   scheduleId: number;
   classId: number;
   classSubject: string;
+  lessonType: string | null;
   startTime: string;
   endTime: string;
   teacherName: string | null;
@@ -83,6 +86,55 @@ type TeacherColumn = {
   locationName: string | null;
   entries: TeacherStudentEntry[];
 };
+
+type AttendanceBlock =
+  | { kind: "group"; key: string; entries: TeacherStudentEntry[] }
+  | { kind: "student"; key: string; entry: TeacherStudentEntry };
+
+function clusterEntriesForTeacher(
+  entries: TeacherStudentEntry[],
+): AttendanceBlock[] {
+  const groupEntries = new Map<string, TeacherStudentEntry[]>();
+  const individuals: TeacherStudentEntry[] = [];
+
+  for (const entry of entries) {
+    const isGroupClass =
+      entry.lessonType?.trim().toLowerCase() === "group" &&
+      !entry.student.isMakeupSlot;
+    if (isGroupClass) {
+      const key = `${entry.scheduleId}:${entry.startTime}`;
+      const existing = groupEntries.get(key) ?? [];
+      existing.push(entry);
+      groupEntries.set(key, existing);
+      continue;
+    }
+    individuals.push(entry);
+  }
+
+  const blocks: AttendanceBlock[] = [
+    ...[...groupEntries.entries()].map(([key, group]) => ({
+      kind: "group" as const,
+      key,
+      entries: group,
+    })),
+    ...individuals.map((entry) => ({
+      kind: "student" as const,
+      key: entry.key,
+      entry,
+    })),
+  ];
+
+  blocks.sort((a, b) => {
+    const timeA = a.kind === "group" ? a.entries[0]!.startTime : a.entry.startTime;
+    const timeB = b.kind === "group" ? b.entries[0]!.startTime : b.entry.startTime;
+    const time = timeA.localeCompare(timeB);
+    if (time !== 0) return time;
+    if (a.kind !== b.kind) return a.kind === "group" ? -1 : 1;
+    return 0;
+  });
+
+  return blocks;
+}
 
 function groupClassGroupsByTeacher(
   classGroups: AttendanceClassGroup[],
@@ -113,6 +165,7 @@ function groupClassGroupsByTeacher(
         scheduleId: group.scheduleId,
         classId: group.classId,
         classSubject: group.classSubject,
+        lessonType: group.lessonType,
         startTime: group.startTime,
         endTime: group.endTime,
         teacherName: group.teacherName,
@@ -374,6 +427,100 @@ function AttendanceActionButtons({
   );
 }
 
+function AttendanceStudentItem({
+  entry,
+  sessionDate,
+  showTime,
+  onMakeup,
+}: {
+  entry: TeacherStudentEntry;
+  sessionDate: string;
+  showTime: boolean;
+  onMakeup: (target: MakeupDialogTarget) => void;
+}) {
+  const { language, t } = useLanguage();
+  const studentName = formatStudentName({
+    "first name": entry.student.firstName,
+    "last name": entry.student.lastName,
+  });
+
+  return (
+    <div className="py-2 first:pt-0 last:pb-0">
+      <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
+        <div className="min-w-0">
+          <p className="inline-flex flex-wrap items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
+            {studentName}
+            <ScheduleMakeupLabel isMakeup={entry.student.isMakeupSlot} />
+          </p>
+          {showTime ? (
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {formatTime(entry.startTime, language)} –{" "}
+              {formatTime(entry.endTime, language)}
+            </p>
+          ) : null}
+        </div>
+        <dl className="flex flex-wrap gap-x-4 text-xs text-gray-500 dark:text-gray-400">
+          <div>
+            <dt className="inline">{t("common.totalClass")} </dt>
+            <dd className="inline font-medium text-gray-900 dark:text-white">
+              {entry.student.sessionsTotal}
+            </dd>
+          </div>
+          <div>
+            <dt className="inline">{t("common.remainingClass")} </dt>
+            <dd className="inline font-medium text-gray-900 dark:text-white">
+              {entry.student.sessionsRemaining}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {entry.student.status ? (
+          <span
+            className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(entry.student.status)}`}
+          >
+            {formatAttendanceStatus(entry.student.status, language)}
+          </span>
+        ) : (
+          <span className="text-xs text-gray-400 dark:text-gray-500">
+            {t("common.notMarked")}
+          </span>
+        )}
+        {entry.student.makeup ? (
+          <span className="text-xs text-sky-700 dark:text-sky-300">
+            {t("common.makeupScheduled", {
+              date: formatAttendanceDate(
+                entry.student.makeup.makeupDate,
+                language,
+              ),
+              time: formatTime(entry.student.makeup.startTime, language),
+            })}
+          </span>
+        ) : null}
+      </div>
+
+      <div className="mt-2">
+        <AttendanceActionButtons
+          studentId={entry.student.studentId}
+          classId={entry.classId}
+          scheduleId={entry.scheduleId}
+          sessionDate={sessionDate}
+          status={entry.student.status}
+          studentName={studentName}
+          classSubject={entry.classSubject}
+          teacherName={entry.teacherName}
+          startTime={entry.startTime}
+          endTime={entry.endTime}
+          isMakeupSlot={entry.student.isMakeupSlot}
+          makeup={entry.student.makeup}
+          onMakeup={onMakeup}
+        />
+      </div>
+    </div>
+  );
+}
+
 function TeacherAttendanceCard({
   column,
   sessionDate,
@@ -387,6 +534,7 @@ function TeacherAttendanceCard({
   const markedCount = column.entries.filter(
     (entry) => entry.student.status !== null,
   ).length;
+  const blocks = clusterEntriesForTeacher(column.entries);
 
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
@@ -409,86 +557,54 @@ function TeacherAttendanceCard({
         </p>
       ) : (
         <ul className="mt-3 divide-y divide-gray-100 dark:divide-white/5">
-          {column.entries.map((entry) => {
-            const studentName = formatStudentName({
-              "first name": entry.student.firstName,
-              "last name": entry.student.lastName,
-            });
-
-            return (
-              <li key={entry.key} className="py-2 first:pt-0 last:pb-0">
-                <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
-                  <div className="min-w-0">
-                    <p className="inline-flex flex-wrap items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
-                      {studentName}
-                      <ScheduleMakeupLabel isMakeup={entry.student.isMakeupSlot} />
-                    </p>
-                    <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                      {formatTime(entry.startTime, language)} –{" "}
-                      {formatTime(entry.endTime, language)}
-                    </p>
-                  </div>
-                  <dl className="flex flex-wrap gap-x-4 text-xs text-gray-500 dark:text-gray-400">
-                    <div>
-                      <dt className="inline">{t("common.totalClass")} </dt>
-                      <dd className="inline font-medium text-gray-900 dark:text-white">
-                        {entry.student.sessionsTotal}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt className="inline">{t("common.remainingClass")} </dt>
-                      <dd className="inline font-medium text-gray-900 dark:text-white">
-                        {entry.student.sessionsRemaining}
-                      </dd>
-                    </div>
-                  </dl>
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-2">
-                  {entry.student.status ? (
-                    <span
-                      className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass(entry.student.status)}`}
-                    >
-                      {formatAttendanceStatus(entry.student.status, language)}
-                    </span>
-                  ) : (
-                    <span className="text-xs text-gray-400 dark:text-gray-500">
-                      {t("common.notMarked")}
-                    </span>
-                  )}
-                  {entry.student.makeup ? (
-                    <span className="text-xs text-sky-700 dark:text-sky-300">
-                      {t("common.makeupScheduled", {
-                        date: formatAttendanceDate(
-                          entry.student.makeup.makeupDate,
-                          language,
-                        ),
-                        time: formatTime(
-                          entry.student.makeup.startTime,
-                          language,
-                        ),
-                      })}
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-2">
-                  <AttendanceActionButtons
-                    studentId={entry.student.studentId}
-                    classId={entry.classId}
-                    scheduleId={entry.scheduleId}
+          {blocks.map((block) => {
+            if (block.kind === "student") {
+              return (
+                <li key={block.key}>
+                  <AttendanceStudentItem
+                    entry={block.entry}
                     sessionDate={sessionDate}
-                    status={entry.student.status}
-                    studentName={studentName}
-                    classSubject={entry.classSubject}
-                    teacherName={entry.teacherName}
-                    startTime={entry.startTime}
-                    endTime={entry.endTime}
-                    isMakeupSlot={entry.student.isMakeupSlot}
-                    makeup={entry.student.makeup}
+                    showTime
                     onMakeup={onMakeup}
                   />
+                </li>
+              );
+            }
+
+            const first = block.entries[0]!;
+            const groupMarked = block.entries.filter(
+              (entry) => entry.student.status !== null,
+            ).length;
+            const subjectLabel = formatClassSubject(first.classSubject, language);
+
+            return (
+              <li key={block.key} className="py-2 first:pt-0 last:pb-0">
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {t("common.groupClassAtTime", {
+                      subject: subjectLabel,
+                      time: formatTime(first.startTime, language),
+                    })}
+                  </h3>
+                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+                    {t("common.studentsMarked", {
+                      students: block.entries.length,
+                      marked: groupMarked,
+                    })}
+                  </p>
                 </div>
+                <ul className="mt-2 divide-y divide-gray-100 dark:divide-white/5">
+                  {block.entries.map((entry) => (
+                    <li key={entry.key}>
+                      <AttendanceStudentItem
+                        entry={entry}
+                        sessionDate={sessionDate}
+                        showTime={false}
+                        onMakeup={onMakeup}
+                      />
+                    </li>
+                  ))}
+                </ul>
               </li>
             );
           })}

@@ -177,7 +177,7 @@ export default async function PaymentsPage() {
       )
       .eq("students.location_id", locationId)
       .order("paid_at", { ascending: false })
-      .limit(50),
+      .limit(300),
   ]);
 
   const payableClasses: PayableClassRow[] =
