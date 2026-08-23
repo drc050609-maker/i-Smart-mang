@@ -19,6 +19,7 @@ import {
 } from "@/app/(dashboard)/finance-actions";
 import { EditAmountDialog } from "@/components/edit-amount-dialog";
 import { EditClassPaymentDialog } from "@/components/edit-class-payment-dialog";
+import { ListSearchInput } from "@/components/list-search-input";
 import { QuickAddStudentDialog } from "@/components/quick-add-student-dialog";
 import {
   PaymentClassFields,
@@ -33,7 +34,7 @@ import {
   TeacherCombobox,
   type TeacherOption,
 } from "@/components/teacher-combobox";
-import { formatClassSubject } from "@/lib/class-subject";
+import { formatClassSubject, classSubjectSearchText } from "@/lib/class-subject";
 import { appLanguageLocale } from "@/lib/language";
 import {
   formatPaymentClassType,
@@ -179,10 +180,32 @@ export function ClassPaymentsSection({
     null,
   );
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [state, formAction, pending] = useActionState(
     recordClassPayment,
     initialState,
   );
+
+  const filteredPayments = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return recentPayments;
+
+    return recentPayments.filter((payment) => {
+      const haystack = [
+        formatStudentName(payment.student),
+        classSubjectSearchText(payment.classSubject, "en"),
+        classSubjectSearchText(payment.classSubject, "zh"),
+        formatClassSubject(payment.classSubject, language),
+        paymentPlanLabel(payment.payment_plan, language),
+        formatPaymentStatus(payment.status, language),
+        payment.notes ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [language, recentPayments, searchQuery]);
 
   const teacherOptions = useMemo(() => {
     const byId = new Map<number, TeacherOption>();
@@ -374,7 +397,33 @@ export function ClassPaymentsSection({
         </div>
       ) : null}
 
-      <div>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        {recentPayments.length > 0 ? (
+          <form
+            className="flex min-w-0 flex-1 flex-wrap items-end gap-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              setSearchQuery(searchInput);
+            }}
+          >
+            <ListSearchInput
+              id="paymentsSearch"
+              value={searchInput}
+              onChange={setSearchInput}
+              placeholder={t("common.searchPayments")}
+              label={t("common.search")}
+              className="min-w-56 max-w-md flex-1"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-white px-3 py-1.5 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:inset-ring-white/10"
+            >
+              {t("common.search")}
+            </button>
+          </form>
+        ) : (
+          <div />
+        )}
         <button
           type="button"
           onClick={openRecordDialog}
@@ -458,7 +507,17 @@ export function ClassPaymentsSection({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-white/10">
-                  {recentPayments.map((payment) => (
+                  {filteredPayments.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={7}
+                        className="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                      >
+                        {t("common.noMatchSearch")}
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredPayments.map((payment) => (
                     <tr key={payment.id}>
                       <td className="py-4 pr-3 pl-4 text-sm whitespace-nowrap text-gray-700 sm:pl-0 dark:text-gray-300">
                         {formatPaidAt(payment.paid_at, language)}
@@ -535,7 +594,8 @@ export function ClassPaymentsSection({
                         </div>
                       </td>
                     </tr>
-                  ))}
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>

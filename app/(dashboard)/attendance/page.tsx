@@ -29,6 +29,7 @@ type ClassEmbed = {
   subject: string;
   is_active: boolean;
   teacher_id: number | null;
+  lesson_type: string | null;
   teachers: TeacherEmbed | TeacherEmbed[] | null;
   locations: LocationEmbed | LocationEmbed[] | null;
 };
@@ -138,6 +139,7 @@ export default async function AttendancePage({
           is_active,
           location_id,
           teacher_id,
+          lesson_type,
           teachers!classes_teacher_id_fkey ( first_name, last_name ),
           locations ( name )
         )
@@ -253,6 +255,7 @@ export default async function AttendancePage({
         classId: classRow.id,
         scheduleStudentId: schedule.student_id,
         classSubject: classRow.subject,
+        lessonType: classRow.lesson_type,
         teacherId: classRow.teacher_id,
         teacherName: teacher ? formatTeacherName(teacher) : null,
         locationName: location?.name ?? null,
@@ -440,6 +443,7 @@ export default async function AttendancePage({
         scheduleId: session.scheduleId,
         classId: session.classId,
         classSubject: session.classSubject,
+        lessonType: session.lessonType,
         teacherId: session.teacherId,
         teacherName: session.teacherName,
         locationName: session.locationName,
