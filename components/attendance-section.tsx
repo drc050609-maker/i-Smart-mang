@@ -2,10 +2,18 @@
 
 import { useActionState, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Dialog,
+  DialogBackdrop,
+  DialogPanel,
+  DialogTitle,
+} from "@headlessui/react";
+import { ChevronRightIcon } from "@heroicons/react/20/solid";
 
 import {
   markAllAttendancePresent,
   markAttendance,
+  markGroupAttendancePresent,
   type ActionState,
   type MarkAllPresentState,
 } from "@/app/(dashboard)/attendance/actions";
@@ -311,6 +319,46 @@ function AttendanceMarkButton({
   );
 }
 
+function MarkGroupPresentButton({
+  scheduleId,
+  classId,
+  sessionDate,
+  unmarkedCount,
+}: {
+  scheduleId: number;
+  classId: number;
+  sessionDate: string;
+  unmarkedCount: number;
+}) {
+  const { t } = useLanguage();
+  const [state, formAction, pending] = useActionState(
+    markGroupAttendancePresent,
+    initialMarkAllState,
+  );
+
+  if (unmarkedCount === 0) {
+    return null;
+  }
+
+  return (
+    <form action={formAction} className="shrink-0">
+      <input type="hidden" name="scheduleId" value={scheduleId} />
+      <input type="hidden" name="classId" value={classId} />
+      <input type="hidden" name="sessionDate" value={sessionDate} />
+      <button
+        type="submit"
+        disabled={pending}
+        className="rounded-md bg-emerald-600 px-2.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-500 disabled:opacity-60 dark:bg-emerald-500 dark:hover:bg-emerald-400"
+      >
+        {pending ? t("common.marking") : t("common.markGroupPresent")}
+      </button>
+      {state.error ? (
+        <p className="mt-1 text-xs text-red-600 dark:text-red-400">{state.error}</p>
+      ) : null}
+    </form>
+  );
+}
+
 function MarkAllPresentButton({
   sessionDate,
   unmarkedCount,
@@ -521,6 +569,151 @@ function AttendanceStudentItem({
   );
 }
 
+function GroupClassAttendanceBlock({
+  entries,
+  sessionDate,
+}: {
+  entries: TeacherStudentEntry[];
+  sessionDate: string;
+}) {
+  const { language, t } = useLanguage();
+  const [open, setOpen] = useState(false);
+  const [makeupTarget, setMakeupTarget] = useState<MakeupDialogTarget | null>(
+    null,
+  );
+  const first = entries[0]!;
+  const subjectLabel = formatClassSubject(first.classSubject, language);
+  const title = t("common.groupClassAtTime", {
+    subject: subjectLabel,
+    time: formatTime(first.startTime, language),
+  });
+  const markedCount = entries.filter((entry) => entry.student.status !== null)
+    .length;
+  const unmarkedCount = entries.length - markedCount;
+  const allPresent =
+    entries.length > 0 &&
+    entries.every((entry) => entry.student.status === "present");
+
+  return (
+    <li className="py-2 first:pt-0 last:pb-0">
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md py-1 text-left hover:bg-gray-50 dark:hover:bg-white/5"
+        >
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {title}
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
+              {t("common.studentsMarked", {
+                students: entries.length,
+                marked: markedCount,
+              })}
+              {" · "}
+              {t("common.groupClassOpenHelp")}
+            </p>
+          </div>
+          {allPresent ? (
+            <span
+              className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass("present")}`}
+            >
+              {formatAttendanceStatus("present", language)}
+            </span>
+          ) : null}
+          <ChevronRightIcon className="size-5 shrink-0 text-gray-400" />
+        </button>
+        <MarkGroupPresentButton
+          scheduleId={first.scheduleId}
+          classId={first.classId}
+          sessionDate={sessionDate}
+          unmarkedCount={unmarkedCount}
+        />
+      </div>
+
+      <Dialog
+        open={open}
+        onClose={() => {
+          if (makeupTarget) return;
+          setOpen(false);
+        }}
+        className="relative z-40"
+      >
+        <DialogBackdrop className="fixed inset-0 bg-gray-900/50" />
+        <div className="fixed inset-0 z-10 w-screen overflow-y-auto">
+          <div className="flex min-h-full items-end justify-center p-4 sm:items-center">
+            <DialogPanel className="relative w-full max-w-lg rounded-lg bg-white p-6 shadow-xl dark:bg-gray-900 dark:outline dark:-outline-offset-1 dark:outline-white/10">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {title}
+                  </DialogTitle>
+                  <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                    {t("common.studentsMarked", {
+                      students: entries.length,
+                      marked: markedCount,
+                    })}
+                  </p>
+                </div>
+                {allPresent ? (
+                  <span
+                    className={`inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset ${attendanceStatusBadgeClass("present")}`}
+                  >
+                    {formatAttendanceStatus("present", language)}
+                  </span>
+                ) : (
+                  <MarkGroupPresentButton
+                    scheduleId={first.scheduleId}
+                    classId={first.classId}
+                    sessionDate={sessionDate}
+                    unmarkedCount={unmarkedCount}
+                  />
+                )}
+              </div>
+
+              <ul className="mt-4 max-h-[60vh] divide-y divide-gray-100 overflow-y-auto dark:divide-white/5">
+                {entries.map((entry) => (
+                  <li key={entry.key}>
+                    <AttendanceStudentItem
+                      entry={entry}
+                      sessionDate={sessionDate}
+                      showTime={false}
+                      onMakeup={setMakeupTarget}
+                    />
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mt-5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (makeupTarget) return;
+                    setOpen(false);
+                  }}
+                  className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 hover:bg-gray-50 dark:bg-white/10 dark:text-white dark:shadow-none dark:inset-ring-white/10 dark:hover:bg-white/20"
+                >
+                  {t("common.close")}
+                </button>
+              </div>
+            </DialogPanel>
+          </div>
+        </div>
+        <ScheduleMakeupDialog
+          key={
+            makeupTarget
+              ? `${makeupTarget.studentId}-${makeupTarget.originalScheduleId}`
+              : "idle"
+          }
+          target={makeupTarget}
+          onClose={() => setMakeupTarget(null)}
+        />
+      </Dialog>
+    </li>
+  );
+}
+
 function TeacherAttendanceCard({
   column,
   sessionDate,
@@ -530,7 +723,7 @@ function TeacherAttendanceCard({
   sessionDate: string;
   onMakeup: (target: MakeupDialogTarget) => void;
 }) {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
   const markedCount = column.entries.filter(
     (entry) => entry.student.status !== null,
   ).length;
@@ -571,41 +764,12 @@ function TeacherAttendanceCard({
               );
             }
 
-            const first = block.entries[0]!;
-            const groupMarked = block.entries.filter(
-              (entry) => entry.student.status !== null,
-            ).length;
-            const subjectLabel = formatClassSubject(first.classSubject, language);
-
             return (
-              <li key={block.key} className="py-2 first:pt-0 last:pb-0">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {t("common.groupClassAtTime", {
-                      subject: subjectLabel,
-                      time: formatTime(first.startTime, language),
-                    })}
-                  </h3>
-                  <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
-                    {t("common.studentsMarked", {
-                      students: block.entries.length,
-                      marked: groupMarked,
-                    })}
-                  </p>
-                </div>
-                <ul className="mt-2 divide-y divide-gray-100 dark:divide-white/5">
-                  {block.entries.map((entry) => (
-                    <li key={entry.key}>
-                      <AttendanceStudentItem
-                        entry={entry}
-                        sessionDate={sessionDate}
-                        showTime={false}
-                        onMakeup={onMakeup}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </li>
+              <GroupClassAttendanceBlock
+                key={block.key}
+                entries={block.entries}
+                sessionDate={sessionDate}
+              />
             );
           })}
         </ul>

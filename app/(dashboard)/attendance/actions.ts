@@ -315,6 +315,54 @@ export async function markAllAttendancePresent(
   }
 }
 
+export async function markGroupAttendancePresent(
+  _prevState: MarkAllPresentState,
+  formData: FormData,
+): Promise<MarkAllPresentState> {
+  const scheduleId = Number(formData.get("scheduleId"));
+  const classId = Number(formData.get("classId"));
+  const sessionDate =
+    parseSessionDate(formData.get("sessionDate")) ?? formatSessionDate(new Date());
+
+  if (!Number.isInteger(scheduleId) || scheduleId <= 0) {
+    return { error: "Invalid class time." };
+  }
+  if (!Number.isInteger(classId) || classId <= 0) {
+    return { error: "Invalid class." };
+  }
+
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "You must be signed in." };
+  }
+
+  try {
+    const slots = (await loadAttendanceSlotsForDate(supabase, sessionDate)).filter(
+      (slot) => slot.scheduleId === scheduleId && slot.classId === classId,
+    );
+    const result = await markSlotsPresent(supabase, user.id, sessionDate, slots);
+
+    if ("error" in result && result.error) {
+      return { error: result.error };
+    }
+
+    return {
+      success: true,
+      markedCount: result.markedCount,
+      skippedCount: result.skippedCount,
+    };
+  } catch (error) {
+    return {
+      error: error instanceof Error ? error.message : "Could not mark attendance.",
+    };
+  }
+}
+
 export async function markStudentAllPresent(
   _prevState: MarkAllPresentState,
   formData: FormData,
