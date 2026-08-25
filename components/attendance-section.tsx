@@ -811,9 +811,11 @@ export function AttendanceSection({
       groupClassGroupsByTeacher(
         classGroups,
         t("common.unassigned"),
+        // Seed an empty card only when a specific teacher is picked.
+        // "All teachers" should list only people who actually have class today.
         selectedTeacherId
           ? teachers.filter((teacher) => teacher.id === selectedTeacherId)
-          : teachers,
+          : [],
       ),
     [classGroups, selectedTeacherId, t, teachers],
   );

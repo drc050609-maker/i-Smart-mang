@@ -69,6 +69,31 @@ type EnrollmentRow = {
 
 const PAGE_SIZE = 1000;
 const IN_FILTER_CHUNK = 200;
+/** Keep one-off makeups/trials in the calendar without loading years of history. */
+const ONE_OFF_PAST_DAYS = 56;
+const ONE_OFF_FUTURE_DAYS = 112;
+
+function ymdWithOffset(base: Date, days: number) {
+  const date = new Date(base);
+  date.setDate(date.getDate() + days);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+/** Recurring rows plus one-offs in a nearby date window. */
+export function recurringOrNearbyOneOffOrFilter(now = new Date()) {
+  const from = ymdWithOffset(now, -ONE_OFF_PAST_DAYS);
+  const to = ymdWithOffset(now, ONE_OFF_FUTURE_DAYS);
+  return `is_recurring.eq.true,and(is_recurring.eq.false,schedule_date.gte.${from},schedule_date.lte.${to})`;
+}
+
+/** Recurring rows for that weekday, plus one-offs on that exact date. */
+export function occurringOnDateOrFilter(ymd: string) {
+  const weekday = new Date(`${ymd}T12:00:00`).getDay();
+  return `and(is_recurring.eq.true,schedule_day_of_week.eq.${weekday}),and(is_recurring.eq.false,schedule_date.eq.${ymd})`;
+}
 
 function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
   if (!value) return null;
@@ -260,6 +285,7 @@ export async function loadScheduleCalendarEvents(
     `,
         )
         .eq("classes.location_id", locationId)
+        .or(recurringOrNearbyOneOffOrFilter())
         .order("schedule_start_time");
 
       if (teacherIds != null && teacherIds.length > 0) {

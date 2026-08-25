@@ -65,11 +65,8 @@ export function StudentNoteStar({
         <StarIcon aria-hidden="true" className={iconClassName} />
       </button>
 
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        className="relative z-50"
-      >
+      {open ? (
+        <Dialog open onClose={() => setOpen(false)} className="relative z-50">
         <DialogBackdrop
           transition
           className="fixed inset-0 bg-gray-900/50 transition-opacity duration-200 ease-out data-closed:opacity-0"
@@ -126,7 +123,8 @@ export function StudentNoteStar({
             </DialogPanel>
           </div>
         </div>
-      </Dialog>
+        </Dialog>
+      ) : null}
     </>
   );
 }
