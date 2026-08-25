@@ -244,30 +244,19 @@ const ScheduleEventBlock = memo(function ScheduleEventBlock({
         <p
           className={classNames(
             "flex items-start gap-0.5 text-[11px] font-semibold leading-tight",
-            wrapNames && !largeGroup ? "break-words" : "truncate",
+            soleStudent || !(wrapNames && !largeGroup)
+              ? "truncate"
+              : "break-words",
           )}
         >
           <span
             className={
-              wrapNames && !largeGroup
-                ? "min-w-0 flex-1 break-words"
-                : "min-w-0 truncate"
+              soleStudent || !(wrapNames && !largeGroup)
+                ? "min-w-0 truncate"
+                : "min-w-0 flex-1 break-words"
             }
           >
-            {soleStudent ? (
-              <>
-                <span className="block leading-tight">
-                  {soleStudent["first name"]}
-                </span>
-                {soleStudent["last name"] ? (
-                  <span className="block leading-tight">
-                    {soleStudent["last name"]}
-                  </span>
-                ) : null}
-              </>
-            ) : (
-              titleLabel
-            )}
+            {soleStudent ? formatStudentName(soleStudent) : titleLabel}
           </span>
           {labeledStudents.length > 0 && !largeGroup ? (
             <>

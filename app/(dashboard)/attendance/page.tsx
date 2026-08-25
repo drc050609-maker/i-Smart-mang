@@ -13,6 +13,7 @@ import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { formatSessionDate } from "@/lib/class-session-credits";
 import { createTranslator } from "@/lib/i18n";
 import { compareStudentNames, formatTeacherName } from "@/lib/person-name";
+import { occurringOnDateOrFilter } from "@/lib/schedule-load";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -116,8 +117,6 @@ export default async function AttendancePage({
 
   const [
     { data: schedules, error: schedulesError },
-    { data: enrollments, error: enrollmentsError },
-    { data: students, error: studentsError },
     { data: attendance, error: attendanceError },
     { data: campusTeachers, error: teachersError },
   ] = await Promise.all([
@@ -147,18 +146,8 @@ export default async function AttendancePage({
       `,
       )
       .eq("classes.location_id", locationId)
+      .or(occurringOnDateOrFilter(sessionDate))
       .order("schedule_start_time"),
-    supabase
-      .from("enrollments")
-      .select('"class id", "student id", is_active, classes!inner ( location_id )')
-      .eq("is_active", true)
-      .eq("classes.location_id", locationId)
-      .not("student id", "is", null),
-    supabase
-      .from("students")
-      .select('id, "first name", "last name"')
-      .eq("is_active", true)
-      .eq("location_id", locationId),
     supabase
       .from("class_attendance")
       .select(
@@ -175,6 +164,57 @@ export default async function AttendancePage({
       .order("first_name"),
   ]);
 
+  const matchingSchedules = ((schedules as ScheduleRow[] | null) ?? []).filter(
+    (schedule) => scheduleMatchesDate(schedule, sessionDate),
+  );
+  const classIdsForDate = [
+    ...new Set(
+      matchingSchedules
+        .map((schedule) => firstOrNull(schedule.classes)?.id ?? schedule.class_id)
+        .filter((classId): classId is number => classId != null),
+    ),
+  ];
+
+  const { data: enrollments, error: enrollmentsError } =
+    classIdsForDate.length === 0
+      ? { data: [] as EnrollmentRow[], error: null }
+      : await supabase
+          .from("enrollments")
+          .select(
+            '"class id", "student id", is_active, classes!inner ( location_id )',
+          )
+          .eq("is_active", true)
+          .eq("classes.location_id", locationId)
+          .in("class id", classIdsForDate)
+          .not("student id", "is", null);
+
+  const enrollmentsByClass = new Map<number, number[]>();
+  const candidateStudentIds = new Set<number>();
+  for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
+    const classId = enrollment["class id"];
+    const studentId = enrollment["student id"];
+    if (studentId === null) continue;
+    const studentIds = enrollmentsByClass.get(classId) ?? [];
+    studentIds.push(studentId);
+    enrollmentsByClass.set(classId, studentIds);
+    candidateStudentIds.add(studentId);
+  }
+  for (const schedule of matchingSchedules) {
+    if (schedule.student_id != null) {
+      candidateStudentIds.add(schedule.student_id);
+    }
+  }
+
+  const { data: students, error: studentsError } =
+    candidateStudentIds.size === 0
+      ? { data: [] as StudentRow[], error: null }
+      : await supabase
+          .from("students")
+          .select('id, "first name", "last name"')
+          .eq("is_active", true)
+          .eq("location_id", locationId)
+          .in("id", [...candidateStudentIds]);
+
   const error =
     schedulesError?.message ??
     enrollmentsError?.message ??
@@ -186,16 +226,6 @@ export default async function AttendancePage({
   const studentById = new Map(
     ((students as StudentRow[] | null) ?? []).map((student) => [student.id, student]),
   );
-
-  const enrollmentsByClass = new Map<number, number[]>();
-  for (const enrollment of (enrollments as EnrollmentRow[] | null) ?? []) {
-    const classId = enrollment["class id"];
-    const studentId = enrollment["student id"];
-    if (studentId === null) continue;
-    const studentIds = enrollmentsByClass.get(classId) ?? [];
-    studentIds.push(studentId);
-    enrollmentsByClass.set(classId, studentIds);
-  }
 
   const attendanceKey = (
     studentId: number,
@@ -315,7 +345,10 @@ export default async function AttendancePage({
           .select(
             "id, student_id, class_id, makeup_schedule_id, original_schedule_id, original_session_date, session_date, session_start_time, session_end_time, credits_applied",
           )
-          .in("student_id", rosterStudentIds),
+          .in("student_id", rosterStudentIds)
+          .or(
+            `session_date.eq.${sessionDate},original_session_date.eq.${sessionDate}`,
+          ),
   ]);
 
   const creditKey = (studentId: number, classId: number) =>

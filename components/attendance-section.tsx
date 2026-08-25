@@ -508,7 +508,7 @@ function AttendanceStudentItem({
     <div className="py-2 first:pt-0 last:pb-0">
       <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1">
         <div className="min-w-0">
-          <p className="inline-flex flex-wrap items-center gap-1 text-sm font-medium text-gray-900 dark:text-white">
+          <p className="inline-flex items-center gap-1 text-sm font-medium text-nowrap text-gray-900 dark:text-white">
             {studentName}
             <ScheduleMakeupLabel isMakeup={entry.student.isMakeupSlot} />
           </p>
@@ -744,7 +744,7 @@ function TeacherAttendanceCard({
   return (
     <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-white/10 dark:bg-gray-900/40">
       <div>
-        <h2 className="text-base font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-base font-semibold text-nowrap text-gray-900 dark:text-white">
           {column.teacherName}
         </h2>
         <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">
@@ -811,9 +811,11 @@ export function AttendanceSection({
       groupClassGroupsByTeacher(
         classGroups,
         t("common.unassigned"),
+        // Seed an empty card only when a specific teacher is picked.
+        // "All teachers" should list only people who actually have class today.
         selectedTeacherId
           ? teachers.filter((teacher) => teacher.id === selectedTeacherId)
-          : teachers,
+          : [],
       ),
     [classGroups, selectedTeacherId, t, teachers],
   );

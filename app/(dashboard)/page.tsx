@@ -8,13 +8,17 @@ import { DashboardLowCredits } from "@/components/dashboard-low-credits";
 import { DashboardUpcomingClasses } from "@/components/dashboard-upcoming-classes";
 import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocation, getActiveCampusLocationId } from "@/lib/campus-location";
-import { studentsWithLowTotalCredits } from "@/lib/class-session-credits";
+import {
+  formatSessionDate,
+  studentsWithLowTotalCredits,
+} from "@/lib/class-session-credits";
 import { createTranslator } from "@/lib/i18n";
 import {
   buildLiveClassItems,
   buildUpcomingTodayClassItems,
 } from "@/lib/live-classes";
 import { compareStudentNames, formatTeacherName } from "@/lib/person-name";
+import { occurringOnDateOrFilter } from "@/lib/schedule-load";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -129,6 +133,7 @@ export default async function Home() {
       `,
       )
       .eq("classes.location_id", locationId)
+      .or(occurringOnDateOrFilter(formatSessionDate(new Date())))
       .order("schedule_start_time"),
     supabase
       .from("students")
