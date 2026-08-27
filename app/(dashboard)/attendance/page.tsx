@@ -14,6 +14,7 @@ import { formatSessionDate } from "@/lib/class-session-credits";
 import { createTranslator } from "@/lib/i18n";
 import { compareStudentNames, formatTeacherName } from "@/lib/person-name";
 import { occurringOnDateOrFilter } from "@/lib/schedule-load";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -101,8 +102,8 @@ export default async function AttendancePage({
       : formatSessionDate(new Date());
 
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-  const locationId = await getActiveCampusLocationId(supabase, staff);
+  const authClient = createClient(cookieStore);
+  const locationId = await getActiveCampusLocationId(authClient, staff);
 
   if (!locationId) {
     return (
@@ -114,6 +115,8 @@ export default async function AttendancePage({
       </p>
     );
   }
+
+  const supabase = createSupabaseServiceClient();
 
   const [
     { data: schedules, error: schedulesError },

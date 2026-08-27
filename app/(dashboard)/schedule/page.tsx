@@ -10,6 +10,7 @@ import {
   fetchTeacherScheduleCounts,
   loadScheduleCalendarEvents,
 } from "@/lib/schedule-load";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 
 const PAGE_SIZE = 1000;
@@ -57,17 +58,24 @@ export default async function SchedulePage() {
     );
   }
 
+  const query = createSupabaseServiceClient();
+
   const [
     { data: teachers, error: teachersError },
     { data: students, error: studentsError },
     { data: teacherCounts, error: countsError },
+    {
+      events: initialEvents,
+      exceptions: initialExceptions,
+      error: eventsError,
+    },
   ] = await Promise.all([
     fetchAllRows<{
       id: number;
       first_name: string;
       last_name: string | null;
     }>((from, to) =>
-      supabase
+      query
         .from("teachers")
         .select("id, first_name, last_name")
         .eq("is_active", true)
@@ -77,7 +85,7 @@ export default async function SchedulePage() {
         .range(from, to),
     ),
     fetchAllRows<ScheduleStudent>((from, to) =>
-      supabase
+      query
         .from("students")
         .select('id, "first name", "last name", notes, dob')
         .eq("is_active", true)
@@ -85,17 +93,12 @@ export default async function SchedulePage() {
         .order("first name")
         .range(from, to),
     ),
-    fetchTeacherScheduleCounts(supabase, locationId),
+    fetchTeacherScheduleCounts(query, locationId),
+    loadScheduleCalendarEvents(query, locationId, null),
   ]);
 
   // Empty selection means "all teachers" in the calendar filter UI.
   const initialTeacherIds: number[] = [];
-
-  const {
-    events: initialEvents,
-    exceptions: initialExceptions,
-    error: eventsError,
-  } = await loadScheduleCalendarEvents(supabase, locationId, null);
 
   const error =
     teachersError ?? studentsError ?? countsError ?? eventsError ?? null;

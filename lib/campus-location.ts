@@ -19,6 +19,9 @@ type DbClient = SupabaseClient<Database>;
 
 export const ACTIVE_CAMPUS_COOKIE = "ismart_active_campus";
 
+/** Campuses almost never change; cache them for the life of this instance. */
+const campusBySlug = new Map<string, CampusLocation>();
+
 export function formatCampusLocationName(
   location: CampusLocation | null | undefined,
 ) {
@@ -68,16 +71,23 @@ export async function getCampusByStaffLocation(
   supabase: DbClient,
   location: StaffLocation,
 ): Promise<CampusLocation | null> {
+  const slug = staffLocationToSlug(location);
+  const cached = campusBySlug.get(slug);
+  if (cached) {
+    return cached;
+  }
+
   const { data, error } = await supabase
     .from("locations")
     .select("id, slug, name")
-    .eq("slug", staffLocationToSlug(location))
+    .eq("slug", slug)
     .maybeSingle();
 
   if (error || !data) {
     return null;
   }
 
+  campusBySlug.set(slug, data);
   return data;
 }
 

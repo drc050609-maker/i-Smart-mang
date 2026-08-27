@@ -14,6 +14,12 @@ import { pickReusableClass } from "@/lib/find-reusable-class";
 import { loadTeacherClassRows } from "@/lib/teacher-class-rows";
 import { deleteCalendarScheduleSlot } from "@/lib/schedule-delete";
 import { loadScheduleCalendarEvents } from "@/lib/schedule-load";
+import {
+  findExistingSlotToJoin,
+  slotMatchesOccurrence,
+  slotShowsFullRoster,
+  type CalendarSlotRow,
+} from "@/lib/schedule-slot-match";
 import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 import type { ScheduleEvent, ScheduleException } from "@/lib/schedule-calendar";
@@ -60,7 +66,7 @@ export async function fetchScheduleCalendarEventsAction(
   }
 
   const result = await loadScheduleCalendarEvents(
-    supabase,
+    createSupabaseServiceClient(),
     locationId,
     teacherIds.length > 0 ? teacherIds : null,
   );
@@ -482,6 +488,14 @@ function weekdayFromDateYmd(date: string) {
   return parsed.getDay();
 }
 
+function firstOrNull<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? (value[0] ?? null) : value;
+}
+
+const OVERLAPPING_CLASS_ERROR =
+  "This teacher already has a class at this time. Click that class, then Add student — that adds them to the existing time instead of creating another column.";
+
 export async function fetchTeacherScheduleOptionsAction(
   teacherId: number,
 ): Promise<TeacherScheduleOptionsResult> {
@@ -677,14 +691,85 @@ export async function addStudentToCalendar(
     return { error: classLookupError };
   }
 
+  const dayOfWeek = weekdayFromDateYmd(scheduleDate);
+  if (isRecurring && dayOfWeek === null) {
+    return { error: "Select a day of the week for repeating classes." };
+  }
+
+  const { data: teacherSlotRows, error: teacherSlotsError } = await client.supabase
+    .from("class_schedules")
+    .select(
+      `
+      class_id,
+      student_id,
+      is_recurring,
+      schedule_day_of_week,
+      schedule_date,
+      schedule_start_time,
+      classes!inner (
+        subject,
+        lesson_type,
+        teacher_id,
+        location_id
+      )
+    `,
+    )
+    .eq("classes.teacher_id", teacherId)
+    .eq("classes.location_id", locationId)
+    .eq("is_makeup", false);
+
+  if (teacherSlotsError) {
+    return { error: teacherSlotsError.message };
+  }
+
+  const teacherSlots: CalendarSlotRow[] = [];
+  for (const row of teacherSlotRows ?? []) {
+    const classRow = firstOrNull(row.classes);
+    if (!classRow) continue;
+    teacherSlots.push({
+      class_id: row.class_id,
+      student_id: row.student_id,
+      is_recurring: row.is_recurring,
+      schedule_day_of_week: row.schedule_day_of_week,
+      schedule_date: row.schedule_date,
+      schedule_start_time: row.schedule_start_time,
+      subject: classRow.subject,
+      lesson_type: classRow.lesson_type,
+    });
+  }
+
+  const occurrence = {
+    isRecurring,
+    dayOfWeek,
+    scheduleDate,
+    startTime,
+  };
+  const matchingSlot = findExistingSlotToJoin(teacherSlots, {
+    ...occurrence,
+    subject,
+    classId,
+  });
+
   let resolvedClassId = classId;
   let durationMinutes = parsedDuration;
+  let skipScheduleInsert = false;
 
   if (durationMinutes == null || durationMinutes <= 0) {
     durationMinutes = 45;
   }
 
-  if (resolvedClassId) {
+  if (matchingSlot) {
+    if (slotShowsFullRoster(matchingSlot)) {
+      resolvedClassId = matchingSlot.class_id;
+      skipScheduleInsert = true;
+      const matchClass = teacherClasses.find((row) => row.id === resolvedClassId);
+      if (matchClass?.duration_minutes && durationMinutes === 45 && parsedDuration == null) {
+        durationMinutes = matchClass.duration_minutes;
+      }
+    } else {
+      return { error: OVERLAPPING_CLASS_ERROR };
+    }
+  } else if (resolvedClassId) {
     const match = teacherClasses.find((row) => row.id === resolvedClassId);
     if (!match) {
       return { error: "That class does not belong to this teacher." };
@@ -810,23 +895,35 @@ export async function addStudentToCalendar(
     }
   }
 
-  const dayOfWeek = weekdayFromDateYmd(scheduleDate);
-  if (isRecurring && dayOfWeek === null) {
-    return { error: "Select a day of the week for repeating classes." };
+  if (!skipScheduleInsert) {
+    const existingForResolved = teacherSlots.find(
+      (slot) =>
+        slot.class_id === targetClassId &&
+        slotMatchesOccurrence(slot, occurrence),
+    );
+    if (existingForResolved) {
+      if (slotShowsFullRoster(existingForResolved)) {
+        skipScheduleInsert = true;
+      } else {
+        return { error: OVERLAPPING_CLASS_ERROR };
+      }
+    }
   }
 
-  const { error: scheduleError } = await client.supabase.from("class_schedules").insert({
-    class_id: targetClassId,
-    student_id: lessonType === "group" ? null : studentIds[0],
-    is_recurring: isRecurring,
-    schedule_day_of_week: isRecurring ? dayOfWeek : null,
-    schedule_date: isRecurring ? null : scheduleDate,
-    schedule_start_time: startTime,
-    schedule_end_time: endTime,
-  });
+  if (!skipScheduleInsert) {
+    const { error: scheduleError } = await client.supabase.from("class_schedules").insert({
+      class_id: targetClassId,
+      student_id: lessonType === "group" ? null : studentIds[0],
+      is_recurring: isRecurring,
+      schedule_day_of_week: isRecurring ? dayOfWeek : null,
+      schedule_date: isRecurring ? null : scheduleDate,
+      schedule_start_time: startTime,
+      schedule_end_time: endTime,
+    });
 
-  if (scheduleError) {
-    return { error: scheduleError.message };
+    if (scheduleError) {
+      return { error: scheduleError.message };
+    }
   }
 
   revalidateSchedule(targetClassId);

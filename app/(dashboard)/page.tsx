@@ -19,6 +19,7 @@ import {
 } from "@/lib/live-classes";
 import { compareStudentNames, formatTeacherName } from "@/lib/person-name";
 import { occurringOnDateOrFilter } from "@/lib/schedule-load";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 
 type TeacherEmbed = {
@@ -64,9 +65,9 @@ export default async function Home() {
   const staff = await requireStaff();
   const t = createTranslator(staff.preferred_language);
   const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
+  const authClient = createClient(cookieStore);
   const activeCampus = await getActiveCampusLocation(staff);
-  const locationId = await getActiveCampusLocationId(supabase, staff);
+  const locationId = await getActiveCampusLocationId(authClient, staff);
 
   if (!locationId) {
     return (
@@ -88,6 +89,8 @@ export default async function Home() {
       </div>
     );
   }
+
+  const supabase = createSupabaseServiceClient();
 
   type EnrollmentRow = {
     "student id": number | null;

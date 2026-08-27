@@ -5,9 +5,11 @@ import {
   type ScheduleStudent,
 } from "@/lib/schedule-calendar";
 import { formatTeacherName } from "@/lib/person-name";
-import type { createClient } from "@/utils/supabase/server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
-type ScheduleQueryClient = ReturnType<typeof createClient>;
+import type { Database } from "@/types/database.types";
+
+type ScheduleQueryClient = SupabaseClient<Database>;
 
 type TeacherEmbed = {
   first_name: string;

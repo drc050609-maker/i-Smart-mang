@@ -1066,7 +1066,7 @@ export async function addClassStudents(
   }
 
   revalidateClassStudents(classId, newStudentIds);
-  return { success: true };
+  return successState();
 }
 
 export async function removeClassStudent(

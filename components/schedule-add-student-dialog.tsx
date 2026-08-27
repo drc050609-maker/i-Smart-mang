@@ -30,7 +30,8 @@ import { StudentMultiCombobox } from "@/components/student-multi-combobox";
 import { DurationMinutesField } from "@/components/duration-minutes-field";
 import { TimeSlotField } from "@/components/time-slot-field";
 import { DEFAULT_SLOT_DURATION_MINUTES } from "@/lib/class-duration";
-import type { LessonType } from "@/lib/class-lesson-type";
+import { formatLessonType, type LessonType } from "@/lib/class-lesson-type";
+import { formatClassSubject } from "@/lib/class-subject";
 import {
   currentLocalTimeInputValue,
   toTimeInputValue,
@@ -83,6 +84,7 @@ export function ScheduleAddStudentDialog({
   const router = useRouter();
   const sortedTeachers = useMemo(() => sortTeachers(teachers), [teachers]);
   const [teacherId, setTeacherId] = useState<number | "">("");
+  const [selectedClassId, setSelectedClassId] = useState<number | "new">("new");
   const [lessonType, setLessonType] = useState<Extract<LessonType, "private" | "group">>(
     "private",
   );
@@ -121,6 +123,7 @@ export function ScheduleAddStudentDialog({
     }
 
     setTeacherId(pending.teacherId ?? "");
+    setSelectedClassId("new");
     setLessonType("private");
     setStudent(null);
     setSelectedStudents([]);
@@ -257,6 +260,26 @@ export function ScheduleAddStudentDialog({
     }
   }
 
+  function handleClassChange(nextId: number | "new") {
+    setSelectedClassId(nextId);
+    if (nextId === "new") {
+      return;
+    }
+    const selected = classes.find((row) => row.id === nextId);
+    if (!selected) {
+      return;
+    }
+    const nextLessonType =
+      selected.lesson_type === "group" ? "group" : "private";
+    handleLessonTypeChange(nextLessonType);
+    if (selected.subject.trim()) {
+      setSubject(selected.subject);
+    }
+    if (selected.duration_minutes && selected.duration_minutes > 0) {
+      setDurationMinutes(String(selected.duration_minutes));
+    }
+  }
+
   if (!pending) {
     return null;
   }
@@ -294,17 +317,11 @@ export function ScheduleAddStudentDialog({
             <DialogTitle className="text-lg font-semibold text-gray-900 dark:text-white">
               {lessonType === "group"
                 ? t("common.addGroupClassToSchedule")
-                : t("common.addStudentToSchedule")}
+                : t("common.addClassTime")}
             </DialogTitle>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               {selectedTeacher
-                ? lessonType === "group"
-                  ? t("common.addGroupClassToScheduleHelp", {
-                      name: formatTeacherName(selectedTeacher),
-                    })
-                  : t("common.addStudentToScheduleHelp", {
-                      name: formatTeacherName(selectedTeacher),
-                    })
+                ? t("common.addClassTimeHelp")
                 : t("common.selectTeacherToAddStudent")}
             </p>
 
@@ -326,7 +343,11 @@ export function ScheduleAddStudentDialog({
                   />
                 ))
               )}
-              <input type="hidden" name="classId" value="new" />
+              <input
+                type="hidden"
+                name="classId"
+                value={selectedClassId === "new" ? "new" : selectedClassId}
+              />
               <input
                 type="hidden"
                 name="isRecurring"
@@ -344,6 +365,7 @@ export function ScheduleAddStudentDialog({
                     onChange={(event) => {
                       const value = event.target.value;
                       setTeacherId(value === "" ? "" : Number(value));
+                      setSelectedClassId("new");
                       setStudent(null);
                       setSelectedStudents([]);
                       setSubject("");
@@ -364,6 +386,61 @@ export function ScheduleAddStudentDialog({
                   />
                 </div>
               </div>
+
+              {teacherId !== "" && classes.length > 0 ? (
+                <div>
+                  <label htmlFor="addScheduleClass" className={labelClassName}>
+                    {t("common.selectClass")}
+                  </label>
+                  <div className="relative mt-2">
+                    <select
+                      id="addScheduleClass"
+                      value={
+                        selectedClassId === "new" ? "new" : String(selectedClassId)
+                      }
+                      onChange={(event) => {
+                        const value = event.target.value;
+                        handleClassChange(
+                          value === "new" ? "new" : Number(value),
+                        );
+                      }}
+                      className={selectClassName}
+                    >
+                      <option value="new">{t("common.createNewClass")}</option>
+                      {classes
+                        .filter((row) => row.lesson_type !== "trial")
+                        .map((row) => {
+                          const typeLabel = formatLessonType(
+                            row.lesson_type === "group" ||
+                              row.lesson_type === "private" ||
+                              row.lesson_type === "trial"
+                              ? row.lesson_type
+                              : "private",
+                            language,
+                          );
+                          const durationLabel = row.duration_minutes
+                            ? t("common.minutes", { count: row.duration_minutes })
+                            : null;
+                          return (
+                            <option key={row.id} value={row.id}>
+                              {[
+                                formatClassSubject(row.subject, language),
+                                typeLabel,
+                                durationLabel,
+                              ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                            </option>
+                          );
+                        })}
+                    </select>
+                    <ChevronDownIcon
+                      aria-hidden="true"
+                      className="pointer-events-none absolute top-1/2 right-4 size-4 -translate-y-1/2 text-gray-500 dark:text-gray-400"
+                    />
+                  </div>
+                </div>
+              ) : null}
 
               <fieldset>
                 <legend className={labelClassName}>{t("common.lessonType")}</legend>

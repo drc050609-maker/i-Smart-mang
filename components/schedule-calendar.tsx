@@ -481,6 +481,16 @@ export function ScheduleCalendar({
     [weekInstances],
   );
 
+  useEffect(() => {
+    setSelectedInstance((current) => {
+      if (!current) return current;
+      const next = weekInstances.find(
+        (row) => row.instanceKey === current.instanceKey,
+      );
+      return next ?? current;
+    });
+  }, [weekInstances]);
+
   const allInstancesByDay = useMemo(() => {
     if (!highlightStudentFilter) {
       return instancesByDay;
@@ -843,14 +853,14 @@ export function ScheduleCalendar({
     openAddStudentDialog(day, startTime);
   }
 
-  function closeAddStudentDialog() {
+  const closeAddStudentDialog = useCallback(() => {
     setPendingAddStudent(null);
-  }
+  }, []);
 
-  function handleAddStudentSuccess() {
+  const handleAddStudentSuccess = useCallback(() => {
     setPendingAddStudent(null);
     onScheduleMutated?.();
-  }
+  }, [onScheduleMutated]);
 
   function toggleTeacher(teacherId: number) {
     const next = selectedTeacherIds.includes(teacherId)
@@ -1076,7 +1086,7 @@ export function ScheduleCalendar({
               className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
             >
               <PlusIcon aria-hidden="true" className="size-4" />
-              {t("common.addStudentToSchedule")}
+              {t("common.addClassTime")}
             </button>
             <button
               type="button"
@@ -1387,6 +1397,7 @@ export function ScheduleCalendar({
         onDeleted={handleClassDetailDeleted}
         onCopy={(instance) => openTimeDialog(instance, "copy")}
         onChangeTime={(instance) => openTimeDialog(instance, "edit")}
+        onStudentsAdded={handleAddStudentSuccess}
       />
 
       {pendingAddStudent ? (

@@ -1,14 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import {
   Dialog,
   DialogBackdrop,
   DialogPanel,
   DialogTitle,
 } from "@headlessui/react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
+import {
+  addClassStudents,
+  type AddClassStudentsState,
+} from "@/app/(dashboard)/classes/actions";
 import {
   deleteFromCalendar,
   type ScheduleActionState,
@@ -18,6 +23,10 @@ import { useLanguage } from "@/components/language-provider";
 import { StudentNoteStar } from "@/components/student-note-star";
 import { ScheduleTrialLabel } from "@/components/schedule-trial-label";
 import { ScheduleMakeupLabel } from "@/components/schedule-makeup-label";
+import {
+  StudentMultiCombobox,
+  type StudentOption,
+} from "@/components/student-multi-combobox";
 import { formatTime12Hour, formatScheduleDate } from "@/lib/class-schedule";
 import { formatClassSubject } from "@/lib/class-subject";
 import { classHref } from "@/lib/return-to";
@@ -32,6 +41,7 @@ import { appLanguageLocale } from "@/lib/language";
 import { formatStudentName } from "@/lib/person-name";
 
 const initialDeleteState: ScheduleActionState = {};
+const initialAddStudentsState: AddClassStudentsState = {};
 
 function formatDob(dob: string | null | undefined, language: "en" | "zh") {
   if (!dob) return null;
@@ -49,6 +59,7 @@ export function ScheduleClassDetailDialog({
   onDeleted,
   onCopy,
   onChangeTime,
+  onStudentsAdded,
 }: {
   instance: ScheduleEventInstance | null;
   students: ScheduleStudent[];
@@ -56,17 +67,33 @@ export function ScheduleClassDetailDialog({
   onDeleted?: () => void;
   onCopy?: (instance: ScheduleEventInstance) => void;
   onChangeTime?: (instance: ScheduleEventInstance) => void;
+  onStudentsAdded?: () => void;
 }) {
   const { t, language } = useLanguage();
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [addingStudents, setAddingStudents] = useState(false);
+  const [quickAddOpen, setQuickAddOpen] = useState(false);
+  const [addError, setAddError] = useState<string | null>(null);
+  const [selectedStudents, setSelectedStudents] = useState<StudentOption[]>([]);
+  const [extraStudents, setExtraStudents] = useState<StudentOption[]>([]);
   const [scope, setScope] = useState<"occurrence" | "series">("occurrence");
   const [deleteState, deleteAction, deletePending] = useActionState(
     deleteFromCalendar,
     initialDeleteState,
   );
+  const [addState, addAction, addPending] = useActionState(
+    addClassStudents,
+    initialAddStudentsState,
+  );
+  const lastAddSavedAtRef = useRef<number | null>(null);
 
   useEffect(() => {
     setConfirmingDelete(false);
+    setAddingStudents(false);
+    setQuickAddOpen(false);
+    setAddError(null);
+    setSelectedStudents([]);
+    setExtraStudents([]);
     setScope("occurrence");
   }, [instance?.instanceKey]);
 
@@ -79,6 +106,23 @@ export function ScheduleClassDetailDialog({
       }
     }
   }, [deleteState.success, onClose, onDeleted]);
+
+  useEffect(() => {
+    if (addState.error) {
+      setAddError(addState.error);
+    }
+    if (
+      addState.success &&
+      addState.savedAt != null &&
+      lastAddSavedAtRef.current !== addState.savedAt
+    ) {
+      lastAddSavedAtRef.current = addState.savedAt;
+      setAddingStudents(false);
+      setSelectedStudents([]);
+      setAddError(null);
+      onStudentsAdded?.();
+    }
+  }, [addState.error, addState.success, addState.savedAt, onStudentsAdded]);
 
   if (!instance) {
     return null;
@@ -103,6 +147,24 @@ export function ScheduleClassDetailDialog({
         : t("common.enrolled", { count: displayStudents.length });
 
   const isTrial = instance.lesson_type === "trial";
+  const canAddStudents = !isTrial && !instance.is_makeup;
+  const enrolledIds = new Set([
+    ...instance.student_ids,
+    ...displayStudents.map((student) => student.id),
+  ]);
+  const availableStudents: StudentOption[] = [];
+  const seenStudentIds = new Set<number>();
+  for (const item of [...students, ...extraStudents]) {
+    if (enrolledIds.has(item.id) || seenStudentIds.has(item.id)) {
+      continue;
+    }
+    seenStudentIds.add(item.id);
+    availableStudents.push({
+      id: item.id,
+      "first name": item["first name"],
+      "last name": item["last name"],
+    });
+  }
   const deleteDescription = isTrial
     ? t("common.deleteTrialFromCalendarConfirm")
     : instance.is_recurring && scope === "series"
@@ -112,7 +174,12 @@ export function ScheduleClassDetailDialog({
   return (
     <Dialog
       open
-      onClose={() => !deletePending && onClose()}
+      onClose={() => {
+        if (deletePending || addPending || quickAddOpen) {
+          return;
+        }
+        onClose();
+      }}
       className="relative z-50"
     >
       <DialogBackdrop className="fixed inset-0 bg-gray-900/50" />
@@ -249,6 +316,81 @@ export function ScheduleClassDetailDialog({
                   </li>
                 ))}
               </ul>
+            ) : null}
+
+            {canAddStudents ? (
+              addingStudents ? (
+                <form action={addAction} className="mt-4 space-y-3 rounded-md border border-gray-200 p-3 dark:border-white/10">
+                  <input type="hidden" name="classId" value={instance.classId} />
+                  {selectedStudents.map((student) => (
+                    <input
+                      key={student.id}
+                      type="hidden"
+                      name="studentIds"
+                      value={student.id}
+                    />
+                  ))}
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    {t("common.addStudents")}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t("common.addStudentToThisClassHelp")}
+                  </p>
+                  <StudentMultiCombobox
+                    id="scheduleClassStudents"
+                    students={availableStudents}
+                    selected={selectedStudents}
+                    onChange={setSelectedStudents}
+                    onStudentAdded={(created) => {
+                      setExtraStudents((current) =>
+                        current.some((item) => item.id === created.id)
+                          ? current
+                          : [...current, created],
+                      );
+                    }}
+                    onQuickAddOpenChange={setQuickAddOpen}
+                  />
+                  {addError ? (
+                    <p className="text-sm text-red-600 dark:text-red-400">
+                      {addError}
+                    </p>
+                  ) : null}
+                  <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddingStudents(false);
+                        setSelectedStudents([]);
+                        setAddError(null);
+                      }}
+                      disabled={addPending}
+                      className="rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-xs inset-ring inset-ring-gray-300 disabled:opacity-60 dark:bg-white/10 dark:text-white"
+                    >
+                      {t("common.cancel")}
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={addPending || selectedStudents.length === 0}
+                      className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                    >
+                      {addPending ? t("common.adding") : t("common.addToClass")}
+                    </button>
+                  </div>
+                </form>
+              ) : !confirmingDelete ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAddError(null);
+                    setSelectedStudents([]);
+                    setAddingStudents(true);
+                  }}
+                  className="mt-4 inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400"
+                >
+                  <PlusIcon aria-hidden="true" className="size-4" />
+                  {t("common.addStudents")}
+                </button>
+              ) : null
             ) : null}
 
             {confirmingDelete ? (

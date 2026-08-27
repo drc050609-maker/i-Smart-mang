@@ -9,6 +9,7 @@ import {
   getActiveCampusLocationId,
 } from "@/lib/campus-location";
 import { processDueClassSessionsIfNeeded } from "@/lib/process-due-sessions";
+import { createSupabaseServiceClient } from "@/lib/supabase/service";
 import { createClient } from "@/utils/supabase/server";
 
 export default async function DashboardLayout({
@@ -26,10 +27,10 @@ export default async function DashboardLayout({
 
   after(async () => {
     try {
-      const afterCookies = await cookies();
-      const afterSupabase = createClient(afterCookies);
+      // Service role skips RLS so this catch-up does not compete with page queries.
+      const service = createSupabaseServiceClient();
       await processDueClassSessionsIfNeeded(
-        afterSupabase,
+        service,
         staff.id,
         activeCampusId,
       );
