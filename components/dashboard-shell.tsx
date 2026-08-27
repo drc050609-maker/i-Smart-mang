@@ -49,6 +49,7 @@ import {
   formatStaffLocationLabel,
   type StaffLocation,
 } from "@/lib/staff-location";
+import { WEBSITE_CHAT_VISIBLE } from "@/lib/website-chat-feature";
 
 type Icon = ComponentType<SVGProps<SVGSVGElement>>;
 
@@ -116,7 +117,7 @@ const navigation: NavItem[] = [
   { name: "Events", href: "/events", icon: PhotoIcon, adminOnly: true },
   {
     name: "Chat",
-    href: "/chat",
+    href: WEBSITE_CHAT_VISIBLE ? "/chat" : "/chat/teachers",
     icon: ChatBubbleLeftRightIcon,
     adminOnly: true,
   },

@@ -2052,6 +2052,78 @@ export type Database = {
           },
         ]
       }
+      website_chat_conversations: {
+        Row: {
+          created_at: string
+          id: number
+          updated_at: string
+          visitor_email: string | null
+          visitor_key: string
+          visitor_name: string | null
+          visitor_phone: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_key?: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          updated_at?: string
+          visitor_email?: string | null
+          visitor_key?: string
+          visitor_name?: string | null
+          visitor_phone?: string | null
+        }
+        Relationships: []
+      }
+      website_chat_messages: {
+        Row: {
+          body: string
+          conversation_id: number
+          created_at: string
+          id: number
+          staff_id: string | null
+          sender_type: Database["public"]["Enums"]["website_chat_sender_type"]
+        }
+        Insert: {
+          body: string
+          conversation_id: number
+          created_at?: string
+          id?: never
+          staff_id?: string | null
+          sender_type: Database["public"]["Enums"]["website_chat_sender_type"]
+        }
+        Update: {
+          body?: string
+          conversation_id?: number
+          created_at?: string
+          id?: never
+          staff_id?: string | null
+          sender_type?: Database["public"]["Enums"]["website_chat_sender_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "website_chat_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "website_chat_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "website_chat_messages_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "staff_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -2282,6 +2354,10 @@ export type Database = {
         }
         Returns: number
       }
+      try_claim_job: {
+        Args: { p_job_name: string; p_throttle_seconds?: number }
+        Returns: boolean
+      }
       update_campus_trial_pricing: {
         Args: {
           p_location_id: number
@@ -2364,6 +2440,7 @@ export type Database = {
     Enums: {
       attendance_status: "present" | "absent" | "late" | "excused"
       chat_sender_type: "teacher" | "student"
+      website_chat_sender_type: "visitor" | "staff"
       credit_transfer_type: "exchange" | "refund"
       financial_source_kind:
         | "class_payment"
@@ -2526,6 +2603,7 @@ export const Constants = {
     Enums: {
       attendance_status: ["present", "absent", "late", "excused"],
       chat_sender_type: ["teacher", "student"],
+      website_chat_sender_type: ["visitor", "staff"],
       credit_transfer_type: ["exchange", "refund"],
       financial_source_kind: [
         "class_payment",

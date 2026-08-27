@@ -27,6 +27,10 @@ import {
   listKnownClassSubjects,
 } from "@/lib/class-subject";
 import { isCatalogTrialClass } from "@/lib/class-lesson-type";
+import {
+  balanceMapKey,
+  type StudentClassBalance,
+} from "@/lib/class-session-credits";
 import { classHref } from "@/lib/return-to";
 import { listPriceSheetSubjects } from "@/lib/tuition-price-sheet";
 import { compareStudentNames, formatStudentName } from "@/lib/person-name";
@@ -327,32 +331,54 @@ export default async function TutorDetailPage({
 
   let enrollmentRows: EnrollmentRow[] = [];
   let enrollmentsError: { message: string } | null = null;
+  let balances: StudentClassBalance[] = [];
+  let balancesError: { message: string } | null = null;
   if (classRows.length > 0) {
-    const { data: enrollments, error } = await supabase
-      .from("enrollments")
-      .select(
-        'id, grade_level, is_active, "class id", students ( id, "first name", "last name", is_active )',
-      )
-      .in(
-        "class id",
-        classRows.map((row) => row.id),
-      )
-      .order("id");
+    const classIds = classRows.map((row) => row.id);
+    const [{ data: enrollments, error }, balancesResult] = await Promise.all([
+      supabase
+        .from("enrollments")
+        .select(
+          'id, grade_level, is_active, "class id", students ( id, "first name", "last name", is_active )',
+        )
+        .in("class id", classIds)
+        .order("id"),
+      supabase
+        .from("student_class_balances")
+        .select(
+          "student_id, class_id, sessions_total, sessions_remaining, sessions_used, absence_count",
+        )
+        .in("class_id", classIds),
+    ]);
     enrollmentsError = error;
     enrollmentRows = (enrollments as EnrollmentRow[] | null) ?? [];
+    balancesError = balancesResult.error;
+    balances = (balancesResult.data as StudentClassBalance[] | null) ?? [];
   }
 
   const studentEnrollments = (() => {
+    const balanceByKey = new Map(
+      balances.map((balance) => [
+        balanceMapKey(balance.student_id, balance.class_id),
+        balance,
+      ]),
+    );
+
     const mapped = enrollmentRows
       .map((enrollment) => {
         const student = firstOrNull(enrollment.students);
         const classId = enrollment["class id"];
         if (!student || classId == null) return null;
+        const balance = balanceByKey.get(
+          balanceMapKey(student.id, classId),
+        );
         return {
           enrollmentId: enrollment.id,
           gradeLevel: enrollment.grade_level,
           isActive: enrollment.is_active !== false && student.is_active !== false,
           subject: subjectByClassId.get(classId) ?? `Class ${classId}`,
+          remaining: balance?.sessions_remaining ?? 0,
+          total: balance?.sessions_total ?? 0,
           student,
         };
       })
@@ -362,9 +388,18 @@ export default async function TutorDetailPage({
     for (const row of mapped) {
       const key = `${row.student.id}|${row.subject.trim().toLowerCase()}`;
       const existing = uniqueByStudentSubject.get(key);
-      if (!existing || (row.isActive && !existing.isActive)) {
+      if (!existing) {
         uniqueByStudentSubject.set(key, row);
+        continue;
       }
+
+      const preferred =
+        row.isActive && !existing.isActive ? row : existing;
+      uniqueByStudentSubject.set(key, {
+        ...preferred,
+        remaining: existing.remaining + row.remaining,
+        total: existing.total + row.total,
+      });
     }
 
     return [...uniqueByStudentSubject.values()].sort((a, b) => {
@@ -640,6 +675,10 @@ export default async function TutorDetailPage({
           <p className="mt-3 text-sm text-red-600 dark:text-red-400">
             {t("common.error.loadFailed", { entity: t("nav.students"), message: enrollmentsError.message })}
           </p>
+        ) : balancesError ? (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-400">
+            {t("common.error.loadFailed", { entity: t("common.classCredits"), message: balancesError.message })}
+          </p>
         ) : studentEnrollments.length === 0 ? (
           <p className="mt-3 text-sm text-gray-500 dark:text-gray-400">
             {t("common.noStudentsYet")}
@@ -668,6 +707,12 @@ export default async function TutorDetailPage({
                         className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white"
                       >
                         {t("common.gradeLevel")}
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-right text-sm font-semibold text-gray-900 dark:text-white"
+                      >
+                        {t("common.remaining")}
                       </th>
                     </tr>
                   </thead>
@@ -701,6 +746,12 @@ export default async function TutorDetailPage({
                               gradeLevel={row.gradeLevel}
                             />
                           </div>
+                        </td>
+                        <td className="px-3 py-4 text-right text-sm font-medium whitespace-nowrap text-indigo-700 dark:text-indigo-300">
+                          {row.remaining}
+                          <span className="mt-0.5 block text-xs font-normal text-gray-500 dark:text-gray-400">
+                            {t("common.of")} {row.total}
+                          </span>
                         </td>
                       </tr>
                     ))}

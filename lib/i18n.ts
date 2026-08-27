@@ -391,6 +391,9 @@ export type TranslationKey =
   | "common.teacherDayListHelp"
   | "common.addStudentToSchedule"
   | "common.addStudentToScheduleHelp"
+  | "common.addClassTime"
+  | "common.addClassTimeHelp"
+  | "common.addStudentToThisClassHelp"
   | "common.addGroupClassToSchedule"
   | "common.addGroupClassToScheduleHelp"
   | "common.selectTeacherToAddStudent"
@@ -489,6 +492,20 @@ export type TranslationKey =
   | "chat.messageCount"
   | "chat.conversationCount"
   | "chat.lastActive"
+  | "chat.tabsAria"
+  | "chat.tabWebsite"
+  | "chat.tabTeachers"
+  | "chat.pageSubtitle"
+  | "chat.websiteSubtitle"
+  | "chat.noWebsiteConversations"
+  | "chat.websiteEmptyHint"
+  | "chat.replyPlaceholder"
+  | "chat.sendReply"
+  | "chat.sendingReply"
+  | "chat.fromVisitor"
+  | "chat.fromStaff"
+  | "chat.visitorAnonymous"
+  | "chat.replyError"
   | "common.createAccount"
   | "common.creating"
   | "common.enrolling"
@@ -1470,6 +1487,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addStudentToSchedule": "Add student",
     "common.addStudentToScheduleHelp":
       "Choose a student, then pick the instrument and how long this class time is.",
+    "common.addClassTime": "Add class time",
+    "common.addClassTimeHelp":
+      "This creates a new time on the calendar. To add a student to a class already listed, click that class, then Add student.",
+    "common.addStudentToThisClassHelp":
+      "Add them to this class. They will show on this calendar time — not as a new column.",
     "common.addGroupClassToSchedule": "Add group class",
     "common.addGroupClassToScheduleHelp":
       "Choose students, then pick the instrument and how long this class time is.",
@@ -1482,7 +1504,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.createNewClass": "Create a new class…",
     "common.addToSchedule": "Add to schedule",
     "common.clickEmptySlotToAdd":
-      "Select a teacher and click an empty time to add a private or group class.",
+      "Select a teacher and click an empty time to add a class. To add a student to an existing class, click that class.",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint":
       "In the print dialog, choose “Save as PDF” to download a copy.",
@@ -1564,9 +1586,26 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noTeacherProfiles":
       "No unlinked teacher profiles for this campus. Create a new one with this account.",
     "common.addStatenIslandManager": "Add Staten Island manager",
-    "chat.title": "Teacher chat",
+    "chat.title": "Chat",
+    "chat.pageSubtitle":
+      "Reply to people who write in from the school website, or review teacher–student app chats.",
+    "chat.websiteSubtitle":
+      "Messages from i-smartmusic.com. Select a conversation, then type a reply.",
     "chat.subtitle":
       "Review conversations between teachers and students. Pick a teacher, then a student thread.",
+    "chat.tabsAria": "Chat inboxes",
+    "chat.tabWebsite": "Website",
+    "chat.tabTeachers": "Teachers",
+    "chat.noWebsiteConversations": "No website chats yet.",
+    "chat.websiteEmptyHint":
+      "When someone uses the chat bubble on the public website, their thread will show up here.",
+    "chat.replyPlaceholder": "Write a reply…",
+    "chat.sendReply": "Send",
+    "chat.sendingReply": "Sending…",
+    "chat.fromVisitor": "Visitor",
+    "chat.fromStaff": "School",
+    "chat.visitorAnonymous": "Website visitor",
+    "chat.replyError": "Could not send that reply. Try again.",
     "chat.pickTeacher": "Teachers",
     "chat.pickConversation": "Conversations",
     "chat.noTeachers": "No teachers with app logins yet. Add them in Settings → Teachers.",
@@ -1734,7 +1773,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.statementsSubtitle": "Monthly income and expense summaries.",
     "common.attendanceSubtitle": "Mark daily attendance for enrolled students. Present and absent use 1 credit; excused does not.",
     "common.scheduleSubtitle":
-      "Select a teacher, then click an empty time to add a student. Drag to change the time. Hold Option (Alt) and drag to copy.",
+      "Select a teacher, then click an empty time to add a class. To add a student to an existing class, click that class, then Add student. Drag to change the time. Hold Option (Alt) and drag to copy.",
     "common.eventsSubtitle": "Share school news, photos, and video highlights.",
     "common.attendanceFooter": "A scheduled makeup waits to use the credit until that makeup class has passed.",
     "common.rescheduleThisOccurrence": "This occurrence only",
@@ -2562,6 +2601,11 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.addStudentToSchedule": "添加学生",
     "common.addStudentToScheduleHelp":
       "选择学生，再选择乐器和本节课时长。",
+    "common.addClassTime": "添加课时",
+    "common.addClassTimeHelp":
+      "这会在日历上新增一个上课时间。若要给已有课程加学生，请点击该课程，再点“添加学生”。",
+    "common.addStudentToThisClassHelp":
+      "将学生加入这节课。他们会出现在现有时间栏里，不会再多出一栏。",
     "common.addGroupClassToSchedule": "添加小组课",
     "common.addGroupClassToScheduleHelp":
       "选择学生，再选择乐器和本节课时长。",
@@ -2573,7 +2617,8 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.selectAtLeastOneStudent": "请至少选择一名学生。",
     "common.createNewClass": "创建新课程…",
     "common.addToSchedule": "添加到日程",
-    "common.clickEmptySlotToAdd": "选择老师后，点击空白时间即可添加一对一或小组课。",
+    "common.clickEmptySlotToAdd":
+      "选择老师后，点击空白时间即可添加课程。若要给已有课程加学生，请点击该课程。",
     "common.downloadPdf": "PDF",
     "common.pdfPrintHint": "在打印对话框中选择“存储为 PDF”即可下载。",
     "common.pdfPopupBlocked": "无法打开 PDF 窗口。请允许本站弹出窗口后重试。",
@@ -2652,8 +2697,22 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.noTeacherProfiles":
       "此校区暂无未关联的老师资料。可在创建账户时一并新建。",
     "common.addStatenIslandManager": "添加史泰登岛经理",
-    "chat.title": "老师聊天",
+    "chat.title": "聊天",
+    "chat.pageSubtitle": "回复官网上的访客消息，或查看老师与学生的 App 对话。",
+    "chat.websiteSubtitle": "来自 i-smartmusic.com 的消息。选择会话后即可回复。",
     "chat.subtitle": "查看老师与学生的对话。先选老师，再选学生会话。",
+    "chat.tabsAria": "聊天收件箱",
+    "chat.tabWebsite": "网站",
+    "chat.tabTeachers": "老师",
+    "chat.noWebsiteConversations": "还没有网站聊天。",
+    "chat.websiteEmptyHint": "访客在官网使用聊天按钮后，对话会出现在这里。",
+    "chat.replyPlaceholder": "输入回复…",
+    "chat.sendReply": "发送",
+    "chat.sendingReply": "发送中…",
+    "chat.fromVisitor": "访客",
+    "chat.fromStaff": "学校",
+    "chat.visitorAnonymous": "网站访客",
+    "chat.replyError": "回复发送失败，请再试一次。",
     "chat.pickTeacher": "老师",
     "chat.pickConversation": "会话",
     "chat.noTeachers": "还没有老师 App 登录。请在 设置 → 老师 中添加。",
@@ -2819,7 +2878,7 @@ const translations: Record<AppLanguage, Record<TranslationKey, string>> = {
     "common.statementsSubtitle": "月度收支汇总。",
     "common.attendanceSubtitle": "为报名学生标记每日考勤。出席和缺席扣除1课时；请假不扣。",
     "common.scheduleSubtitle":
-      "选择老师后，点击空白时间即可添加学生。拖动可改时间。按住 Option（Alt）再拖动可复制课表。",
+      "选择老师后，点击空白时间即可添加课程。若要给已有课程加学生，请点击该课程，再点“添加学生”。拖动可改时间。按住 Option（Alt）再拖动可复制课表。",
     "common.eventsSubtitle": "分享学校新闻、照片和视频亮点。",
     "common.attendanceFooter": "已安排的补课会等到补课时间过后再扣除课时。",
     "common.rescheduleThisOccurrence": "仅此次",
@@ -3222,6 +3281,7 @@ export function getNavTranslationKey(href: string): TranslationKey {
     case "/events":
       return "nav.events";
     case "/chat":
+    case "/chat/teachers":
       return "nav.chat";
     case "/settings":
     case "/settings/staff":

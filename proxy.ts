@@ -13,7 +13,8 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isLoginPage = pathname.startsWith("/login");
-  const isPublicRoute = pathname.startsWith("/trial");
+  const isPublicRoute =
+    pathname.startsWith("/trial") || pathname === "/website-chat.js";
   const isProtectedRoute =
     !isLoginPage &&
     !isPublicRoute &&
@@ -61,6 +62,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|website-chat\\.js|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };

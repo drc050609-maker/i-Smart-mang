@@ -87,7 +87,20 @@ export async function processDueClassSessionsIfNeeded(
   if (now - lastProcessAttemptAt < THROTTLE_MS) {
     return 0;
   }
+
+  // In-memory throttle is per serverless instance. Claim a shared DB lock so
+  // concurrent dashboard requests do not all run this catch-up at once.
+  const { data: claimed, error: claimError } = await supabase.rpc(
+    "try_claim_job",
+    {
+      p_job_name: "process_due_class_sessions",
+      p_throttle_seconds: Math.ceil(THROTTLE_MS / 1000),
+    },
+  );
   lastProcessAttemptAt = now;
+  if (!claimError && claimed !== true) {
+    return 0;
+  }
 
   // Brooklyn was reset to a clean credit/history slate — do not backfill past
   // sessions (which would re-inflate used credits / classes taken).
@@ -157,6 +170,8 @@ export async function processDueClassSessions(
   let schedules: ScheduleForOccurrences[] = [];
   let enrollments: EnrollmentRow[] = [];
 
+  const nearbyScheduleOr = `is_recurring.eq.true,and(is_recurring.eq.false,schedule_date.gte.${lookbackIso})`;
+
   if (campusClassIds != null) {
     const [schedulesResult, enrollmentsResult] = await Promise.all([
       fetchInChunks<ScheduleForOccurrences>(campusClassIds, (chunk) =>
@@ -167,6 +182,7 @@ export async function processDueClassSessions(
           )
           .not("schedule_start_time", "is", null)
           .not("schedule_end_time", "is", null)
+          .or(nearbyScheduleOr)
           .in("class_id", chunk),
       ),
       fetchInChunks<EnrollmentRow>(campusClassIds, (chunk) =>
@@ -199,7 +215,8 @@ export async function processDueClassSessions(
           "id, class_id, is_recurring, schedule_day_of_week, schedule_date, schedule_start_time, schedule_end_time, is_makeup",
         )
         .not("schedule_start_time", "is", null)
-        .not("schedule_end_time", "is", null),
+        .not("schedule_end_time", "is", null)
+        .or(nearbyScheduleOr),
       supabase
         .from("enrollments")
         .select('"class id", "student id", is_active')

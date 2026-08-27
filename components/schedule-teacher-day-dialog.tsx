@@ -276,7 +276,7 @@ export function ScheduleTeacherDayDialog({
                     className="inline-flex items-center gap-x-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400"
                   >
                     <PlusIcon aria-hidden="true" className="size-4" />
-                    {t("common.addStudentToSchedule")}
+                    {t("common.addClassTime")}
                   </button>
                 ) : null}
                 <button

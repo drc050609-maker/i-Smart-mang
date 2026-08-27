@@ -90,7 +90,7 @@ export function AdminTeacherChatPanel({
   }
 
   return (
-    <div className="mt-6 grid gap-4 lg:grid-cols-[220px_260px_minmax(0,1fr)]">
+    <div className="grid gap-4 lg:grid-cols-[220px_260px_minmax(0,1fr)]">
       <section className="rounded-lg border border-gray-200 dark:border-white/10">
         <div className="border-b border-gray-200 px-3 py-2 text-sm font-semibold text-gray-900 dark:border-white/10 dark:text-white">
           {t("chat.pickTeacher")}
