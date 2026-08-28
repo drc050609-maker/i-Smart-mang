@@ -1552,11 +1552,7 @@ export async function saveStudentDetails(
   }
 
   revalidateStudent(studentId);
-  revalidatePath("/classes", "layout");
-  revalidatePath("/tutors", "layout");
   revalidatePath("/schedule");
-  revalidatePath("/payments");
-  revalidatePath("/attendance");
   for (const classId of classIdsToSync) {
     revalidatePath(`/classes/${classId}`);
   }

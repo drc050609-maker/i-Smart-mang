@@ -90,12 +90,6 @@ const navigation: NavItem[] = [
     hideForFrontDesk: true,
   },
   {
-    name: "Tuitions",
-    href: "/tuitions",
-    icon: BanknotesIcon,
-    hideForFrontDesk: true,
-  },
-  {
     name: "Payments",
     href: "/payments",
     icon: CreditCardIcon,
@@ -120,6 +114,12 @@ const navigation: NavItem[] = [
     href: WEBSITE_CHAT_VISIBLE ? "/chat" : "/chat/teachers",
     icon: ChatBubbleLeftRightIcon,
     adminOnly: true,
+  },
+  {
+    name: "Tuitions",
+    href: "/tuitions",
+    icon: BanknotesIcon,
+    hideForFrontDesk: true,
   },
   { name: "Settings", href: "/settings", icon: Cog6ToothIcon },
 ];
