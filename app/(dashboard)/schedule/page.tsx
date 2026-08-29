@@ -1,4 +1,5 @@
 import { cookies } from "next/headers";
+import { after } from "next/server";
 
 import { ScheduleCalendarLoader } from "@/components/schedule-calendar-loader";
 import type { ScheduleStudent, ScheduleTeacher } from "@/lib/schedule-calendar";
@@ -6,6 +7,7 @@ import { requireStaff } from "@/lib/auth";
 import { getActiveCampusLocationId } from "@/lib/campus-location";
 import { createTranslator } from "@/lib/i18n";
 import { sortTeachers } from "@/lib/person-name";
+import { processDueClassSessionsIfNeeded } from "@/lib/process-due-sessions";
 import {
   fetchTeacherScheduleCounts,
   loadScheduleCalendarEvents,
@@ -59,6 +61,14 @@ export default async function SchedulePage() {
   }
 
   const query = createSupabaseServiceClient();
+
+  after(async () => {
+    try {
+      await processDueClassSessionsIfNeeded(query, staff.id, locationId);
+    } catch {
+      // Auto-processing should not block the schedule if it fails.
+    }
+  });
 
   const [
     { data: teachers, error: teachersError },
