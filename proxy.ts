@@ -20,7 +20,7 @@ function maintenanceNotFound() {
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>404: This page could not be found.</title>
   </head>
-  <body style="margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center">
+  <body style="margin:0;background:#fff;color:#000;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;height:100vh;display:flex;align-items:center;justify-content:center">
     <div>
       <h1 style="display:inline-block;border-right:1px solid rgba(0,0,0,.3);margin:0 20px 0 0;padding:0 23px 0 0;font-size:24px;font-weight:500;vertical-align:top;line-height:49px">404</h1>
       <div style="display:inline-block;text-align:left;line-height:49px;height:49px;vertical-align:middle">
